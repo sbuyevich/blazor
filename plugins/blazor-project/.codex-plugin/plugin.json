@@ -1,0 +1,40 @@
+{
+  "name": "blazor-project",
+  "version": "0.1.0",
+  "description": "Repo-local project knowledge and workflows for the Blazor workspace.",
+  "author": {
+    "name": "[TODO: Author Name]",
+    "email": "[TODO: author@example.com]",
+    "url": "[TODO: https://github.com/your-org-or-user]"
+  },
+  "homepage": "[TODO: https://github.com/your-org-or-user/your-repo]",
+  "repository": "[TODO: https://github.com/your-org-or-user/your-repo]",
+  "license": "[TODO: MIT]",
+  "keywords": [
+    "blazor",
+    "aspnet-core",
+    "sqlite",
+    "project-context"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Blazor Project",
+    "shortDescription": "Project-local skills and context for this repo.",
+    "longDescription": "Keeps repo-specific knowledge, plans, and workflows inside the repository so they can be committed and shared through GitHub.",
+    "developerName": "[TODO: Team or Author]",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "[TODO: https://github.com/your-org-or-user/your-repo]",
+    "privacyPolicyURL": "[TODO: https://example.com/privacy]",
+    "termsOfServiceURL": "[TODO: https://example.com/terms]",
+    "defaultPrompt": [
+      "Use the project skill for repo-specific Blazor work.",
+      "Follow the Contacts CRUD design tasks in this repo.",
+      "Summarize the current project context and next steps."
+    ],
+    "brandColor": "#2563EB"
+  }
+}
