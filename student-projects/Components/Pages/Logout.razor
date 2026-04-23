@@ -1,0 +1,25 @@
+@page "/logout"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@using Microsoft.AspNetCore.Authentication
+
+@inject NavigationManager NavigationManager
+
+<PageTitle>Logout</PageTitle>
+
+<p>Signing you out...</p>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpContext.User.Identity?.IsAuthenticated == true)
+        {
+            await HttpContext.SignOutAsync(AuthenticationConstants.Scheme);
+        }
+
+        NavigationManager.NavigateTo(AuthenticationConstants.LoginPath, forceLoad: true);
+    }
+}

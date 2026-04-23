@@ -58,3 +58,19 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.auth-shell {
+    min-height: calc(100vh - 8rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    width: min(100%, 26rem);
+    padding: 2rem;
+    border: 1px solid #d9dee4;
+    border-radius: 1rem;
+    background-color: #fff;
+    box-shadow: 0 1.25rem 3rem rgba(18, 38, 63, 0.08);
+}

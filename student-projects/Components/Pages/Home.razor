@@ -4,6 +4,14 @@
 
 <h1>Student Projects</h1>
 
-<p>This scaffold is running as a Blazor Web App with interactive server rendering.</p>
+<p>This app uses a minimal custom cookie-auth flow on top of the seeded SQLite user store.</p>
 
-<p>The host pipeline is ready for the database, login flow, and project pages planned in the next tasks.</p>
+<AuthorizeView>
+    <Authorized>
+        <p>You are signed in as <strong>@context.User.Identity?.Name</strong>.</p>
+        <p><a href="projects">Open the protected projects area</a>.</p>
+    </Authorized>
+    <NotAuthorized>
+        <p><a href="login">Sign in</a> with the seeded credentials to continue.</p>
+    </NotAuthorized>
+</AuthorizeView>

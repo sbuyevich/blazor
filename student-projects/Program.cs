@@ -1,21 +1,47 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Components.Forms.Mapping;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using student_projects.Auth;
 using student_projects.Components;
 using student_projects.Data;
+using student_projects.Models;
+using student_projects.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=student-projects.db";
+var dataProtectionPath = Path.Combine(builder.Environment.ContentRootPath, ".keys");
 var seedOptions = builder.Configuration.GetSection(DatabaseSeedOptions.SectionName).Get<DatabaseSeedOptions>() ?? new DatabaseSeedOptions();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddSupplyValueFromFormProvider();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath))
+    .SetApplicationName("student-projects");
+builder.Services.AddAuthentication(AuthenticationConstants.Scheme)
+    .AddCookie(AuthenticationConstants.Scheme, options =>
+    {
+        options.LoginPath = AuthenticationConstants.LoginPath;
+        options.LogoutPath = AuthenticationConstants.LogoutPath;
+        options.AccessDeniedPath = AuthenticationConstants.LoginPath;
+        options.Cookie.Name = AuthenticationConstants.CookieName;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString)
         .UseSeeding((context, _) => ApplicationDbContextSeed.Seed(context, seedOptions))
         .UseAsyncSeeding((context, _, cancellationToken) => ApplicationDbContextSeed.SeedAsync(context, seedOptions, cancellationToken)));
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 
 var app = builder.Build();
 
@@ -25,14 +51,13 @@ await ApplicationDbContextInitializer.InitializeAsync(app.Services);
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseAntiforgery();
 
 app.MapStaticAssets();

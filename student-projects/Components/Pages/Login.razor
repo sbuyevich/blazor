@@ -1,0 +1,95 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@using Microsoft.AspNetCore.Authentication
+
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Login</PageTitle>
+
+<div class="auth-shell">
+    <div class="auth-card">
+        <h1>Login</h1>
+        <p class="text-muted">Use the seeded local account to enter the app.</p>
+
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">@_errorMessage</div>
+        }
+
+        <form method="post" @formname="login">
+            <AntiforgeryToken />
+
+            <div class="mb-3">
+                <label class="form-label" for="login-username">Username</label>
+                <input id="login-username" class="form-control" name="UserName" value="@UserName" autocomplete="username" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="login-password">Password</label>
+                <input id="login-password" class="form-control" type="password" name="Password" autocomplete="current-password" />
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">Sign in</button>
+        </form>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "login")]
+    private string? UserName { get; set; }
+
+    [SupplyParameterFromForm(FormName = "login")]
+    private string? Password { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? _errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (HttpContext.User.Identity?.IsAuthenticated == true)
+        {
+            NavigationManager.NavigateTo(GetSafeReturnUrl(), forceLoad: true);
+            return;
+        }
+
+        if (!HttpMethods.IsPost(HttpContext.Request.Method))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(UserName) || string.IsNullOrWhiteSpace(Password))
+        {
+            _errorMessage = "Enter both your username and password.";
+            return;
+        }
+
+        var user = await AuthService.ValidateCredentialsAsync(UserName, Password);
+        if (user is null)
+        {
+            _errorMessage = "Invalid username or password.";
+            Password = null;
+            return;
+        }
+
+        await HttpContext.SignInAsync(
+            AuthenticationConstants.Scheme,
+            AuthService.CreatePrincipal(user),
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                AllowRefresh = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+            });
+
+        NavigationManager.NavigateTo(GetSafeReturnUrl(), forceLoad: true);
+    }
+
+    private string GetSafeReturnUrl() => AuthNavigation.NormalizeReturnUrl(ReturnUrl);
+}
