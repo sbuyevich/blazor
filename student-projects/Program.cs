@@ -36,12 +36,11 @@ builder.Services.AddAuthentication(AuthenticationConstants.Scheme)
         options.SlidingExpiration = true;
     });
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton(seedOptions);
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString)
-        .UseSeeding((context, _) => ApplicationDbContextSeed.Seed(context, seedOptions))
-        .UseAsyncSeeding((context, _, cancellationToken) => ApplicationDbContextSeed.SeedAsync(context, seedOptions, cancellationToken)));
+    options.UseSqlite(connectionString));
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
+builder.Services.AddScoped<IPasswordHasher<Student>, PasswordHasher<Student>>();
 
 var app = builder.Build();
 

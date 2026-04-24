@@ -5,8 +5,6 @@ namespace student_projects.Data;
 
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    public DbSet<AppUser> Users => Set<AppUser>();
-
     public DbSet<StudentProject> StudentProjects => Set<StudentProject>();
 
     public DbSet<School> Schools => Set<School>();
@@ -18,23 +16,6 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<AppUser>(entity =>
-        {
-            entity.ToTable("Users");
-            entity.HasKey(user => user.Id);
-            entity.Property(user => user.UserName)
-                .HasMaxLength(100)
-                .IsRequired();
-            entity.Property(user => user.PasswordHash)
-                .IsRequired();
-            entity.HasIndex(user => user.UserName)
-                .IsUnique();
-            entity.HasMany(user => user.OwnedProjects)
-                .WithOne(project => project.Owner)
-                .HasForeignKey(project => project.OwnerUserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
 
         modelBuilder.Entity<StudentProject>(entity =>
         {
@@ -48,6 +29,10 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
                 .IsRequired();
             entity.Property(project => project.CreatedAtUtc)
                 .IsRequired();
+            entity.HasOne(project => project.Owner)
+                .WithMany(student => student.OwnedProjects)
+                .HasForeignKey(project => project.OwnerStudentId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<School>(entity =>
@@ -76,6 +61,13 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
         {
             entity.ToTable("Student");
             entity.HasKey(student => student.Id);
+            entity.Property(student => student.UserName)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.Property(student => student.PasswordHash)
+                .IsRequired();
+            entity.HasIndex(student => student.UserName)
+                .IsUnique();
             entity.HasOne(student => student.Class)
                 .WithMany(schoolClass => schoolClass.Students)
                 .HasForeignKey(student => student.ClassId)

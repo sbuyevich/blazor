@@ -9,9 +9,9 @@ namespace student_projects.Services;
 
 public sealed class AuthService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
-    IPasswordHasher<AppUser> passwordHasher) : IAuthService
+    IPasswordHasher<Student> passwordHasher) : IAuthService
 {
-    public async Task<AppUser?> ValidateCredentialsAsync(string userName, string password, CancellationToken cancellationToken = default)
+    public async Task<Student?> ValidateCredentialsAsync(string userName, string password, CancellationToken cancellationToken = default)
     {
         var trimmedUserName = userName.Trim();
 
@@ -21,17 +21,17 @@ public sealed class AuthService(
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var user = await dbContext.Users
+        var student = await dbContext.Students
             .AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.UserName == trimmedUserName, cancellationToken);
 
-        if (user is null)
+        if (student is null)
         {
             return null;
         }
 
-        var verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
-        return verificationResult == PasswordVerificationResult.Failed ? null : user;
+        var verificationResult = passwordHasher.VerifyHashedPassword(student, student.PasswordHash, password);
+        return verificationResult == PasswordVerificationResult.Failed ? null : student;
     }
 
     public async Task<RegistrationResult> RegisterUserAsync(string userName, string password, CancellationToken cancellationToken = default)
@@ -44,7 +44,7 @@ public sealed class AuthService(
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var duplicateExists = await dbContext.Users
+        var duplicateExists = await dbContext.Students
             .AsNoTracking()
             .AnyAsync(candidate => candidate.UserName == trimmedUserName, cancellationToken);
 
@@ -53,14 +53,14 @@ public sealed class AuthService(
             return new RegistrationResult(false, ErrorMessage: "That username is already taken.");
         }
 
-        var user = new AppUser
+        var student = new Student
         {
             UserName = trimmedUserName
         };
 
-        user.PasswordHash = passwordHasher.HashPassword(user, password);
+        student.PasswordHash = passwordHasher.HashPassword(student, password);
 
-        dbContext.Users.Add(user);
+        dbContext.Students.Add(student);
 
         try
         {
@@ -71,15 +71,15 @@ public sealed class AuthService(
             return new RegistrationResult(false, ErrorMessage: "That username is already taken.");
         }
 
-        return new RegistrationResult(true, user);
+        return new RegistrationResult(true, Student: student);
     }
 
-    public ClaimsPrincipal CreatePrincipal(AppUser user)
+    public ClaimsPrincipal CreatePrincipal(Student student)
     {
         var identity = new ClaimsIdentity(
         [
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.UserName)
+            new Claim(ClaimTypes.NameIdentifier, student.Id.ToString()),
+            new Claim(ClaimTypes.Name, student.UserName)
         ],
         AuthenticationConstants.Scheme);
 

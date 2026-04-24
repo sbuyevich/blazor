@@ -8,9 +8,9 @@ public sealed class StudentProject
 
     public string Description { get; set; } = string.Empty;
 
-    public int OwnerUserId { get; set; }
+    public int OwnerStudentId { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
 
-    public AppUser Owner { get; set; } = null!;
+    public Student Owner { get; set; } = null!;
 }

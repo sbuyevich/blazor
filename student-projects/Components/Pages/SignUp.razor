@@ -93,7 +93,7 @@
         }
 
         var registration = await AuthService.RegisterUserAsync(UserName, Password);
-        if (!registration.Succeeded || registration.User is null)
+        if (!registration.Succeeded || registration.Student is null)
         {
             _errorMessage = registration.ErrorMessage ?? "Unable to create the account.";
             Password = null;
@@ -103,7 +103,7 @@
 
         await HttpContext.SignInAsync(
             AuthenticationConstants.Scheme,
-            AuthService.CreatePrincipal(registration.User),
+            AuthService.CreatePrincipal(registration.Student),
             new AuthenticationProperties
             {
                 IsPersistent = true,

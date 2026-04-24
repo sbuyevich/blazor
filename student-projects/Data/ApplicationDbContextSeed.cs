@@ -9,44 +9,44 @@ public static class ApplicationDbContextSeed
     public static void Seed(DbContext context, DatabaseSeedOptions options)
     {
         var resolvedOptions = ResolveOptions(options);
-        var users = context.Set<AppUser>();
+        var students = context.Set<Student>();
 
-        if (users.Any(user => user.UserName == resolvedOptions.UserName))
+        if (students.Any(student => student.UserName == resolvedOptions.UserName))
         {
             return;
         }
 
-        var user = new AppUser
+        var student = new Student
         {
             UserName = resolvedOptions.UserName
         };
 
-        var passwordHasher = new PasswordHasher<AppUser>();
-        user.PasswordHash = passwordHasher.HashPassword(user, resolvedOptions.Password);
+        var passwordHasher = new PasswordHasher<Student>();
+        student.PasswordHash = passwordHasher.HashPassword(student, resolvedOptions.Password);
 
-        users.Add(user);
+        students.Add(student);
         context.SaveChanges();
     }
 
     public static async Task SeedAsync(DbContext context, DatabaseSeedOptions options, CancellationToken cancellationToken)
     {
         var resolvedOptions = ResolveOptions(options);
-        var users = context.Set<AppUser>();
+        var students = context.Set<Student>();
 
-        if (await users.AnyAsync(user => user.UserName == resolvedOptions.UserName, cancellationToken))
+        if (await students.AnyAsync(student => student.UserName == resolvedOptions.UserName, cancellationToken))
         {
             return;
         }
 
-        var user = new AppUser
+        var student = new Student
         {
             UserName = resolvedOptions.UserName
         };
 
-        var passwordHasher = new PasswordHasher<AppUser>();
-        user.PasswordHash = passwordHasher.HashPassword(user, resolvedOptions.Password);
+        var passwordHasher = new PasswordHasher<Student>();
+        student.PasswordHash = passwordHasher.HashPassword(student, resolvedOptions.Password);
 
-        await users.AddAsync(user, cancellationToken);
+        await students.AddAsync(student, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
     }
 
