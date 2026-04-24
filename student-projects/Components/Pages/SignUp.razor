@@ -1,0 +1,118 @@
+@page "/signup"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@using Microsoft.AspNetCore.Authentication
+
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Sign Up</PageTitle>
+
+<div class="auth-shell">
+    <div class="auth-card">
+        <h1>Sign Up</h1>
+        <p class="text-muted">Create a minimal local account for the app.</p>
+
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">@_errorMessage</div>
+        }
+
+        <form method="post" @formname="signup">
+            <AntiforgeryToken />
+
+            <div class="mb-3">
+                <label class="form-label" for="signup-username">Username</label>
+                <input id="signup-username" class="form-control" name="UserName" value="@UserName" autocomplete="username" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="signup-password">Password</label>
+                <input id="signup-password" class="form-control" type="password" name="Password" autocomplete="new-password" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="signup-confirm-password">Confirm password</label>
+                <input id="signup-confirm-password" class="form-control" type="password" name="ConfirmPassword" autocomplete="new-password" />
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">Create account</button>
+        </form>
+
+        <p class="mt-3 mb-0 text-center">
+            Already have an account? <a href="login">Sign in</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "signup")]
+    private string? UserName { get; set; }
+
+    [SupplyParameterFromForm(FormName = "signup")]
+    private string? Password { get; set; }
+
+    [SupplyParameterFromForm(FormName = "signup")]
+    private string? ConfirmPassword { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? _errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (HttpContext.User.Identity?.IsAuthenticated == true)
+        {
+            NavigationManager.NavigateTo(GetSafeReturnUrl(), forceLoad: true);
+            return;
+        }
+
+        if (!HttpMethods.IsPost(HttpContext.Request.Method))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(UserName) ||
+            string.IsNullOrWhiteSpace(Password) ||
+            string.IsNullOrWhiteSpace(ConfirmPassword))
+        {
+            _errorMessage = "Enter a username, password, and confirmation password.";
+            return;
+        }
+
+        if (!string.Equals(Password, ConfirmPassword, StringComparison.Ordinal))
+        {
+            _errorMessage = "The password and confirmation password must match.";
+            Password = null;
+            ConfirmPassword = null;
+            return;
+        }
+
+        var registration = await AuthService.RegisterUserAsync(UserName, Password);
+        if (!registration.Succeeded || registration.User is null)
+        {
+            _errorMessage = registration.ErrorMessage ?? "Unable to create the account.";
+            Password = null;
+            ConfirmPassword = null;
+            return;
+        }
+
+        await HttpContext.SignInAsync(
+            AuthenticationConstants.Scheme,
+            AuthService.CreatePrincipal(registration.User),
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                AllowRefresh = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+            });
+
+        NavigationManager.NavigateTo(GetSafeReturnUrl(), forceLoad: true);
+    }
+
+    private string GetSafeReturnUrl() => AuthNavigation.NormalizeReturnUrl(ReturnUrl);
+}

@@ -1,4 +1,4 @@
-# Task 06 - Testing And Validation
+# Task 07 - Testing And Validation
 
 ## Goal
 Verify the MVP behavior end to end and close any gaps against the plan.
@@ -7,6 +7,7 @@ Verify the MVP behavior end to end and close any gaps against the plan.
 - Build and run the application locally.
 - Verify database creation and seeded user setup.
 - Test login success and failure cases.
+- Test sign-up success and duplicate-username handling.
 - Test unauthenticated redirect behavior.
 - Test create, list, edit, and delete for the logged-in user.
 - Test that another user's data cannot be edited or deleted.
@@ -20,6 +21,7 @@ Verify the MVP behavior end to end and close any gaps against the plan.
 - App starts and the database is available.
 - Seeded default user can log in.
 - Invalid login fails cleanly.
+- Sign-up creates a new user with a hashed password.
 - Protected routes require login.
 - CRUD works for the current user's projects.
 - Ownership restrictions are enforced server-side.

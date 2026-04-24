@@ -1,4 +1,4 @@
-# Task 05 - Project UI
+# Task 06 - Project UI
 
 ## Goal
 Build the authenticated Blazor pages for managing projects.
