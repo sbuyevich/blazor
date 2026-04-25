@@ -10,7 +10,7 @@ Verify the MVP works end to end as a separate local classroom app.
 - Run the app locally.
 - Verify database creation or migration.
 - Verify valid, missing, and invalid class-code flows.
-- Verify teacher login and logout.
+- Verify teacher login.
 - Verify student login, registration, and duplicate handling.
 - Verify teacher-only Students navigation and direct route protection.
 - Confirm no dependency on `student-projects` database or configuration.
@@ -27,6 +27,7 @@ Verify the MVP works end to end as a separate local classroom app.
 - The app starts with its own SQLite database.
 - Valid landing page `?c={code}` classroom flow works.
 - `/login` and `/students` work from the stored current class context without `c`.
+- MudBlazor layout, form controls, navigation, and student table/grid render correctly.
 - Missing and invalid `c` values show clear errors.
 - Teacher auth flow works.
 - Student auth and registration flows work.

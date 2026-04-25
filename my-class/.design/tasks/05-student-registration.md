@@ -6,7 +6,7 @@ Allow students to self-register from the shared login flow when no matching stud
 
 ## Work
 
-- Add registration behavior to the login flow.
+- Add registration behavior to the login flow using MudBlazor form controls.
 - Create student records only for the current class.
 - Reject duplicate student usernames within the same class.
 - Store student credential data securely if credentials include a password or secret.
@@ -15,7 +15,7 @@ Allow students to self-register from the shared login flow when no matching stud
 
 ## Deliverables
 
-- Student self-registration UI in the login flow
+- Student self-registration UI in the login flow using MudBlazor components
 - Registration support in `IAuthService`
 - Student creation logic scoped to the current class
 - Validation messages

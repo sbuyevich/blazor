@@ -2,7 +2,7 @@
 
 ## Summary
 
-Build a separate `my-class` solution with a new `Blazor Web App` using `net10.0`, `Interactive Server` rendering, SQLite, and EF Core. The app has its own SQLite database and is independent from the existing `student-projects` solution. It is intended for classroom use on a local Wi-Fi network, with teachers and students opening the same web app in a browser.
+Build a separate `my-class` solution with a new `Blazor Web App` using `net10.0`, `Interactive Server` rendering, SQLite, EF Core, and MudBlazor. The app has its own SQLite database and is independent from the existing `student-projects` solution. It is intended for classroom use on a local Wi-Fi network, with teachers and students opening the same web app in a browser.
 
 Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses one shared login page for teachers and students, stores login state in browser `localStorage`, and carries an `IsTeacher` flag across the app. Server-side operations must still validate role and class scope instead of trusting browser state alone.
 
@@ -10,12 +10,19 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 
 - Scaffold a new Blazor Web App with no built-in authentication template.
 - Keep the solution, project files, app settings, EF Core migrations, and SQLite database under `my-class`.
+- Add MudBlazor as the UI component library and use it for app shell, forms, alerts, buttons, menus, and data grids/tables.
 - Configure `Program.cs` for:
   - Razor components with interactive server components
   - SQLite-backed EF Core data access
   - `IDbContextFactory<ApplicationDbContext>` for Blazor-safe database work
+  - MudBlazor services with `AddMudServices()`
   - app settings binding for teacher credentials
   - startup database creation or migrations
+- Add MudBlazor providers to the layout/app shell:
+  - `MudThemeProvider`
+  - `MudPopoverProvider`
+  - `MudDialogProvider`
+  - `MudSnackbarProvider`
 - Add core entities:
   - `School`: school record shown in the app header
   - `Class`: belongs to a school and has a unique class code
@@ -27,11 +34,10 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
   - show school and class names in the app header
   - show an error page or error panel when `c` is missing or invalid
 - Implement shared login and local auth state:
-  - `/login` page supports teacher and student login
+  - `/login` page uses MudBlazor form controls and supports teacher and student login
   - teacher login validates against app settings
   - student login validates against the `Student` table for the current class
   - successful login writes username, `IsTeacher`, and current class code to `localStorage`
-  - logout clears the local login state
 - Implement student self-registration:
   - allow students to register from the shared login flow when no matching student record exists
   - create the student record for the current class only
@@ -41,8 +47,8 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
   - `IAuthService` handles teacher/student login and registration
   - `IStudentService` handles current-class student grid queries
 - Implement teacher UI:
-  - show Students menu only for teacher users
-  - Students page shows a grid of students for the current class only
+  - show Students menu only for teacher users using MudBlazor navigation components
+  - Students page shows a MudBlazor table/grid of students for the current class only
 - Leave student post-login capabilities as `TBD`; after login, students can reach only placeholder content until requirements are defined.
 - Do not add controllers, Minimal APIs, or external AJAX endpoints for v1 unless a later requirement needs them.
 
@@ -57,6 +63,7 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - `IClassContextService`
 - `IAuthService`
 - `IStudentService`
+- MudBlazor package and app-level providers
 - Pages/routes:
   - `/?c={code}`
   - `/login`
@@ -71,6 +78,7 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - Invalid `c` query parameter shows a clear error message.
 - `/login` and `/students` use the stored current class context and do not require `c` in the URL.
 - Teacher can log in with app settings credentials from the shared login page.
+- Login UI is built with MudBlazor form components.
 - Teacher login stores username, `IsTeacher = true`, and class code in `localStorage`.
 - Invalid teacher login shows an error and does not update login state.
 - Existing student can log in from the shared login page for the current class.
@@ -78,14 +86,15 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - Duplicate student username in the same class is rejected cleanly.
 - Student login stores username, `IsTeacher = false`, and class code in `localStorage`.
 - Teacher can open the Students menu and view only students from the current class.
+- Student grid is built with MudBlazor table/grid components.
 - Student users cannot see or open the teacher Students page.
-- Logout clears browser login state and returns the user to an unauthenticated state.
 
 ## Assumptions
 
 - `net10.0` is the target because this is a new app and current ASP.NET Core guidance prefers the latest stable version.
 - Render mode is `Interactive Server` so the app can use server-side services and SQLite directly without a separate API layer.
 - `my-class` is a separate solution with its own project files, configuration, migrations, and SQLite database.
+- MudBlazor is the standard UI library for app layout, forms, navigation, alerts, dialogs/snackbars, and tables/grids.
 - The class code query parameter is named `c` and is only required on the landing page.
 - Browser `localStorage` is used only for lightweight local classroom state; server-side services still enforce teacher/student permissions and current-class filtering.
 - The MVP supports one global teacher account for the whole app, configured through app settings.

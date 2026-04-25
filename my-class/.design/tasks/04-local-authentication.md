@@ -6,7 +6,7 @@ Implement the shared login page and browser-local login state for teachers and s
 
 ## Work
 
-- Add a shared `/login` page.
+- Add a shared `/login` page using MudBlazor form controls.
 - Add `TeacherOptions` bound from app settings.
 - Add `LoginState` for username, `IsTeacher`, and current class code.
 - Add a small local storage abstraction for reading, writing, and clearing login state.
@@ -28,6 +28,7 @@ Implement the shared login page and browser-local login state for teachers and s
 ## Acceptance Criteria
 
 - Teacher can log in through the shared login page.
+- Login page uses MudBlazor inputs, buttons, and alerts.
 - Teacher login stores username, `IsTeacher = true`, and class code in `localStorage`.
 - Existing student can log in through the shared login page.
 - Student login stores username, `IsTeacher = false`, and class code in `localStorage`.

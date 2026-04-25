@@ -2,6 +2,8 @@
 
 My Class is a Blazor Web App that helps teachers communicate with students during class. Teachers and students use a browser interface while connected to the same local Wi-Fi network. The application uses a SQLite database.
 
+The UI uses MudBlazor components.
+
 ## Authentication
 
 Authentication does not use standard web authentication.

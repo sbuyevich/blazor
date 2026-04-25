@@ -10,9 +10,11 @@ Create `my-class` as a separate Blazor Web App solution with its own project, co
 - Scaffold a new Blazor Web App targeting `net10.0`.
 - Use `Interactive Server` rendering.
 - Do not enable a built-in authentication template.
-- Add required EF Core SQLite package references.
+- Add required EF Core SQLite and MudBlazor package references.
 - Configure app settings for teacher credentials and the SQLite connection string.
 - Ensure launch settings are local to the `my-class` project.
+- Register MudBlazor services with `AddMudServices()`.
+- Add MudBlazor stylesheet/script assets and required providers.
 
 ## Deliverables
 
@@ -21,6 +23,7 @@ Create `my-class` as a separate Blazor Web App solution with its own project, co
 - Local `appsettings` configuration
 - Local `launchSettings.json`
 - Required package references
+- MudBlazor service/provider setup
 
 ## Acceptance Criteria
 
@@ -28,6 +31,7 @@ Create `my-class` as a separate Blazor Web App solution with its own project, co
 - The app does not reference `student-projects`.
 - The app can run without using the `student-projects` database or configuration.
 - The project targets `net10.0`.
+- MudBlazor is installed and available to Razor components.
 
 ## Notes
 

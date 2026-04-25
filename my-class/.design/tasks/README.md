@@ -1,6 +1,6 @@
 # My Class Task Breakdown
 
-Implement `my-class` as a separate Blazor solution with its own SQLite database.
+Implement `my-class` as a separate Blazor solution with its own SQLite database and MudBlazor UI.
 
 ## Tasks
 
