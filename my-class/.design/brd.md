@@ -20,11 +20,11 @@ Teacher credentials are configured in app settings.
 
 The database includes `School`, `Class`, and `Student` tables.
 
-Each class has a code. The class code is provided as a query parameter in the app URL.
+Each class has a code. The class code is provided as the `c` query parameter on the landing page URL.
 
-When the app loads, it reads the school and class from the class code and shows their names in the app header. The teacher works only with students from the current class.
+When the landing page loads, the app reads the school and class from the class code, stores the current class context for later pages, and shows the school and class names in the app header. The teacher works only with students from the current class.
 
-If the class code is missing or invalid, the app shows an error message.
+If the landing page class code is missing or invalid, the app shows an error message.
 
 ## Roles
 
@@ -32,6 +32,7 @@ There are two roles: teacher and student.
 
 ### Teacher
 
+- The app has only one teacher account.
 - Uses credentials from app settings.
 - Logs in through the shared login page.
 - Has `IsTeacher` set to `true` after login.

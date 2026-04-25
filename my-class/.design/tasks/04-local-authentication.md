@@ -40,3 +40,5 @@ Implement the shared login page and browser-local login state for teachers and s
 
 - This is intentionally not ASP.NET Core Identity.
 - Browser state is convenience state, not a trusted authorization boundary.
+- Do not build teacher registration or multiple teacher accounts.
+- `TeacherOptions` represents the single global teacher account.

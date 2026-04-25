@@ -25,7 +25,8 @@ Verify the MVP works end to end as a separate local classroom app.
 
 - The app builds successfully.
 - The app starts with its own SQLite database.
-- Valid `?c={code}` classroom flow works.
+- Valid landing page `?c={code}` classroom flow works.
+- `/login` and `/students` work from the stored current class context without `c`.
 - Missing and invalid `c` values show clear errors.
 - Teacher auth flow works.
 - Student auth and registration flows work.

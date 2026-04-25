@@ -2,17 +2,18 @@
 
 ## Goal
 
-Resolve the current school and class from the URL and show a clear error when the class cannot be loaded.
+Resolve the current school and class from the landing page URL and make it available to later pages.
 
 ## Work
 
-- Use `c` as the class-code query parameter.
+- Use `c` as the class-code query parameter on the landing page only.
 - Add `IClassContextService` to load the current class and school from the database.
 - Add a shared class context model for the resolved school, class, and code.
 - Update layout/header UI to show school and class names when a valid class is loaded.
 - Add missing-class-code handling.
 - Add invalid-class-code handling.
-- Preserve the class code in navigation links, including login and students pages.
+- Store the resolved class context so `/login` and `/students` do not require `c`.
+- Do not preserve the class code in navigation links after landing page resolution.
 
 ## Deliverables
 
@@ -20,7 +21,7 @@ Resolve the current school and class from the URL and show a clear error when th
 - Class context model
 - Header display for school and class names
 - Error UI for missing or invalid `c`
-- Routes that preserve `?c={code}`
+- Routes that use stored class context after `/?c={code}` loads
 
 ## Acceptance Criteria
 
@@ -28,8 +29,8 @@ Resolve the current school and class from the URL and show a clear error when th
 - Missing `c` shows a clear error.
 - Invalid `c` shows a clear error.
 - Keep class as static var in app to use it in other pages
-- `/login` loads the matching class.
-- `/students` loads the matching class.
+- `/login` loads the stored current class without `c`.
+- `/students` loads the stored current class without `c`.
 
 ## Notes
 

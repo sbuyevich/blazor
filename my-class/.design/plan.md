@@ -21,8 +21,9 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
   - `Class`: belongs to a school and has a unique class code
   - `Student`: belongs to a class and stores student login/registration details
 - Implement current class selection:
-  - read the class code from the `c` query parameter
+  - read the class code from the `c` query parameter on the landing page only
   - load the matching school and class
+  - store the resolved current class context for later pages
   - show school and class names in the app header
   - show an error page or error panel when `c` is missing or invalid
 - Implement shared login and local auth state:
@@ -36,7 +37,7 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
   - create the student record for the current class only
   - reject duplicate student usernames within the same class
 - Keep data access and rules out of components:
-  - `IClassContextService` resolves the active school/class from `c`
+  - `IClassContextService` resolves the active school/class from landing-page `c` and the stored current class context
   - `IAuthService` handles teacher/student login and registration
   - `IStudentService` handles current-class student grid queries
 - Implement teacher UI:
@@ -68,6 +69,7 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - A valid `c` query parameter loads the matching school and class and displays both names in the header.
 - Missing `c` query parameter shows a clear error message.
 - Invalid `c` query parameter shows a clear error message.
+- `/login` and `/students` use the stored current class context and do not require `c` in the URL.
 - Teacher can log in with app settings credentials from the shared login page.
 - Teacher login stores username, `IsTeacher = true`, and class code in `localStorage`.
 - Invalid teacher login shows an error and does not update login state.
@@ -84,8 +86,9 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - `net10.0` is the target because this is a new app and current ASP.NET Core guidance prefers the latest stable version.
 - Render mode is `Interactive Server` so the app can use server-side services and SQLite directly without a separate API layer.
 - `my-class` is a separate solution with its own project files, configuration, migrations, and SQLite database.
-- The class code query parameter is named `c`.
+- The class code query parameter is named `c` and is only required on the landing page.
 - Browser `localStorage` is used only for lightweight local classroom state; server-side services still enforce teacher/student permissions and current-class filtering.
+- The MVP supports one global teacher account for the whole app, configured through app settings.
 - Teacher credentials are stored in app settings for this local classroom MVP.
 - Student passwords or secret values should be stored as hashes if a password field is used.
 - Student capabilities and the final database field list remain `TBD` until the BRD defines them.

@@ -8,7 +8,7 @@ Add the teacher-only Students menu and student grid for the current class.
 
 - Add `IStudentService` for student queries scoped to the current class.
 - Add a teacher-only Students menu item.
-- Add `/students?c={code}` page.
+- Add `/students` page that uses the stored current class context.
 - Render a grid of students from the current class.
 - Block student users from opening the Students page.
 - Show a clear unauthorized message or redirect for non-teacher users.

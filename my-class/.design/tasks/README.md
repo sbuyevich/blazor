@@ -16,4 +16,4 @@ Implement `my-class` as a separate Blazor solution with its own SQLite database.
 
 - Do not reuse the `student-projects` solution, database, migrations, or configuration.
 - Keep all implementation files for this app under `my-class`.
-- Use `c` as the class-code query parameter.
+- Use `c` as the class-code query parameter only on the landing page.
