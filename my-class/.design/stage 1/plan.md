@@ -1,4 +1,4 @@
-# My Class MVP Plan
+# My Class MVP Plan. Stage 1.
 
 ## Summary
 
