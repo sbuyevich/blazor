@@ -26,7 +26,7 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - Add core entities:
   - `School`: school record shown in the app header
   - `Class`: belongs to a school and has a unique class code
-  - `Student`: belongs to a class and stores student login/registration details
+  - `Student`: belongs to a class and stores first name, last name, username, and login/registration details
 - Implement current class selection:
   - read the class code from the `c` query parameter on the landing page only
   - load the matching school and class
@@ -39,7 +39,7 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
   - student login validates against the `Student` table for the current class
   - successful login writes username, `IsTeacher`, and current class code to `localStorage`
 - Implement student self-registration:
-  - allow students to register from the shared login flow when no matching student record exists
+  - allow students to open `/register` from the `/login` sign-up link
   - create the student record for the current class only
   - reject duplicate student usernames within the same class
 - Keep data access and rules out of components:
@@ -67,6 +67,7 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - Pages/routes:
   - `/?c={code}`
   - `/login`
+  - `/register`
   - `/students`
   - `/class-error`
 
@@ -104,10 +105,10 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 
 ## Task Breakdown
 
-- [Task 01 - Solution Scaffold](tasks/01-solution-scaffold.md)
-- [Task 02 - Data and Database](tasks/02-data-and-database.md)
-- [Task 03 - Class Context](tasks/03-class-context.md)
-- [Task 04 - Local Authentication](tasks/04-local-authentication.md)
-- [Task 05 - Student Registration](tasks/05-student-registration.md)
-- [Task 06 - Teacher Student Grid](tasks/06-teacher-student-grid.md)
-- [Task 07 - Verification](tasks/07-verification.md)
+- [x] [Task 01 - Solution Scaffold](tasks/01-solution-scaffold.md)
+- [x] [Task 02 - Data and Database](tasks/02-data-and-database.md)
+- [x] [Task 03 - Class Context](tasks/03-class-context.md)
+- [x] [Task 04 - Local Authentication](tasks/04-local-authentication.md)
+- [x] [Task 05 - Student Registration](tasks/05-student-registration.md)
+- [ ] [Task 06 - Teacher Student Grid](tasks/06-teacher-student-grid.md)
+- [ ] [Task 07 - Verification](tasks/07-verification.md)

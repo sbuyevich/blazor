@@ -9,45 +9,57 @@
     <ChildContent Context="currentClass">
         <div class="login-shell">
             <MudPaper Class="login-panel pa-5" Elevation="2">
-                <MudStack Spacing="3">
+                <MudStack Spacing="4">
                     <div>
                         <MudText Typo="Typo.h5">Login</MudText>
                         <MudText Typo="Typo.body2" Color="Color.Secondary">@currentClass.SchoolName - @currentClass.ClassName</MudText>
                     </div>
 
-                    <MudForm @ref="_form">
-                        @if (!string.IsNullOrWhiteSpace(_message))
-                        {
-                            <MudAlert Severity="@_messageSeverity" Variant="Variant.Filled" Dense="true">@_message</MudAlert>
-                        }
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.subtitle1">Teacher sign in</MudText>
 
-                        <MudTextField @bind-Value="_loginModel.UserName"
-                                      Label="Username"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Required="true"
-                                      RequiredError="Username is required"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.Person" />
+                        <MudForm @ref="_teacherForm">
+                            @if (!string.IsNullOrWhiteSpace(_teacherMessage))
+                            {
+                                <MudAlert Severity="@_teacherMessageSeverity" Variant="Variant.Filled" Dense="true">@_teacherMessage</MudAlert>
+                            }
 
-                        <MudTextField @bind-Value="_loginModel.Password"
-                                      Label="Password"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      InputType="InputType.Password"
-                                      Required="true"
-                                      RequiredError="Password is required"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.Lock" />
+                            <MudTextField @bind-Value="_teacherLogin.UserName"
+                                          Label="Username"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Required="true"
+                                          RequiredError="Username is required"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Person" />
 
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   FullWidth="true"
-                                   Disabled="@_isSubmitting"
-                                   OnClick="() => HandleLoginAsync(currentClass)">
-                            @(_isSubmitting ? "Signing in..." : "Sign in")
-                        </MudButton>
-                    </MudForm>
+                            <MudTextField @bind-Value="_teacherLogin.Password"
+                                          Label="Password"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          InputType="InputType.Password"
+                                          Required="true"
+                                          RequiredError="Password is required"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Lock" />
+
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       FullWidth="true"
+                                       Disabled="@_isTeacherSubmitting"
+                                       OnClick="() => HandleTeacherLoginAsync(currentClass)">
+                                @(_isTeacherSubmitting ? "Signing in..." : "Sign in")
+                            </MudButton>
+                        </MudForm>
+                    </MudStack>
+
+                    <MudStack Spacing="2">
+                        <MudDivider />
+                        <MudText Typo="Typo.body2" Align="Align.Center">
+                            Student?
+                            <MudLink Href="/register">Sign up</MudLink>
+                        </MudText>
+                    </MudStack>
                 </MudStack>
             </MudPaper>
         </div>
@@ -57,53 +69,50 @@
 @code {
     private const string LoginStateKey = "my-class.loginState";
 
-    private readonly LoginModel _loginModel = new();
-    private MudForm? _form;
-    private bool _isSubmitting;
-    private string? _message;
-    private Severity _messageSeverity = Severity.Error;
+    private readonly LoginModel _teacherLogin = new();
+    private MudForm? _teacherForm;
+    private bool _isTeacherSubmitting;
+    private string? _teacherMessage;
+    private Severity _teacherMessageSeverity = Severity.Error;
 
-    private async Task HandleLoginAsync(ClassContext currentClass)
+    private async Task HandleTeacherLoginAsync(ClassContext currentClass)
     {
-        if (_form is null)
+        if (_teacherForm is null)
         {
             return;
         }
 
-        await _form.ValidateAsync();
+        await _teacherForm.ValidateAsync();
 
-        if (!_form.IsValid)
+        if (!_teacherForm.IsValid)
         {
             return;
         }
 
-        _isSubmitting = true;
-        _message = null;
+        _isTeacherSubmitting = true;
+        _teacherMessage = null;
 
         var result = await AuthService.LoginAsync(
-            _loginModel.UserName,
-            _loginModel.Password,
+            _teacherLogin.UserName,
+            _teacherLogin.Password,
             isTeacher: true,
             currentClass.Code);
 
         if (!result.Succeeded || result.State is null)
         {
             await LocalStorage.RemoveAsync(LoginStateKey);
-            _messageSeverity = Severity.Error;
-            _message = result.Message;
-            _isSubmitting = false;
+            _teacherMessageSeverity = Severity.Error;
+            _teacherMessage = result.Message;
+            _isTeacherSubmitting = false;
             return;
         }
 
         await LocalStorage.SetAsync(LoginStateKey, result.State);
 
-        _messageSeverity = Severity.Success;
-        _message = result.State.IsTeacher
-            ? "Teacher login saved."
-            : "Student login saved.";
-        _isSubmitting = false;
+        _teacherMessageSeverity = Severity.Success;
+        _teacherMessage = "Teacher login saved.";
+        _isTeacherSubmitting = false;
     }
-
     private sealed class LoginModel
     {
         public string UserName { get; set; } = string.Empty;

@@ -2,11 +2,13 @@
 
 ## Goal
 
-Allow students to self-register from the shared login flow when no matching student record exists.
+Allow students to self-register from a separate register page when no matching student record exists.
 
 ## Work
 
-- Add registration behavior to the login flow using MudBlazor form controls.
+- Add a `/register` page using MudBlazor form controls.
+- Add a sign-up link on `/login` that leads to `/register`.
+- Capture student first name and last name on the registration form.
 - Create student records only for the current class.
 - Reject duplicate student usernames within the same class.
 - Store student credential data securely if credentials include a password or secret.
@@ -15,7 +17,8 @@ Allow students to self-register from the shared login flow when no matching stud
 
 ## Deliverables
 
-- Student self-registration UI in the login flow using MudBlazor components
+- Student self-registration UI on `/register` using MudBlazor components
+- Sign-up link on `/login`
 - Registration support in `IAuthService`
 - Student creation logic scoped to the current class
 - Validation messages
@@ -24,6 +27,7 @@ Allow students to self-register from the shared login flow when no matching stud
 
 - A new student can register for the current class.
 - Registration creates a `Student` record in the app's own database.
+- Registration stores first name and last name on the `Student` record.
 - Duplicate student username in the same class is rejected.
 - Successful registration stores `IsTeacher = false` login state.
 - Registration is not possible without a valid current class.

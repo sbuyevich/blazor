@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MyClass.Data;
+using MyClass.Data.Entities;
 using MyClass.Options;
 
 namespace MyClass.Services.Auth;
@@ -51,6 +52,75 @@ public sealed class AuthService(
         if (student is null || !passwordHashService.Verify(password, student.PasswordHash))
         {
             return LoginResult.Failure("Invalid username or password.");
+        }
+
+        return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode));
+    }
+
+    public async Task<LoginResult> RegisterStudentAsync(
+        string userName,
+        string firstName,
+        string lastName,
+        string password,
+        string classCode,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedUserName = userName.Trim();
+        var normalizedFirstName = firstName.Trim();
+        var normalizedLastName = lastName.Trim();
+        var normalizedClassCode = classCode.Trim();
+
+        if (string.IsNullOrWhiteSpace(normalizedUserName) ||
+            string.IsNullOrWhiteSpace(normalizedFirstName) ||
+            string.IsNullOrWhiteSpace(normalizedLastName) ||
+            string.IsNullOrWhiteSpace(password) ||
+            string.IsNullOrWhiteSpace(normalizedClassCode))
+        {
+            return LoginResult.Failure("First name, last name, username, password, and class are required.");
+        }
+
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var currentClass = await dbContext.Classes
+            .SingleOrDefaultAsync(@class => @class.Code == normalizedClassCode, cancellationToken);
+
+        if (currentClass is null)
+        {
+            return LoginResult.Failure("A valid class is required before registration.");
+        }
+
+        var duplicateExists = await dbContext.Students
+            .AnyAsync(
+                student =>
+                    student.ClassId == currentClass.Id &&
+                    student.UserName.ToLower() == normalizedUserName.ToLower(),
+                cancellationToken);
+
+        if (duplicateExists)
+        {
+            return LoginResult.Failure("That username is already registered for this class.");
+        }
+
+        var student = new Student
+        {
+            ClassId = currentClass.Id,
+            UserName = normalizedUserName,
+            FirstName = normalizedFirstName,
+            LastName = normalizedLastName,
+            DisplayName = $"{normalizedFirstName} {normalizedLastName}",
+            PasswordHash = passwordHashService.Hash(password),
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.Students.Add(student);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return LoginResult.Failure("That username is already registered for this class.");
         }
 
         return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode));

@@ -56,6 +56,14 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
                 .HasMaxLength(200)
                 .IsRequired();
 
+            entity.Property(student => student.FirstName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(student => student.LastName)
+                .HasMaxLength(100)
+                .IsRequired();
+
             entity.Property(student => student.PasswordHash)
                 .HasMaxLength(500)
                 .IsRequired();

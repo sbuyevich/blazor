@@ -12,6 +12,7 @@ public static class DatabaseInitializer
             .CreateDbContextAsync();
 
         await dbContext.Database.EnsureCreatedAsync();
+        await EnsureStudentNameColumnsAsync(dbContext);
 
         if (await dbContext.Schools.AnyAsync())
         {
@@ -33,5 +34,25 @@ public static class DatabaseInitializer
 
         dbContext.Schools.Add(school);
         await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task EnsureStudentNameColumnsAsync(ApplicationDbContext dbContext)
+    {
+        var studentColumns = await dbContext.Database
+            .SqlQueryRaw<string>("SELECT name AS Value FROM pragma_table_info('Students')")
+            .ToListAsync();
+
+        if (!studentColumns.Contains("FirstName", StringComparer.OrdinalIgnoreCase))
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Students ADD COLUMN FirstName TEXT NOT NULL DEFAULT ''");
+        }
+
+        if (!studentColumns.Contains("LastName", StringComparer.OrdinalIgnoreCase))
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Students ADD COLUMN LastName TEXT NOT NULL DEFAULT ''");
+        }
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "UPDATE Students SET FirstName = DisplayName WHERE FirstName = '' AND LastName = '' AND DisplayName <> ''");
     }
 }
