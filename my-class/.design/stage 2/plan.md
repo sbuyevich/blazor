@@ -67,6 +67,6 @@ The Students page becomes a more useful teacher tool by adding name search and a
 
 - [x] [Task 01 - Login Modal Gate](tasks/01-login-modal-gate.md)
 - [x] [Task 02 - Post-Login Redirects](tasks/02-post-login-redirects.md)
-- [ ] [Task 03 - Student Grid Search](tasks/03-student-grid-search.md)
-- [ ] [Task 04 - Remove Student](tasks/04-remove-student.md)
+- [x] [Task 03 - Student Grid Search](tasks/03-student-grid-search.md)
+- [x] [Task 04 - Remove Student](tasks/04-remove-student.md)
 - [ ] [Task 05 - Verification](tasks/05-verification.md)

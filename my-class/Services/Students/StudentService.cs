@@ -14,35 +14,33 @@ public sealed class StudentService(
     public async Task<StudentListResult> GetStudentsForClassAsync(
         LoginState? loginState,
         ClassContextModel currentClass,
+        string? searchText = null,
         CancellationToken cancellationToken = default)
     {
-        if (loginState is null)
-        {
-            return StudentListResult.Failure("Sign in as the teacher to view students.");
-        }
+        var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
 
-        if (!loginState.IsTeacher)
+        if (authorizationMessage is not null)
         {
-            return StudentListResult.Failure("Only teachers can view the student list.");
-        }
-
-        if (!string.Equals(loginState.ClassCode, currentClass.Code, StringComparison.OrdinalIgnoreCase))
-        {
-            return StudentListResult.Failure("Sign in as the teacher for this class to view students.");
-        }
-
-        var teacher = teacherOptions.Value;
-
-        if (!string.Equals(loginState.UserName, teacher.UserName, StringComparison.OrdinalIgnoreCase))
-        {
-            return StudentListResult.Failure("Teacher login is required to view students.");
+            return StudentListResult.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-        var students = await dbContext.Students
+        var query = dbContext.Students
             .AsNoTracking()
-            .Where(student => student.ClassId == currentClass.ClassId)
+            .Where(student => student.ClassId == currentClass.ClassId);
+
+        var normalizedSearchText = searchText?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(normalizedSearchText))
+        {
+            query = query.Where(student =>
+                student.FirstName.Contains(normalizedSearchText) ||
+                student.LastName.Contains(normalizedSearchText) ||
+                student.DisplayName.Contains(normalizedSearchText));
+        }
+
+        var students = await query
             .OrderBy(student => student.LastName)
             .ThenBy(student => student.FirstName)
             .ThenBy(student => student.UserName)
@@ -56,5 +54,62 @@ public sealed class StudentService(
             .ToListAsync(cancellationToken);
 
         return StudentListResult.Success(students);
+    }
+
+    public async Task<StudentActionResult> RemoveStudentFromClassAsync(
+        LoginState? loginState,
+        ClassContextModel currentClass,
+        int studentId,
+        CancellationToken cancellationToken = default)
+    {
+        var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
+
+        if (authorizationMessage is not null)
+        {
+            return StudentActionResult.Failure(authorizationMessage);
+        }
+
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var student = await dbContext.Students
+            .SingleOrDefaultAsync(
+                student =>
+                    student.Id == studentId &&
+                    student.ClassId == currentClass.ClassId,
+                cancellationToken);
+
+        if (student is null)
+        {
+            return StudentActionResult.Failure("The selected student was not found in this class.");
+        }
+
+        dbContext.Students.Remove(student);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return StudentActionResult.Success($"{student.DisplayName} was removed.");
+    }
+
+    private string? ValidateTeacherAccess(LoginState? loginState, ClassContextModel currentClass)
+    {
+        if (loginState is null)
+        {
+            return "Sign in as the teacher to view students.";
+        }
+
+        if (!loginState.IsTeacher)
+        {
+            return "Only teachers can manage the student list.";
+        }
+
+        if (!string.Equals(loginState.ClassCode, currentClass.Code, StringComparison.OrdinalIgnoreCase))
+        {
+            return "Sign in as the teacher for this class to manage students.";
+        }
+
+        var teacher = teacherOptions.Value;
+
+        return string.Equals(loginState.UserName, teacher.UserName, StringComparison.OrdinalIgnoreCase)
+            ? null
+            : "Teacher login is required to manage students.";
     }
 }

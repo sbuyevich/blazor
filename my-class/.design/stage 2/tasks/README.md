@@ -6,8 +6,8 @@ Implement stage 2 improvements for the existing `my-class` Blazor app.
 
 1. [ ] [Task 01 - Login Modal Gate](01-login-modal-gate.md)
 2. [ ] [Task 02 - Post-Login Redirects](02-post-login-redirects.md)
-3. [ ] [Task 03 - Student Grid Search](03-student-grid-search.md)
-4. [ ] [Task 04 - Remove Student](04-remove-student.md)
+3. [x] [Task 03 - Student Grid Search](03-student-grid-search.md)
+4. [x] [Task 04 - Remove Student](04-remove-student.md)
 5. [ ] [Task 05 - Verification](05-verification.md)
 
 ## Notes

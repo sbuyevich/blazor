@@ -8,5 +8,12 @@ public interface IStudentService
     Task<StudentListResult> GetStudentsForClassAsync(
         LoginState? loginState,
         ClassContextModel currentClass,
+        string? searchText = null,
+        CancellationToken cancellationToken = default);
+
+    Task<StudentActionResult> RemoveStudentFromClassAsync(
+        LoginState? loginState,
+        ClassContextModel currentClass,
+        int studentId,
         CancellationToken cancellationToken = default);
 }

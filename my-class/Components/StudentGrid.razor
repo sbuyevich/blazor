@@ -2,6 +2,8 @@
 @inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
 @inject IStudentService StudentService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 @if (_isLoading)
 {
@@ -22,28 +24,54 @@ else if (!_studentsResult.Succeeded)
         @_studentsResult.Message
     </MudAlert>
 }
-else if (_studentsResult.Students.Count == 0)
+else if (_studentsResult.Succeeded)
 {
-    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-        No students are registered for this class yet.
-    </MudAlert>
-}
-else
-{
-    <MudTable Items="_studentsResult.Students" Dense="true" Hover="true" Elevation="1">
-        <HeaderContent>
-            <MudTh>Last name</MudTh>
-            <MudTh>First name</MudTh>
-            <MudTh>Username</MudTh>
-            <MudTh>Registered</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Last name">@context.LastName</MudTd>
-            <MudTd DataLabel="First name">@context.FirstName</MudTd>
-            <MudTd DataLabel="Username">@context.UserName</MudTd>
-            <MudTd DataLabel="Registered">@context.CreatedAtUtc.ToLocalTime().ToString("g")</MudTd>
-        </RowTemplate>
-    </MudTable>
+    <MudStack Spacing="3">
+        <MudTextField T="string"
+                      Value="_searchText"
+                      ValueChanged="HandleSearchChangedAsync"
+                      Label="Search students"
+                      Placeholder="First name or last name"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Immediate="true"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Clearable="true" />
+
+        @if (_studentsResult.Students.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                @EmptyStateText
+            </MudAlert>
+        }
+        else
+        {
+            <MudTable Items="_studentsResult.Students" Dense="true" Hover="true" Elevation="1">
+                <HeaderContent>
+                    <MudTh>Last name</MudTh>
+                    <MudTh>First name</MudTh>
+                    <MudTh>Username</MudTh>
+                    <MudTh>Registered</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Last name">@context.LastName</MudTd>
+                    <MudTd DataLabel="First name">@context.FirstName</MudTd>
+                    <MudTd DataLabel="Username">@context.UserName</MudTd>
+                    <MudTd DataLabel="Registered">@context.CreatedAtUtc.ToLocalTime().ToString("g")</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       Disabled="_isRemoving"
+                                       aria-label="Remove student"
+                                       OnClick="() => ConfirmRemoveStudentAsync(context)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudStack>
 }
 
 @code {
@@ -56,9 +84,16 @@ else
     public EventCallback<StudentListResult> StudentsLoaded { get; set; }
 
     private StudentListResult? _studentsResult;
+    private LoginState? _loginState;
+    private string? _searchText;
     private int? _loadedClassId;
     private int? _pendingClassId;
     private bool _isLoading = true;
+    private bool _isRemoving;
+
+    private string EmptyStateText => string.IsNullOrWhiteSpace(_searchText)
+        ? "No students are registered for this class yet."
+        : "No students match that name search.";
 
     protected override void OnParametersSet()
     {
@@ -88,17 +123,58 @@ else
     {
         _loadedClassId = currentClass.ClassId;
 
-        var state = LoginStateService.Current;
+        _loginState = LoginStateService.Current;
 
-        if (state is null)
+        if (_loginState is null)
         {
-            state = await SessionStorage.GetAsync<LoginState>(LoginStateKey);
-            LoginStateService.Set(state);
+            _loginState = await SessionStorage.GetAsync<LoginState>(LoginStateKey);
+            LoginStateService.Set(_loginState);
         }
 
-        _studentsResult = await StudentService.GetStudentsForClassAsync(state, currentClass);
+        _studentsResult = await StudentService.GetStudentsForClassAsync(_loginState, currentClass, _searchText);
         _isLoading = false;
 
         await StudentsLoaded.InvokeAsync(_studentsResult);
+    }
+
+    private async Task HandleSearchChangedAsync(string value)
+    {
+        _searchText = value;
+        _isLoading = true;
+
+        await LoadStudentsAsync(CurrentClass);
+    }
+
+    private async Task ConfirmRemoveStudentAsync(StudentListItem student)
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Remove student",
+            $"Remove {student.DisplayName}? This will delete the student account and they will need to register again.",
+            yesText: "Remove",
+            cancelText: "Cancel");
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        _isRemoving = true;
+
+        var result = await StudentService.RemoveStudentFromClassAsync(
+            _loginState,
+            CurrentClass,
+            student.Id);
+
+        _isRemoving = false;
+
+        if (!result.Succeeded)
+        {
+            Snackbar.Add(result.Message, Severity.Error);
+            return;
+        }
+
+        Snackbar.Add(result.Message, Severity.Success);
+        _isLoading = true;
+        await LoadStudentsAsync(CurrentClass);
     }
 }
