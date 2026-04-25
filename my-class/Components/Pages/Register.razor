@@ -1,8 +1,8 @@
 @page "/register"
 @rendermode InteractiveServer
-@inject IAuthService AuthService
-@inject ILocalStorageService LocalStorage
+@inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
+@inject NavigationManager Navigation
 
 <PageTitle>Register</PageTitle>
 
@@ -10,74 +10,9 @@
     <ChildContent Context="currentClass">
         <div class="login-shell">
             <MudPaper Class="login-panel pa-5" Elevation="2">
-                <MudStack Spacing="4">
-                    <div>
-                        <MudText Typo="Typo.h5">Student registration</MudText>
-                    </div>
-                  
-                    <MudForm @ref="_registrationForm" Spacing="5">
-                        @if (!string.IsNullOrWhiteSpace(_registrationMessage))
-                        {
-                            <MudAlert Severity="@_registrationMessageSeverity" Variant="Variant.Filled" Dense="true">@_registrationMessage</MudAlert>
-                        }
-
-                        <MudTextField @bind-Value="_registration.FirstName"
-                                      Label="First name"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Required="true"
-                                      RequiredError="First name is required"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.Badge" />
-
-                        <MudTextField @bind-Value="_registration.LastName"
-                                      Label="Last name"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Required="true"
-                                      RequiredError="Last name is required"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.Badge" />
-
-                        <MudTextField @bind-Value="_registration.UserName"
-                                      Label="Username"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Required="true"
-                                      RequiredError="Username is required"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.PersonAdd" />
-
-                        <MudTextField @bind-Value="_registration.Password"
-                                      Label="Password"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      InputType="InputType.Password"
-                                      Required="true"
-                                      RequiredError="Password is required"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.Lock" />
-
-                        <MudTextField @bind-Value="_registration.ConfirmPassword"
-                                      Label="Confirm password"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      InputType="InputType.Password"
-                                      Required="true"
-                                      RequiredError="Confirm password is required"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.LockReset" />
-
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Secondary"
-                                   FullWidth="true"
-                                   Disabled="@_isRegistrationSubmitting"
-                                   OnClick="() => HandleStudentRegistrationAsync(currentClass)">
-                            @(_isRegistrationSubmitting ? "Registering..." : "REGISTER")
-                        </MudButton>
-                    </MudForm>
-                    
-                </MudStack>
+                <StudentRegistrationForm CurrentClass="currentClass"
+                                         Succeeded="HandleSucceededAsync"
+                                         LoginRequested="GoToLogin" />
             </MudPaper>
         </div>
     </ChildContent>
@@ -86,71 +21,33 @@
 @code {
     private const string LoginStateKey = "my-class.loginState";
 
-    private readonly StudentRegistrationModel _registration = new();
-    private MudForm? _registrationForm;
-    private bool _isRegistrationSubmitting;
-    private string? _registrationMessage;
-    private Severity _registrationMessageSeverity = Severity.Error;
-
-    private async Task HandleStudentRegistrationAsync(ClassContext currentClass)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_registrationForm is null)
+        if (!firstRender)
         {
             return;
         }
 
-        await _registrationForm.ValidateAsync();
+        var state = LoginStateService.Current ?? await SessionStorage.GetAsync<LoginState>(LoginStateKey);
 
-        if (!_registrationForm.IsValid)
+        if (state is null)
         {
             return;
         }
 
-        if (_registration.Password != _registration.ConfirmPassword)
-        {
-            _registrationMessageSeverity = Severity.Error;
-            _registrationMessage = "Passwords do not match.";
-            return;
-        }
-
-        _isRegistrationSubmitting = true;
-        _registrationMessage = null;
-
-        var result = await AuthService.RegisterStudentAsync(
-            _registration.UserName,
-            _registration.FirstName,
-            _registration.LastName,
-            _registration.Password,
-            currentClass.Code);
-
-        if (!result.Succeeded || result.State is null)
-        {
-            await LocalStorage.RemoveAsync(LoginStateKey);
-            LoginStateService.Set(null);
-            _registrationMessageSeverity = Severity.Error;
-            _registrationMessage = result.Message;
-            _isRegistrationSubmitting = false;
-            return;
-        }
-
-        await LocalStorage.SetAsync(LoginStateKey, result.State);
-        LoginStateService.Set(result.State);
-
-        _registrationMessageSeverity = Severity.Success;
-        _registrationMessage = "Student registration saved.";
-        _isRegistrationSubmitting = false;
+        LoginStateService.Set(state);
+        Navigation.NavigateTo("/home");
     }
 
-    private sealed class StudentRegistrationModel
+    private Task HandleSucceededAsync(LoginState state)
     {
-        public string FirstName { get; set; } = string.Empty;
+        Navigation.NavigateTo("/home");
 
-        public string LastName { get; set; } = string.Empty;
+        return Task.CompletedTask;
+    }
 
-        public string UserName { get; set; } = string.Empty;
-
-        public string Password { get; set; } = string.Empty;
-
-        public string ConfirmPassword { get; set; } = string.Empty;
+    private void GoToLogin()
+    {
+        Navigation.NavigateTo("/login");
     }
 }

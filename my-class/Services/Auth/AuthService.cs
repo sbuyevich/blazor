@@ -35,7 +35,7 @@ public sealed class AuthService(
 
         if (validTeacher)
         {
-            return LoginResult.Success(new LoginState(normalizedUserName, true, normalizedClassCode));
+            return LoginResult.Success(new LoginState(normalizedUserName, true, normalizedClassCode, "Teacher"));
         }
 
         if (isTeacher)
@@ -57,7 +57,7 @@ public sealed class AuthService(
             return LoginResult.Failure("Invalid username or password.");
         }
 
-        return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode));
+        return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));
     }
 
     public async Task<LoginResult> RegisterStudentAsync(
@@ -126,6 +126,6 @@ public sealed class AuthService(
             return LoginResult.Failure("That username is already registered for this class.");
         }
 
-        return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode));
+        return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));
     }
 }

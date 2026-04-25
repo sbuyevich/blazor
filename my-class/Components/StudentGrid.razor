@@ -1,5 +1,5 @@
 @rendermode InteractiveServer
-@inject ILocalStorageService LocalStorage
+@inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
 @inject IStudentService StudentService
 
@@ -92,7 +92,7 @@ else
 
         if (state is null)
         {
-            state = await LocalStorage.GetAsync<LoginState>(LoginStateKey);
+            state = await SessionStorage.GetAsync<LoginState>(LoginStateKey);
             LoginStateService.Set(state);
         }
 

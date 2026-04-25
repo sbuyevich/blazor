@@ -7,7 +7,7 @@ Replace navigation-based login with a blocking login modal shown when no user is
 ## Work
 
 - Remove the Login item from the navigation menu.
-- Add an app-level authentication gate that checks the existing `my-class.loginState` local storage key.
+- Add an app-level authentication gate that checks the existing `my-class.loginState` session storage key.
 - Show the existing login UI as a MudBlazor modal/dialog when no login state exists.
 - Prevent unauthenticated users from interacting with the normal app shell behind the modal.
 - Keep the modal scoped to the current class context so login still uses the active class code.
@@ -31,5 +31,5 @@ Replace navigation-based login with a blocking login modal shown when no user is
 
 ## Notes
 
-- Continue using `localStorage`; do not introduce ASP.NET Core Identity.
+- Continue using `sessionStorage`; do not introduce ASP.NET Core Identity.
 - Prefer reusing existing login form logic instead of duplicating validation rules.

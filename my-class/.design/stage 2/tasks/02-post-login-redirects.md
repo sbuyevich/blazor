@@ -29,5 +29,5 @@ Redirect users to `/home` after successful login or registration.
 
 ## Notes
 
-- Keep using the existing `LoginStateService` and `ILocalStorageService`.
+- Keep using the existing `LoginStateService` and `ISessionStorageService`.
 - Do not change the stored login state shape.

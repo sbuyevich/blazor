@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject IClassContextService ClassContextService
+@inject ILoginStateService LoginStateService
 @inject NavigationManager Navigation
 
 <MudThemeProvider Theme="_theme" />
@@ -13,6 +14,11 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
         <MudText Typo="Typo.h6">My Class</MudText>
         <MudSpacer />
+
+        @if (LoginStateService.Current is not null)
+        {
+            <MudText Typo="Typo.body2" Class="me-3">@GreetingText</MudText>
+        }
 
         @if (_currentClass is not null)
         {
@@ -37,6 +43,8 @@
         </MudContainer>
     </MudMainContent>
 </MudLayout>
+
+<AuthGate CurrentClass="_currentClass" />
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -69,7 +77,27 @@
     protected override async Task OnInitializedAsync()
     {
         Navigation.LocationChanged += OnLocationChanged;
+        LoginStateService.Changed += OnLoginStateChanged;
         await LoadClassContextAsync();
+    }
+
+    private string GreetingText
+    {
+        get
+        {
+            var state = LoginStateService.Current;
+
+            if (state is null)
+            {
+                return string.Empty;
+            }
+
+            var displayName = string.IsNullOrWhiteSpace(state.DisplayName)
+                ? state.UserName
+                : state.DisplayName;
+
+            return $"Hi, {displayName}";
+        }
     }
 
     private void ToggleDrawer()
@@ -95,8 +123,14 @@
         _classMessage = result.IsLoaded ? null : result.Message;
     }
 
+    private void OnLoginStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
+        LoginStateService.Changed -= OnLoginStateChanged;
     }
 }

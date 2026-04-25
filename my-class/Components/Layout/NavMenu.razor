@@ -1,14 +1,14 @@
 @rendermode InteractiveServer
 @implements IDisposable
-@inject ILocalStorageService LocalStorage
 @inject ILoginStateService LoginStateService
 
 <MudStack Spacing="0" Class="pa-3">
-    <MudText Typo="Typo.subtitle1" Class="px-2 pb-2">Navigation</MudText>
-
+       
     <MudNavMenu Dense="true" Rounded="true">
-        <MudNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-        <MudNavLink Href="/" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+        @if (IsSignedIn)
+        {
+            <MudNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+        }
 
         @if (IsTeacher)
         {
@@ -20,24 +20,13 @@
 </MudStack>
 
 @code {
-    private const string LoginStateKey = "my-class.loginState";
+    private bool IsSignedIn => LoginStateService.Current is not null;
 
     private bool IsTeacher => LoginStateService.Current?.IsTeacher == true;
 
     protected override void OnInitialized()
     {
         LoginStateService.Changed += OnLoginStateChanged;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender)
-        {
-            return;
-        }
-
-        var state = await LocalStorage.GetAsync<LoginState>(LoginStateKey);
-        LoginStateService.Set(state);
     }
 
     private void OnLoginStateChanged()

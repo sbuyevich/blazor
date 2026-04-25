@@ -1,8 +1,9 @@
 @page "/"
+@page "/login"
 @rendermode InteractiveServer
-@inject IAuthService AuthService
-@inject ILocalStorageService LocalStorage
+@inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
+@inject NavigationManager Navigation
 
 <PageTitle>Login</PageTitle>
 
@@ -10,56 +11,9 @@
     <ChildContent Context="currentClass">
         <div class="login-shell">
             <MudPaper Class="login-panel pa-5" Elevation="2">
-                <MudStack Spacing="4">
-                    <div>
-                        <MudText Typo="Typo.h5">Login</MudText>
-                    </div>
-
-                    <MudStack Spacing="20">
-
-                        <MudForm @ref="_loginForm" Spacing="5">
-                            @if (!string.IsNullOrWhiteSpace(_teacherMessage))
-                            {
-                                <MudAlert Severity="@_teacherMessageSeverity" Variant="Variant.Filled" Dense="true">@_teacherMessage</MudAlert>
-                            }
-
-                            <MudTextField @bind-Value="_teacherLogin.UserName"
-                                          Label="Username"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          Required="true"
-                                          RequiredError="Username is required"
-                                          Adornment="Adornment.Start"
-                                          AdornmentIcon="@Icons.Material.Filled.Person" />
-
-                            <MudTextField @bind-Value="_teacherLogin.Password"
-                                          Label="Password"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          InputType="InputType.Password"
-                                          Required="true"
-                                          RequiredError="Password is required"
-                                          Adornment="Adornment.Start"
-                                          AdornmentIcon="@Icons.Material.Filled.Lock" />
-
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Primary"
-                                       FullWidth="true"
-                                       Disabled="@_isTeacherSubmitting"
-                                       OnClick="() => HandleTeacherLoginAsync(currentClass)">
-                                @(_isTeacherSubmitting ? "Signing in..." : "Register")
-                            </MudButton>
-                        </MudForm>
-                    </MudStack>
-
-                    <MudStack Spacing="2">
-                        <MudDivider />
-                        <MudText Typo="Typo.body2" Align="Align.Center">
-                            Student?
-                            <MudLink Href="/register">Register</MudLink>
-                        </MudText>
-                    </MudStack>
-                </MudStack>
+                <LoginForm CurrentClass="currentClass"
+                           Succeeded="HandleSucceededAsync"
+                           RegisterRequested="GoToRegister" />
             </MudPaper>
         </div>
     </ChildContent>
@@ -68,58 +22,33 @@
 @code {
     private const string LoginStateKey = "my-class.loginState";
 
-    private readonly LoginModel _teacherLogin = new();
-    private MudForm? _loginForm;
-    private bool _isTeacherSubmitting;
-    private string? _teacherMessage;
-    private Severity _teacherMessageSeverity = Severity.Error;
-
-    private async Task HandleTeacherLoginAsync(ClassContext currentClass)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_loginForm is null)
+        if (!firstRender)
         {
             return;
         }
 
-        await _loginForm.ValidateAsync();
+        var state = LoginStateService.Current ?? await SessionStorage.GetAsync<LoginState>(LoginStateKey);
 
-        if (!_loginForm.IsValid)
+        if (state is null)
         {
             return;
         }
 
-        _isTeacherSubmitting = true;
-        _teacherMessage = null;
-
-        var result = await AuthService.LoginAsync(
-            _teacherLogin.UserName,
-            _teacherLogin.Password,
-            isTeacher: false,
-            currentClass.Code);
-
-        if (!result.Succeeded || result.State is null)
-        {
-            await LocalStorage.RemoveAsync(LoginStateKey);
-            LoginStateService.Set(null);
-            _teacherMessageSeverity = Severity.Error;
-            _teacherMessage = result.Message;
-            _isTeacherSubmitting = false;
-            return;
-        }
-
-        await LocalStorage.SetAsync(LoginStateKey, result.State);
-        LoginStateService.Set(result.State);
-
-        _teacherMessageSeverity = Severity.Success;
-        _teacherMessage = result.State.IsTeacher
-            ? "Teacher login saved."
-            : "Student login saved.";
-        _isTeacherSubmitting = false;
+        LoginStateService.Set(state);
+        Navigation.NavigateTo("/home");
     }
-    private sealed class LoginModel
-    {
-        public string UserName { get; set; } = string.Empty;
 
-        public string Password { get; set; } = string.Empty;
+    private Task HandleSucceededAsync(LoginState state)
+    {
+        Navigation.NavigateTo("/home");
+
+        return Task.CompletedTask;
+    }
+
+    private void GoToRegister()
+    {
+        Navigation.NavigateTo("/register");
     }
 }

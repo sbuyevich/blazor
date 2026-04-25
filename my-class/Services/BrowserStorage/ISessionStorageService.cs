@@ -1,6 +1,6 @@
 namespace MyClass.Services.BrowserStorage;
 
-public interface ILocalStorageService
+public interface ISessionStorageService
 {
     ValueTask<T?> GetAsync<T>(string key);
 

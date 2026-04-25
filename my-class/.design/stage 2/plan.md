@@ -11,7 +11,7 @@ The Students page becomes a more useful teacher tool by adding name search and a
 - Replace navigation-based login with an unauthenticated gate:
   - remove the Login item from the navigation menu
   - show the login UI as a blocking MudBlazor modal/dialog when no login state exists
-  - keep login state in `localStorage` under the existing key
+  - keep login state in `sessionStorage` under the existing key
   - redirect successful teacher and student logins to `/home`
 - Keep student registration available from the login modal:
   - student can register when no matching `Student` record exists
@@ -35,7 +35,7 @@ The Students page becomes a more useful teacher tool by adding name search and a
   - querying students by current class and optional name search text
   - removing a student by id from the current class
 - Add small result types only if needed to return success/failure messages for removal.
-- Continue using existing `LoginState`, `IAuthService`, `ILoginStateService`, `ILocalStorageService`, and `ClassContext`.
+- Continue using existing `LoginState`, `IAuthService`, `ILoginStateService`, `ISessionStorageService`, and `ClassContext`.
 - Do not add controllers, Minimal APIs, ASP.NET Core Identity, or external AJAX endpoints for this stage.
 
 ## Test Plan
@@ -65,8 +65,8 @@ The Students page becomes a more useful teacher tool by adding name search and a
 
 ## Task Breakdown
 
-- [ ] [Task 01 - Login Modal Gate](tasks/01-login-modal-gate.md)
-- [ ] [Task 02 - Post-Login Redirects](tasks/02-post-login-redirects.md)
+- [x] [Task 01 - Login Modal Gate](tasks/01-login-modal-gate.md)
+- [x] [Task 02 - Post-Login Redirects](tasks/02-post-login-redirects.md)
 - [ ] [Task 03 - Student Grid Search](tasks/03-student-grid-search.md)
 - [ ] [Task 04 - Remove Student](tasks/04-remove-student.md)
 - [ ] [Task 05 - Verification](tasks/05-verification.md)

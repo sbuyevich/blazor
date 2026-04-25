@@ -22,7 +22,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILoginStateService, LoginStateService>();
 builder.Services.AddScoped<IClassContextService, ClassContextService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
-builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+builder.Services.AddScoped<ISessionStorageService, SessionStorageService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 
 var app = builder.Build();
