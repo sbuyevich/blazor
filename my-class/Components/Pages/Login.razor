@@ -1,10 +1,90 @@
 @page "/login"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@inject IAuthService AuthService
+@inject ILocalStorageService LocalStorage
 
 <PageTitle>Login</PageTitle>
 
 <ClassContextView>
     <ChildContent Context="currentClass">
-        <h1>Login</h1>
-        <p class="text-muted">Login for @currentClass.SchoolName - @currentClass.ClassName.</p>
+        <div class="login-shell">
+            <div class="login-panel">
+                <h1>Login</h1>
+                <p class="text-muted">@currentClass.SchoolName - @currentClass.ClassName</p>
+
+                <EditForm Model="_loginModel" OnValidSubmit="() => HandleLoginAsync(currentClass)" FormName="login">
+                    <DataAnnotationsValidator />
+
+                    @if (!string.IsNullOrWhiteSpace(_message))
+                    {
+                        <div class="alert @_messageClass py-2" role="alert">@_message</div>
+                    }
+
+                    <div class="mb-2">
+                        <label class="form-label" for="username">Username</label>
+                        <InputText id="username" class="form-control form-control-sm" @bind-Value="_loginModel.UserName" autocomplete="username" />
+                        <ValidationMessage For="() => _loginModel.UserName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="password">Password</label>
+                        <InputText id="password" type="password" class="form-control form-control-sm" @bind-Value="_loginModel.Password" autocomplete="current-password" />
+                        <ValidationMessage For="() => _loginModel.Password" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm w-100" disabled="@_isSubmitting">
+                        @(_isSubmitting ? "Signing in..." : "Sign in")
+                    </button>
+                </EditForm>
+            </div>
+        </div>
     </ChildContent>
 </ClassContextView>
+
+@code {
+    private const string LoginStateKey = "my-class.loginState";
+
+    private readonly LoginModel _loginModel = new();
+    private bool _isSubmitting;
+    private string? _message;
+    private string _messageClass = "alert-danger";
+
+    private async Task HandleLoginAsync(ClassContext currentClass)
+    {
+        _isSubmitting = true;
+        _message = null;
+
+        var result = await AuthService.LoginAsync(
+            _loginModel.UserName,
+            _loginModel.Password,
+            isTeacher: true,
+            currentClass.Code);
+
+        if (!result.Succeeded || result.State is null)
+        {
+            await LocalStorage.RemoveAsync(LoginStateKey);
+            _messageClass = "alert-danger";
+            _message = result.Message;
+            _isSubmitting = false;
+            return;
+        }
+
+        await LocalStorage.SetAsync(LoginStateKey, result.State);
+
+        _messageClass = "alert-success";
+        _message = result.State.IsTeacher
+            ? "Teacher login saved."
+            : "Student login saved.";
+        _isSubmitting = false;
+    }
+
+    private sealed class LoginModel
+    {
+        [Required]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
+}

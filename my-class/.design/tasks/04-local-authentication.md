@@ -14,7 +14,6 @@ Implement the shared login page and browser-local login state for teachers and s
 - Validate teacher credentials against app settings.
 - Validate existing student credentials against the `Student` table for the current class.
 - Store successful login state in browser `localStorage`.
-- Add logout behavior that clears `localStorage`.
 - Ensure server-side operations validate role and class scope instead of trusting `localStorage` alone.
 
 ## Deliverables
@@ -25,7 +24,6 @@ Implement the shared login page and browser-local login state for teachers and s
 - Local storage auth-state helper
 - `IAuthService`
 - `AuthService`
-- Logout flow
 
 ## Acceptance Criteria
 
@@ -34,7 +32,6 @@ Implement the shared login page and browser-local login state for teachers and s
 - Existing student can log in through the shared login page.
 - Student login stores username, `IsTeacher = false`, and class code in `localStorage`.
 - Invalid credentials show an error and do not update login state.
-- Logout clears local login state.
 
 ## Notes
 
@@ -42,3 +39,4 @@ Implement the shared login page and browser-local login state for teachers and s
 - Browser state is convenience state, not a trusted authorization boundary.
 - Do not build teacher registration or multiple teacher accounts.
 - `TeacherOptions` represents the single global teacher account.
+- Do not build a logout page for this task.

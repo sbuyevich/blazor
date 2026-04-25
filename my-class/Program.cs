@@ -1,6 +1,9 @@
 using MyClass.Components;
 using MyClass.Data;
 using Microsoft.EntityFrameworkCore;
+using MyClass.Options;
+using MyClass.Services.Auth;
+using MyClass.Services.BrowserStorage;
 using MyClass.Services.ClassContext;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +14,11 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.Configure<TeacherOptions>(builder.Configuration.GetSection("Teacher"));
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClassContextService, ClassContextService>();
+builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 
 var app = builder.Build();
 

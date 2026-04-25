@@ -1,9 +1,6 @@
-@inject IClassContextService ClassContextService
-@inject NavigationManager Navigation
-
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="@HomeHref">MyClass</a>
+        <a class="navbar-brand" href="/">MyClass</a>
     </div>
 </div>
 
@@ -12,31 +9,21 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@HomeHref" Match="NavLinkMatch.All">
+            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@LoginHref">
+            <NavLink class="nav-link" href="/login">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Login
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@StudentsHref">
+            <NavLink class="nav-link" href="/students">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Students
             </NavLink>
         </div>
     </nav>
 </div>
-
-@code {
-    private string? ClassCode => ClassContextService.GetClassCodeFromUri(Navigation.Uri);
-
-    private string HomeHref => ClassContextService.GetPathWithClassCode("/", ClassCode);
-
-    private string LoginHref => ClassContextService.GetPathWithClassCode("/login", ClassCode);
-
-    private string StudentsHref => ClassContextService.GetPathWithClassCode("/students", ClassCode);
-}

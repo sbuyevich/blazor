@@ -13,6 +13,14 @@ public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> 
 
         if (string.IsNullOrWhiteSpace(normalizedCode))
         {
+            if (App.CurrentClass is not null)
+            {
+                return new ClassContextResult(
+                    ClassContextStatus.Loaded,
+                    App.CurrentClass,
+                    string.Empty);
+            }
+
             App.CurrentClass = null;
 
             return new ClassContextResult(
