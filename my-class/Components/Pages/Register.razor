@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject IAuthService AuthService
 @inject ILocalStorageService LocalStorage
+@inject ILoginStateService LoginStateService
 
 <PageTitle>Register</PageTitle>
 
@@ -130,6 +131,7 @@
         if (!result.Succeeded || result.State is null)
         {
             await LocalStorage.RemoveAsync(LoginStateKey);
+            LoginStateService.Set(null);
             _registrationMessageSeverity = Severity.Error;
             _registrationMessage = result.Message;
             _isRegistrationSubmitting = false;
@@ -137,6 +139,7 @@
         }
 
         await LocalStorage.SetAsync(LoginStateKey, result.State);
+        LoginStateService.Set(result.State);
 
         _registrationMessageSeverity = Severity.Success;
         _registrationMessage = "Student registration saved.";

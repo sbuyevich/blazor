@@ -28,16 +28,19 @@ public sealed class AuthService(
             return LoginResult.Failure("Username, password, and class are required.");
         }
 
+        var teacher = teacherOptions.Value;
+        var validTeacher =
+            string.Equals(normalizedUserName, teacher.UserName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(password, teacher.Password, StringComparison.Ordinal);
+
+        if (validTeacher)
+        {
+            return LoginResult.Success(new LoginState(normalizedUserName, true, normalizedClassCode));
+        }
+
         if (isTeacher)
         {
-            var teacher = teacherOptions.Value;
-            var validTeacher =
-                string.Equals(normalizedUserName, teacher.UserName, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(password, teacher.Password, StringComparison.Ordinal);
-
-            return validTeacher
-                ? LoginResult.Success(new LoginState(normalizedUserName, true, normalizedClassCode))
-                : LoginResult.Failure("Invalid username or password.");
+            return LoginResult.Failure("Invalid username or password.");
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);

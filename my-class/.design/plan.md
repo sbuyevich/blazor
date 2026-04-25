@@ -47,7 +47,8 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
   - `IAuthService` handles teacher/student login and registration
   - `IStudentService` handles current-class student grid queries
 - Implement teacher UI:
-  - show Students menu only for teacher users using MudBlazor navigation components
+  - show a Teacher section/divider in the menu only for teacher users using MudBlazor navigation components
+  - place all teacher-only menu items, including Students, under the Teacher section
   - Students page shows a MudBlazor table/grid of students for the current class only
 - Leave student post-login capabilities as `TBD`; after login, students can reach only placeholder content until requirements are defined.
 - Do not add controllers, Minimal APIs, or external AJAX endpoints for v1 unless a later requirement needs them.
@@ -86,7 +87,8 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - New student can self-register when no matching record exists.
 - Duplicate student username in the same class is rejected cleanly.
 - Student login stores username, `IsTeacher = false`, and class code in `localStorage`.
-- Teacher can open the Students menu and view only students from the current class.
+- Teacher can see the Teacher menu section, open the Students menu item, and view only students from the current class.
+- Student users cannot see the Teacher menu section or its Students menu item.
 - Student grid is built with MudBlazor table/grid components.
 - Student users cannot see or open the teacher Students page.
 

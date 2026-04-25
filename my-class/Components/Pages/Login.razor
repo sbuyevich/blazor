@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject IAuthService AuthService
 @inject ILocalStorageService LocalStorage
+@inject ILoginStateService LoginStateService
 
 <PageTitle>Login</PageTitle>
 
@@ -16,7 +17,7 @@
                     </div>
 
                     <MudStack Spacing="2">
-                        <MudText Typo="Typo.subtitle1">Teacher sign in</MudText>
+                        <MudText Typo="Typo.subtitle1">Sign in</MudText>
 
                         <MudForm @ref="_teacherForm">
                             @if (!string.IsNullOrWhiteSpace(_teacherMessage))
@@ -95,12 +96,13 @@
         var result = await AuthService.LoginAsync(
             _teacherLogin.UserName,
             _teacherLogin.Password,
-            isTeacher: true,
+            isTeacher: false,
             currentClass.Code);
 
         if (!result.Succeeded || result.State is null)
         {
             await LocalStorage.RemoveAsync(LoginStateKey);
+            LoginStateService.Set(null);
             _teacherMessageSeverity = Severity.Error;
             _teacherMessage = result.Message;
             _isTeacherSubmitting = false;
@@ -108,9 +110,12 @@
         }
 
         await LocalStorage.SetAsync(LoginStateKey, result.State);
+        LoginStateService.Set(result.State);
 
         _teacherMessageSeverity = Severity.Success;
-        _teacherMessage = "Teacher login saved.";
+        _teacherMessage = result.State.IsTeacher
+            ? "Teacher login saved."
+            : "Student login saved.";
         _isTeacherSubmitting = false;
     }
     private sealed class LoginModel

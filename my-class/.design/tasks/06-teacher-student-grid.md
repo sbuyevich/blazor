@@ -7,7 +7,8 @@ Add the teacher-only Students menu and student grid for the current class.
 ## Work
 
 - Add `IStudentService` for student queries scoped to the current class.
-- Add a teacher-only Students menu item using MudBlazor navigation components.
+- Add a teacher-only Teacher section/divider using MudBlazor navigation components.
+- Put the Students menu item under the Teacher section.
 - Add `/students` page that uses the stored current class context.
 - Render a MudBlazor table/grid of students from the current class.
 - Block student users from opening the Students page.
@@ -16,15 +17,16 @@ Add the teacher-only Students menu and student grid for the current class.
 ## Deliverables
 
 - `IStudentService`
-- Teacher-only Students menu item
+- Teacher-only Teacher menu section
+- Teacher-only Students menu item under that section
 - `/students` page
 - Current-class MudBlazor student table/grid
 - Non-teacher access handling
 
 ## Acceptance Criteria
 
-- Teacher users can see the Students menu.
-- Student users cannot see the Students menu.
+- Teacher users can see the Teacher menu section and Students menu item.
+- Student users cannot see the Teacher menu section or Students menu item.
 - Teacher users can open the student grid.
 - The grid shows only students from the current class.
 - The grid uses MudBlazor table/grid components.
