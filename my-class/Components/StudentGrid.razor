@@ -1,0 +1,104 @@
+@rendermode InteractiveServer
+@inject ILocalStorageService LocalStorage
+@inject ILoginStateService LoginStateService
+@inject IStudentService StudentService
+
+@if (_isLoading)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        <MudText Typo="Typo.body2">Loading students...</MudText>
+    </MudStack>
+}
+else if (_studentsResult is null)
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+        Unable to load students.
+    </MudAlert>
+}
+else if (!_studentsResult.Succeeded)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+        @_studentsResult.Message
+    </MudAlert>
+}
+else if (_studentsResult.Students.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        No students are registered for this class yet.
+    </MudAlert>
+}
+else
+{
+    <MudTable Items="_studentsResult.Students" Dense="true" Hover="true" Elevation="1">
+        <HeaderContent>
+            <MudTh>Last name</MudTh>
+            <MudTh>First name</MudTh>
+            <MudTh>Username</MudTh>
+            <MudTh>Registered</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Last name">@context.LastName</MudTd>
+            <MudTd DataLabel="First name">@context.FirstName</MudTd>
+            <MudTd DataLabel="Username">@context.UserName</MudTd>
+            <MudTd DataLabel="Registered">@context.CreatedAtUtc.ToLocalTime().ToString("g")</MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private const string LoginStateKey = "my-class.loginState";
+
+    [Parameter, EditorRequired]
+    public ClassContext CurrentClass { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<StudentListResult> StudentsLoaded { get; set; }
+
+    private StudentListResult? _studentsResult;
+    private int? _loadedClassId;
+    private int? _pendingClassId;
+    private bool _isLoading = true;
+
+    protected override void OnParametersSet()
+    {
+        if (_loadedClassId == CurrentClass.ClassId)
+        {
+            return;
+        }
+
+        _pendingClassId = CurrentClass.ClassId;
+        _isLoading = true;
+        _studentsResult = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingClassId != CurrentClass.ClassId)
+        {
+            return;
+        }
+
+        _pendingClassId = null;
+        await LoadStudentsAsync(CurrentClass);
+        StateHasChanged();
+    }
+
+    private async Task LoadStudentsAsync(ClassContext currentClass)
+    {
+        _loadedClassId = currentClass.ClassId;
+
+        var state = LoginStateService.Current;
+
+        if (state is null)
+        {
+            state = await LocalStorage.GetAsync<LoginState>(LoginStateKey);
+            LoginStateService.Set(state);
+        }
+
+        _studentsResult = await StudentService.GetStudentsForClassAsync(state, currentClass);
+        _isLoading = false;
+
+        await StudentsLoaded.InvokeAsync(_studentsResult);
+    }
+}

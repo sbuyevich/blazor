@@ -5,6 +5,7 @@ using MyClass.Options;
 using MyClass.Services.Auth;
 using MyClass.Services.BrowserStorage;
 using MyClass.Services.ClassContext;
+using MyClass.Services.Students;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,7 @@ builder.Services.Configure<Teacher>(builder.Configuration.GetSection("Teacher"))
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILoginStateService, LoginStateService>();
 builder.Services.AddScoped<IClassContextService, ClassContextService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 

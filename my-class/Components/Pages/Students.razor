@@ -1,14 +1,37 @@
 @page "/students"
+@rendermode InteractiveServer
 
 <PageTitle>Students</PageTitle>
 
 <ClassContextView>
     <ChildContent Context="currentClass">
         <MudStack Spacing="3">
-            <MudText Typo="Typo.h4">Students</MudText>
-            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                Student grid for @currentClass.SchoolName - @currentClass.ClassName will be implemented in the teacher student grid task.
-            </MudAlert>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <div>
+                    <MudText Typo="Typo.h4">Students</MudText>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                        @currentClass.SchoolName - @currentClass.ClassName
+                    </MudText>
+                </div>
+
+                @if (_studentsResult?.Succeeded == true)
+                {
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
+                        @_studentsResult.Students.Count student@(_studentsResult.Students.Count == 1 ? string.Empty : "s")
+                    </MudChip>
+                }
+            </MudStack>
+
+            <StudentGrid CurrentClass="currentClass" StudentsLoaded="OnStudentsLoaded" />
         </MudStack>
     </ChildContent>
 </ClassContextView>
+
+@code {
+    private StudentListResult? _studentsResult;
+
+    private void OnStudentsLoaded(StudentListResult result)
+    {
+        _studentsResult = result;
+    }
+}
