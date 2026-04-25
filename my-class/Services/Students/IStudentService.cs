@@ -16,4 +16,9 @@ public interface IStudentService
         ClassContextModel currentClass,
         int studentId,
         CancellationToken cancellationToken = default);
+
+    Task<StudentActionResult> ResetStudentsActiveStateAsync(
+        LoginState? loginState,
+        ClassContextModel currentClass,
+        CancellationToken cancellationToken = default);
 }

@@ -16,6 +16,8 @@ public sealed class Student
 
     public string PasswordHash { get; set; } = string.Empty;
 
+    public bool IsActive { get; set; }
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public Class Class { get; set; } = null!;

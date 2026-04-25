@@ -50,6 +50,7 @@ public sealed class StudentService(
                 student.FirstName,
                 student.LastName,
                 student.DisplayName,
+                student.IsActive,
                 student.CreatedAtUtc))
             .ToListAsync(cancellationToken);
 
@@ -87,6 +88,29 @@ public sealed class StudentService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return StudentActionResult.Success($"{student.DisplayName} was removed.");
+    }
+
+    public async Task<StudentActionResult> ResetStudentsActiveStateAsync(
+        LoginState? loginState,
+        ClassContextModel currentClass,
+        CancellationToken cancellationToken = default)
+    {
+        var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
+
+        if (authorizationMessage is not null)
+        {
+            return StudentActionResult.Failure(authorizationMessage);
+        }
+
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var updatedCount = await dbContext.Students
+            .Where(student => student.ClassId == currentClass.ClassId && student.IsActive)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(student => student.IsActive, false),
+                cancellationToken);
+
+        return StudentActionResult.Success($"Reset {updatedCount} active student{(updatedCount == 1 ? string.Empty : "s")}.");
     }
 
     private string? ValidateTeacherAccess(LoginState? loginState, ClassContextModel currentClass)

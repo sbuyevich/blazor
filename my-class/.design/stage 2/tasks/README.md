@@ -8,7 +8,8 @@ Implement stage 2 improvements for the existing `my-class` Blazor app.
 2. [ ] [Task 02 - Post-Login Redirects](02-post-login-redirects.md)
 3. [x] [Task 03 - Student Grid Search](03-student-grid-search.md)
 4. [x] [Task 04 - Remove Student](04-remove-student.md)
-5. [ ] [Task 05 - Verification](05-verification.md)
+5. [x] [Task 05 - Student Active Reset](05-student-active-reset.md)
+10. [ ] [Task 10 - Verification](10-verification.md)
 
 ## Notes
 

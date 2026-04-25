@@ -1,4 +1,4 @@
-# Task 05 - Verification
+# Task 10 - Verification
 
 ## Goal
 
@@ -15,6 +15,8 @@ Verify stage 2 behavior end to end.
 - Verify Students page search.
 - Verify confirmed student removal.
 - Verify removed student login and re-registration behavior.
+- Verify student active state after login.
+- Verify current-class active reset.
 
 ## Deliverables
 
@@ -33,6 +35,9 @@ Verify stage 2 behavior end to end.
 - Students search filters by name only.
 - Student removal requires confirmation.
 - Removed student cannot log in until registering again.
+- Student login marks that student active.
+- Students grid shows active state and no Registered column.
+- Reset marks current-class students inactive.
 - Student users cannot access or modify the Students page.
 
 ## Notes

@@ -6,6 +6,8 @@ Stage 2 improves the post-login experience and teacher student management. The a
 
 The Students page becomes a more useful teacher tool by adding name search and a confirmed remove action. Removing a student permanently deletes that student from the current class, which forces that student to register again before logging in.
 
+Stage 2 also tracks whether students are active in the current classroom session. Student login marks the student active, and the teacher can reset all students in the current class to inactive from the Students page.
+
 ## Key Changes
 
 - Replace navigation-based login with an unauthenticated gate:
@@ -24,6 +26,13 @@ The Students page becomes a more useful teacher tool by adding name search and a
   - add a row-level remove action
   - show a confirmation dialog before removing a student
   - hard-delete the selected student from the database
+  - add a teacher-only Reset button that sets current-class students inactive
+  - replace the Registered column with an `IsActive` column
+- Track student active state:
+  - add `Student.IsActive`
+  - default new and existing students to inactive
+  - set `IsActive = true` after successful student login
+  - reset only students from the current class
 - Keep teacher-only protections:
   - only teacher login state can view the Students page
   - student users and unsigned-in users see a clear unauthorized message or are blocked by the login modal
@@ -34,6 +43,8 @@ The Students page becomes a more useful teacher tool by adding name search and a
 - Extend `IStudentService` with teacher-only methods for:
   - querying students by current class and optional name search text
   - removing a student by id from the current class
+  - resetting current-class students to inactive
+- Extend `Student` with `IsActive`.
 - Add small result types only if needed to return success/failure messages for removal.
 - Continue using existing `LoginState`, `IAuthService`, `ILoginStateService`, `ISessionStorageService`, and `ClassContext`.
 - Do not add controllers, Minimal APIs, ASP.NET Core Identity, or external AJAX endpoints for this stage.
@@ -53,6 +64,10 @@ The Students page becomes a more useful teacher tool by adding name search and a
 - Confirmed remove deletes the student from the database for the current class only.
 - Removed student can no longer log in until registering again.
 - Canceling remove leaves the student unchanged.
+- Successful student login sets `IsActive = true`.
+- Reset sets all current-class students to `IsActive = false`.
+- Reset does not affect students from another class.
+- Students grid shows `IsActive` and does not show Registered.
 - `dotnet build .\MyClass.slnx` succeeds with no warnings or errors.
 
 ## Assumptions
@@ -61,6 +76,7 @@ The Students page becomes a more useful teacher tool by adding name search and a
 - "No Login item in Navigation menu" means the nav link is removed entirely, not hidden only after login.
 - Student removal is a hard delete, not a soft delete.
 - Search is name-only: first name, last name, and display name.
+- `IsActive` tracks classroom session activity and does not block login.
 - Stage 2 keeps the current local classroom auth model and does not introduce ASP.NET Core Identity.
 
 ## Task Breakdown
@@ -69,4 +85,5 @@ The Students page becomes a more useful teacher tool by adding name search and a
 - [x] [Task 02 - Post-Login Redirects](tasks/02-post-login-redirects.md)
 - [x] [Task 03 - Student Grid Search](tasks/03-student-grid-search.md)
 - [x] [Task 04 - Remove Student](tasks/04-remove-student.md)
-- [ ] [Task 05 - Verification](tasks/05-verification.md)
+- [x] [Task 05 - Student Active Reset](tasks/05-student-active-reset.md)
+- [ ] [Task 10 - Verification](tasks/10-verification.md)

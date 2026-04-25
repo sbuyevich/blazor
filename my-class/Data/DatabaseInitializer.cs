@@ -12,7 +12,7 @@ public static class DatabaseInitializer
             .CreateDbContextAsync();
 
         await dbContext.Database.EnsureCreatedAsync();
-        await EnsureStudentNameColumnsAsync(dbContext);
+        await EnsureStudentCompatibilityColumnsAsync(dbContext);
 
         if (await dbContext.Schools.AnyAsync())
         {
@@ -36,7 +36,7 @@ public static class DatabaseInitializer
         await dbContext.SaveChangesAsync();
     }
 
-    private static async Task EnsureStudentNameColumnsAsync(ApplicationDbContext dbContext)
+    private static async Task EnsureStudentCompatibilityColumnsAsync(ApplicationDbContext dbContext)
     {
         var studentColumns = await dbContext.Database
             .SqlQueryRaw<string>("SELECT name AS Value FROM pragma_table_info('Students')")
@@ -50,6 +50,11 @@ public static class DatabaseInitializer
         if (!studentColumns.Contains("LastName", StringComparer.OrdinalIgnoreCase))
         {
             await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Students ADD COLUMN LastName TEXT NOT NULL DEFAULT ''");
+        }
+
+        if (!studentColumns.Contains("IsActive", StringComparer.OrdinalIgnoreCase))
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Students ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 0");
         }
 
         await dbContext.Database.ExecuteSqlRawAsync(

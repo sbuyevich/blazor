@@ -27,17 +27,28 @@ else if (!_studentsResult.Succeeded)
 else if (_studentsResult.Succeeded)
 {
     <MudStack Spacing="3">
-        <MudTextField T="string"
-                      Value="_searchText"
-                      ValueChanged="HandleSearchChangedAsync"
-                      Label="Search students"
-                      Placeholder="First name or last name"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      Immediate="true"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      Clearable="true" />
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudTextField T="string"
+                          Value="_searchText"
+                          ValueChanged="HandleSearchChangedAsync"
+                          Label="Search students"
+                          Placeholder="First name or last name"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Immediate="true"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Clearable="true"
+                          Class="flex-grow-1" />
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.RestartAlt"
+                       Disabled="@(_isResetting || _isRemoving)"
+                       OnClick="ResetActiveStudentsAsync">
+                @(_isResetting ? "Resetting..." : "Reset")
+            </MudButton>
+        </MudStack>
 
         @if (_studentsResult.Students.Count == 0)
         {
@@ -52,14 +63,21 @@ else if (_studentsResult.Succeeded)
                     <MudTh>Last name</MudTh>
                     <MudTh>First name</MudTh>
                     <MudTh>Username</MudTh>
-                    <MudTh>Registered</MudTh>
+                    <MudTh>Active</MudTh>
                     <MudTh>Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Last name">@context.LastName</MudTd>
                     <MudTd DataLabel="First name">@context.FirstName</MudTd>
                     <MudTd DataLabel="Username">@context.UserName</MudTd>
-                    <MudTd DataLabel="Registered">@context.CreatedAtUtc.ToLocalTime().ToString("g")</MudTd>
+                    <MudTd DataLabel="Active">
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@(context.IsActive ? Color.Success : Color.Default)"
+                                 Variant="@(context.IsActive ? Variant.Filled : Variant.Outlined)">
+                            @(context.IsActive ? "Active" : "Inactive")
+                        </MudChip>
+                    </MudTd>
                     <MudTd DataLabel="Actions">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                        Color="Color.Error"
@@ -90,6 +108,7 @@ else if (_studentsResult.Succeeded)
     private int? _pendingClassId;
     private bool _isLoading = true;
     private bool _isRemoving;
+    private bool _isResetting;
 
     private string EmptyStateText => string.IsNullOrWhiteSpace(_searchText)
         ? "No students are registered for this class yet."
@@ -166,6 +185,27 @@ else if (_studentsResult.Succeeded)
             student.Id);
 
         _isRemoving = false;
+
+        if (!result.Succeeded)
+        {
+            Snackbar.Add(result.Message, Severity.Error);
+            return;
+        }
+
+        Snackbar.Add(result.Message, Severity.Success);
+        _isLoading = true;
+        await LoadStudentsAsync(CurrentClass);
+    }
+
+    private async Task ResetActiveStudentsAsync()
+    {
+        _isResetting = true;
+
+        var result = await StudentService.ResetStudentsActiveStateAsync(
+            _loginState,
+            CurrentClass);
+
+        _isResetting = false;
 
         if (!result.Succeeded)
         {

@@ -68,6 +68,10 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
                 .HasMaxLength(500)
                 .IsRequired();
 
+            entity.Property(student => student.IsActive)
+                .HasDefaultValue(false)
+                .IsRequired();
+
             entity.HasIndex(student => new { student.ClassId, student.UserName })
                 .IsUnique();
         });

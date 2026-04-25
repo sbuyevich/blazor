@@ -46,7 +46,6 @@ public sealed class AuthService(
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         var student = await dbContext.Students
-            .AsNoTracking()
             .Where(student => student.Class.Code == normalizedClassCode)
             .SingleOrDefaultAsync(
                 student => student.UserName == normalizedUserName,
@@ -55,6 +54,12 @@ public sealed class AuthService(
         if (student is null || !passwordHashService.Verify(password, student.PasswordHash))
         {
             return LoginResult.Failure("Invalid username or password.");
+        }
+
+        if (!student.IsActive)
+        {
+            student.IsActive = true;
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));

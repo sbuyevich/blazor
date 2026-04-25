@@ -6,4 +6,5 @@ public sealed record StudentListItem(
     string FirstName,
     string LastName,
     string DisplayName,
+    bool IsActive,
     DateTime CreatedAtUtc);
