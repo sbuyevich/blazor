@@ -1,29 +1,9 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">MyClass</a>
-    </div>
-</div>
+<MudStack Spacing="0" Class="pa-3">
+    <MudText Typo="Typo.subtitle1" Class="px-2 pb-2">Navigation</MudText>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/login">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Login
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/students">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Students
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    <MudNavMenu Dense="true" Rounded="true">
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+        <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+        <MudNavLink Href="/students" Icon="@Icons.Material.Filled.Groups">Students</MudNavLink>
+    </MudNavMenu>
+</MudStack>

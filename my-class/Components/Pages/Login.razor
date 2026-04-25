@@ -1,6 +1,5 @@
 @page "/login"
 @rendermode InteractiveServer
-@using System.ComponentModel.DataAnnotations
 @inject IAuthService AuthService
 @inject ILocalStorageService LocalStorage
 
@@ -9,35 +8,48 @@
 <ClassContextView>
     <ChildContent Context="currentClass">
         <div class="login-shell">
-            <div class="login-panel">
-                <h1>Login</h1>
-                <p class="text-muted">@currentClass.SchoolName - @currentClass.ClassName</p>
-
-                <EditForm Model="_loginModel" OnValidSubmit="() => HandleLoginAsync(currentClass)" FormName="login">
-                    <DataAnnotationsValidator />
-
-                    @if (!string.IsNullOrWhiteSpace(_message))
-                    {
-                        <div class="alert @_messageClass py-2" role="alert">@_message</div>
-                    }
-
-                    <div class="mb-2">
-                        <label class="form-label" for="username">Username</label>
-                        <InputText id="username" class="form-control form-control-sm" @bind-Value="_loginModel.UserName" autocomplete="username" />
-                        <ValidationMessage For="() => _loginModel.UserName" />
+            <MudPaper Class="login-panel pa-5" Elevation="2">
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.h5">Login</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">@currentClass.SchoolName - @currentClass.ClassName</MudText>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="password">Password</label>
-                        <InputText id="password" type="password" class="form-control form-control-sm" @bind-Value="_loginModel.Password" autocomplete="current-password" />
-                        <ValidationMessage For="() => _loginModel.Password" />
-                    </div>
+                    <MudForm @ref="_form">
+                        @if (!string.IsNullOrWhiteSpace(_message))
+                        {
+                            <MudAlert Severity="@_messageSeverity" Variant="Variant.Filled" Dense="true">@_message</MudAlert>
+                        }
 
-                    <button type="submit" class="btn btn-primary btn-sm w-100" disabled="@_isSubmitting">
-                        @(_isSubmitting ? "Signing in..." : "Sign in")
-                    </button>
-                </EditForm>
-            </div>
+                        <MudTextField @bind-Value="_loginModel.UserName"
+                                      Label="Username"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Required="true"
+                                      RequiredError="Username is required"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Person" />
+
+                        <MudTextField @bind-Value="_loginModel.Password"
+                                      Label="Password"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      InputType="InputType.Password"
+                                      Required="true"
+                                      RequiredError="Password is required"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock" />
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true"
+                                   Disabled="@_isSubmitting"
+                                   OnClick="() => HandleLoginAsync(currentClass)">
+                            @(_isSubmitting ? "Signing in..." : "Sign in")
+                        </MudButton>
+                    </MudForm>
+                </MudStack>
+            </MudPaper>
         </div>
     </ChildContent>
 </ClassContextView>
@@ -46,12 +58,25 @@
     private const string LoginStateKey = "my-class.loginState";
 
     private readonly LoginModel _loginModel = new();
+    private MudForm? _form;
     private bool _isSubmitting;
     private string? _message;
-    private string _messageClass = "alert-danger";
+    private Severity _messageSeverity = Severity.Error;
 
     private async Task HandleLoginAsync(ClassContext currentClass)
     {
+        if (_form is null)
+        {
+            return;
+        }
+
+        await _form.ValidateAsync();
+
+        if (!_form.IsValid)
+        {
+            return;
+        }
+
         _isSubmitting = true;
         _message = null;
 
@@ -64,7 +89,7 @@
         if (!result.Succeeded || result.State is null)
         {
             await LocalStorage.RemoveAsync(LoginStateKey);
-            _messageClass = "alert-danger";
+            _messageSeverity = Severity.Error;
             _message = result.Message;
             _isSubmitting = false;
             return;
@@ -72,7 +97,7 @@
 
         await LocalStorage.SetAsync(LoginStateKey, result.State);
 
-        _messageClass = "alert-success";
+        _messageSeverity = Severity.Success;
         _message = result.State.IsTeacher
             ? "Teacher login saved."
             : "Student login saved.";
@@ -81,10 +106,8 @@
 
     private sealed class LoginModel
     {
-        [Required]
         public string UserName { get; set; } = string.Empty;
 
-        [Required]
         public string Password { get; set; } = string.Empty;
     }
 }

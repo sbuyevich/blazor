@@ -5,12 +5,14 @@ using MyClass.Options;
 using MyClass.Services.Auth;
 using MyClass.Services.BrowserStorage;
 using MyClass.Services.ClassContext;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddMudServices();
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));

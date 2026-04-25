@@ -4,7 +4,11 @@
 
 <ClassContextView>
     <ChildContent Context="currentClass">
-        <h1>Students</h1>
-        <p class="text-muted">Student grid for @currentClass.SchoolName - @currentClass.ClassName will be implemented in the teacher student grid task.</p>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h4">Students</MudText>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                Student grid for @currentClass.SchoolName - @currentClass.ClassName will be implemented in the teacher student grid task.
+            </MudAlert>
+        </MudStack>
     </ChildContent>
 </ClassContextView>

@@ -4,8 +4,12 @@
 
 <ClassContextView>
     <ChildContent Context="currentClass">
-        <h1>@currentClass.ClassName</h1>
-        <p class="text-muted">@currentClass.SchoolName</p>
-        <p>Welcome to My Class.</p>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h4">@currentClass.ClassName</MudText>
+            <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@currentClass.SchoolName</MudText>
+            <MudPaper Elevation="1" Class="pa-4">
+                <MudText>Welcome to My Class.</MudText>
+            </MudPaper>
+        </MudStack>
     </ChildContent>
 </ClassContextView>

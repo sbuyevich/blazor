@@ -4,11 +4,14 @@
 
 @if (_result is null)
 {
-    <div class="alert alert-secondary" role="status">Loading class...</div>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        <MudText Typo="Typo.body2">Loading class...</MudText>
+    </MudStack>
 }
 else if (!_result.IsLoaded)
 {
-    <div class="alert alert-danger" role="alert">@_result.Message</div>
+    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@_result.Message</MudAlert>
 }
 else if (ChildContent is not null)
 {
