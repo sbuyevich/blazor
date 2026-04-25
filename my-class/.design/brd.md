@@ -1,23 +1,54 @@
 # My Class Project
-It is tool to help teacher communicate with student in class using browser as interface and local wifi connection. 
 
-## Auth
-Auth is not using standard web auth. User registrars with record in database. Each POST request has username to update database.
+My Class is a Blazor Web App that helps teachers communicate with students during class. Teachers and students use a browser interface while connected to the same local Wi-Fi network. The application uses a SQLite database.
 
-## Current class selection
-Database has School, Class and Student tables. Class has code which should be query param in app loaded url.
-App reads shool and class based on class code and show it's names in app header. Teacher works with students only from this current class.
+## Authentication
+
+Authentication does not use standard web authentication.
+
+The app uses one shared login page for both teachers and students. After login, the app stores login state in browser `localStorage` and carries an `IsTeacher` flag across the app.
+
+Each POST request includes the username so database updates can be associated with the current user.
+
+## Registration
+
+Students self-register when they do not already have a matching record in the database.
+
+Teacher credentials are configured in app settings.
+
+## Current Class Selection
+
+The database includes `School`, `Class`, and `Student` tables.
+
+Each class has a code. The class code is provided as a query parameter in the app URL.
+
+When the app loads, it reads the school and class from the class code and shows their names in the app header. The teacher works only with students from the current class.
+
+If the class code is missing or invalid, the app shows an error message.
 
 ## Roles
-There are only 2 roles: teacher and student
+
+There are two roles: teacher and student.
 
 ### Teacher
-- has credentials hardcoded in appsetting
-- can see Students in menu to load student grid for the current class
 
-### Student 
-- has credentials in Student table
-- must be register if not record in table
+- Uses credentials from app settings.
+- Logs in through the shared login page.
+- Has `IsTeacher` set to `true` after login.
+- Can open the Students menu and view the student grid for the current class.
 
-## Solution
-Use Blazor web app with SQLite database.
+### Student
+
+- Uses credentials from the `Student` table.
+- Self-registers if no matching student record exists.
+- Student capabilities are `TBD`.
+
+## Data Model
+
+Known tables:
+
+- `School`
+- `Class`
+- `Student`
+
+Full table fields, relationships, and validation rules are `TBD`.
