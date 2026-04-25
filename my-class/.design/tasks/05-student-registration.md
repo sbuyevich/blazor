@@ -35,3 +35,6 @@ Allow students to self-register from a separate register page when no matching s
 ## Notes
 
 - Student post-login capabilities remain `TBD`.
+- Current code stores registration login state in `localStorage` through `ILocalStorageService`.
+- Current code hashes student passwords with `PasswordHashService` before saving `Student.PasswordHash`.
+- Current code rejects duplicate usernames per class through both an application check and the database unique index.
