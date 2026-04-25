@@ -74,8 +74,8 @@
             return;
         }
 
-        var student = await AuthService.ValidateCredentialsAsync(UserName, Password);
-        if (student is null)
+        var principal = await AuthService.ValidateCredentialsAsync(UserName, Password);
+        if (principal is null)
         {
             _errorMessage = "Invalid username or password.";
             Password = null;
@@ -84,7 +84,7 @@
 
         await HttpContext.SignInAsync(
             AuthenticationConstants.Scheme,
-            AuthService.CreatePrincipal(student),
+            principal,
             new AuthenticationProperties
             {
                 IsPersistent = true,

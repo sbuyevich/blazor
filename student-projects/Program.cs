@@ -13,13 +13,18 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=student-projects.db";
 var dataProtectionPath = Path.Combine(builder.Environment.ContentRootPath, ".keys");
 var seedOptions = builder.Configuration.GetSection(DatabaseSeedOptions.SectionName).Get<DatabaseSeedOptions>() ?? new DatabaseSeedOptions();
+var superUserOptions = builder.Configuration.GetSection(SuperUserOptions.SectionName).Get<SuperUserOptions>() ?? new SuperUserOptions();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddSupplyValueFromFormProvider();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthenticationConstants.AdminPolicy, policy =>
+        policy.RequireRole(AuthenticationConstants.AdminRole));
+});
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath))
     .SetApplicationName("student-projects");
@@ -37,6 +42,7 @@ builder.Services.AddAuthentication(AuthenticationConstants.Scheme)
     });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(seedOptions);
+builder.Services.AddSingleton(superUserOptions);
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 builder.Services.AddScoped<IAuthService, AuthService>();
