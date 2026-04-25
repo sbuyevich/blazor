@@ -9,14 +9,13 @@
 <ClassContextView>
     <ChildContent Context="currentClass">
         <div class="login-shell">
-            <MudPaper Class="login-panel pa-5" Elevation="2">
+            <MudPaper Class="login-panel pa-5" Elevation="2" Justify="Justify.Center" AlignItems="AlignItems.Center" Style="width:50%;">
                 <MudStack Spacing="4">
                     <div>
                         <MudText Typo="Typo.h5">Student registration</MudText>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">@currentClass.SchoolName - @currentClass.ClassName</MudText>
                     </div>
-
-                    <MudForm @ref="_registrationForm">
+                  
+                    <MudForm @ref="_registrationForm" Spacing="5">
                         @if (!string.IsNullOrWhiteSpace(_registrationMessage))
                         {
                             <MudAlert Severity="@_registrationMessageSeverity" Variant="Variant.Filled" Dense="true">@_registrationMessage</MudAlert>
@@ -74,14 +73,10 @@
                                    FullWidth="true"
                                    Disabled="@_isRegistrationSubmitting"
                                    OnClick="() => HandleStudentRegistrationAsync(currentClass)">
-                            @(_isRegistrationSubmitting ? "Registering..." : "Register")
+                            @(_isRegistrationSubmitting ? "Registering..." : "REGISTER")
                         </MudButton>
                     </MudForm>
-
-                    <MudText Typo="Typo.body2" Align="Align.Center">
-                        Already registered?
-                        <MudLink Href="/login">Sign in</MudLink>
-                    </MudText>
+                    
                 </MudStack>
             </MudPaper>
         </div>

@@ -16,7 +16,7 @@ builder.Services.AddMudServices();
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.Configure<TeacherOptions>(builder.Configuration.GetSection("Teacher"));
+builder.Services.Configure<Teacher>(builder.Configuration.GetSection("Teacher"));
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILoginStateService, LoginStateService>();
 builder.Services.AddScoped<IClassContextService, ClassContextService>();

@@ -9,7 +9,7 @@ namespace MyClass.Services.Auth;
 public sealed class AuthService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IPasswordHashService passwordHashService,
-    IOptions<TeacherOptions> teacherOptions) : IAuthService
+    IOptions<Teacher> teacherOptions) : IAuthService
 {
     public async Task<LoginResult> LoginAsync(
         string userName,
