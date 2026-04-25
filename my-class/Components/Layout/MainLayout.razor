@@ -1,4 +1,7 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject IClassContextService ClassContextService
+@inject NavigationManager Navigation
 
 <div class="page">
     <div class="sidebar">
@@ -7,7 +10,17 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            @if (_currentClass is not null)
+            {
+                <div class="class-header">
+                    <span class="school-name">@_currentClass.SchoolName</span>
+                    <span class="class-name">@_currentClass.ClassName</span>
+                </div>
+            }
+            else if (!string.IsNullOrWhiteSpace(_classMessage))
+            {
+                <div class="class-header class-header-error">@_classMessage</div>
+            }
         </div>
 
         <article class="content px-4">
@@ -19,5 +32,39 @@
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <span class="dismiss">x</span>
 </div>
+
+@code {
+    private ClassContext? _currentClass;
+    private string? _classMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        await LoadClassContextAsync();
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadClassContextAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadClassContextAsync()
+    {
+        var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
+        var result = await ClassContextService.ResolveAsync(classCode);
+
+        _currentClass = result.CurrentClass;
+        _classMessage = result.IsLoaded ? null : result.Message;
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

@@ -1,4 +1,7 @@
 using MyClass.Components;
+using MyClass.Data;
+using Microsoft.EntityFrameworkCore;
+using MyClass.Services.ClassContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,7 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<IClassContextService, ClassContextService>();
+
 var app = builder.Build();
+
+await DatabaseInitializer.InitializeAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

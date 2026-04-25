@@ -58,8 +58,8 @@ Use a minimal custom login flow instead of ASP.NET Core Identity. The app uses o
 - `IStudentService`
 - Pages/routes:
   - `/?c={code}`
-  - `/login?c={code}`
-  - `/students?c={code}`
+  - `/login`
+  - `/students`
   - `/class-error`
 
 ## Test Plan

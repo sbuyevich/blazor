@@ -25,11 +25,11 @@ Resolve the current school and class from the URL and show a clear error when th
 ## Acceptance Criteria
 
 - `/?c={code}` loads the matching class.
-- `/login?c={code}` loads the matching class.
-- `/students?c={code}` loads the matching class.
 - Missing `c` shows a clear error.
 - Invalid `c` shows a clear error.
-- Navigation does not drop the class code.
+- Keep class as static var in app to use it in other pages
+- `/login` loads the matching class.
+- `/students` loads the matching class.
 
 ## Notes
 
