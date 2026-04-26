@@ -1,7 +1,7 @@
 # Stage 4 Quiz Reading And Answer Saving Plan
 
 ## Summary
-Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and replaces the session-based answer model with one denormalized live `QuizAnswers` table. The teacher loads one quiz into memory when opening the Quiz page. Starting a quiz clears prior answers, and each newly started question creates answer rows for all active students.
+Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and replaces the session-based answer model with one denormalized active-run `QuizAnswers` table. The teacher loads one quiz into memory when opening the Quiz page. Starting a quiz clears prior answers once, and each newly started question adds answer rows for all active students.
 
 ## Key Changes
 - Update quiz file reading:
@@ -10,16 +10,16 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
   - `q.json` maps to `QuizQuestion` with string `correctAnswer` and optional `TimeLimitSeconds`.
   - `Quiz.TimeLimitSeconds` is the default; `QuizQuestion.TimeLimitSeconds` overrides it when present.
 - Update answer storage:
-  - Use one denormalized `QuizAnswers` table for the current live quiz only.
+  - Use one denormalized `QuizAnswers` table for the current active quiz run.
   - Truncate/clear `QuizAnswers` when teacher clicks Start quiz.
-  - For any newly started question, create one `QuizAnswers` row per active student.
+  - For any newly started question, add one `QuizAnswers` row per active student.
   - Store student first name, last name, display name, question identifier/title, start time, end time, `Answer`, `CorrectAnswer`, and `IsCorrect`.
   - Student `Answer` is a string and may be empty when time expires before answer submission.
   - `correctAnswer` is a string and is matched against the student `Answer` string.
   - Empty `Answer` is treated as incorrect.
 - Update quiz flow:
   - Start quiz clears old rows and starts the first question.
-  - Next starts the next question and creates rows for that question.
+  - Next starts the next question and appends rows for that question.
   - Finish/timeout updates end time, empty answer where needed, and `IsCorrect`.
   - Stop using session tables for live quiz behavior; existing old tables may remain but should no longer be queried or written by the quiz flow.
 
@@ -37,7 +37,7 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
 - Question `q.json` with `TimeLimitSeconds` overrides root default.
 - `correctAnswer` string matches submitted answer string.
 - Start quiz clears previous `QuizAnswers` rows and creates first-question rows for active students.
-- Next creates rows for each active student for the new question.
+- Next creates rows for each active student for the new question and preserves previous question rows.
 - Student answer updates only that student/current-question row.
 - Timeout leaves unanswered student `Answer` empty and marks `IsCorrect = false`.
 - Wrong-role and wrong-class submissions remain rejected server-side.

@@ -201,12 +201,6 @@ public sealed class QuizSessionService(
         DateTime startedAtUtc,
         CancellationToken cancellationToken)
     {
-        await dbContext.QuizAnswers
-            .Where(answer =>
-                answer.QuestionIndex == questionContent.Index &&
-                answer.QuestionKey == questionContent.Key)
-            .ExecuteDeleteAsync(cancellationToken);
-
         var activeStudents = await dbContext.Students
             .AsNoTracking()
             .Where(student => student.ClassId == classId && student.IsActive)

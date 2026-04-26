@@ -1,13 +1,14 @@
 # Database Relationships
 
-## Current Core Tables
+## Relationship Shape
 
-The live SQLite database currently contains the core school/class/student tables. The quiz tables are defined in code and are created or updated by `DatabaseInitializer` when the app starts.
+The app database is centered on schools, classes, students, and live quiz answers.
 
 ```text
 Schools
   1 --- many Classes
           1 --- many Students
+                  1 --- many QuizAnswers
 ```
 
 ## Tables
@@ -32,43 +33,17 @@ Schools
 - Foreign key: `ClassId -> Classes.Id`.
 - Delete behavior: deleting a class deletes its students.
 - Unique index: `(ClassId, UserName)`, so usernames are unique inside a class.
-
-## Quiz Tables Defined By Code
-
-```text
-Classes
-  1 --- many QuizSessions
-            1 --- many QuizSessionQuestions
-
-Students
-  1 --- many QuizAnswers
-```
-
-### QuizSessions
-
-- Legacy/compatibility table.
-- Belongs to one `Class`.
-- Foreign key: `ClassId -> Classes.Id`.
-- Delete behavior: deleting a class deletes its quiz sessions.
-- Tracks old session fields such as title, status, active question index, start time, and completion time.
-- Stage 4 teacher live quiz flow no longer uses this table as the live source.
-
-### QuizSessionQuestions
-
-- Legacy/compatibility table.
-- Belongs to one `QuizSession`.
-- Foreign key: `QuizSessionId -> QuizSessions.Id`.
-- Delete behavior: deleting a quiz session deletes its session questions.
-- Unique index: `(QuizSessionId, QuestionIndex)`.
-- Stage 4 live quiz flow no longer uses this table as the live answer source.
+- Navigation: one student can have many `QuizAnswers` rows while a quiz is active.
 
 ### QuizAnswers
 
-- Stage 4 live quiz table.
+- Active quiz answer table for the current quiz run.
 - Belongs to one `Student`.
 - Foreign key: `StudentId -> Students.Id`.
 - Delete behavior: deleting a student deletes that student's quiz answer rows.
-- Does not point to `QuizSessionQuestions`.
+- Current class scope is inferred through `QuizAnswers.StudentId -> Students.ClassId`.
+- Does not store `ClassId` directly.
+- Does not point to a quiz session or quiz session question table.
 - Stores denormalized student snapshot fields:
   - `StudentUserName`
   - `StudentFirstName`
@@ -85,15 +60,24 @@ Students
   - `EndedAtUtc`
   - `IsCorrect`
 
-## Stage 4 Live Quiz Identity
+## Live Quiz Behavior
 
-`QuizAnswers` groups live answers by:
+- `QuizAnswers` contains rows for the current active quiz run.
+- For each started question, `QuizAnswers` contains one row for each active student in the current class.
+- Starting a quiz clears/replaces old `QuizAnswers` rows and creates first-question rows.
+- Starting the next question appends rows for the next question and keeps previous question rows.
+- `QuizAnswers` keeps all questions and student answers for the active quiz run.
+- `QuizAnswers` is active quiz-run storage, not long-term historical reporting.
+
+## Live Quiz Identity
+
+`QuizAnswers` groups question rows by:
 
 ```text
 QuestionIndex + QuestionKey
 ```
 
-Each student's answer row is identified by:
+Each student's answer row for a question is identified by:
 
 ```text
 QuestionIndex + QuestionKey + StudentId
@@ -105,7 +89,7 @@ QuestionIndex + QuestionKey + StudentId
 
 - School owns classes.
 - Class owns students.
-- Old quiz session tables may remain for compatibility.
-- Stage 4 live answer state is stored in `QuizAnswers`.
-- `QuizAnswers` is related only to `Students` by a foreign key.
+- Student owns live quiz answer rows.
+- `QuizAnswers` is connected only to `Students` by a foreign key.
+- Current class is resolved through the student relationship.
 - Question identity is stored directly in each answer row instead of being normalized through a question table.

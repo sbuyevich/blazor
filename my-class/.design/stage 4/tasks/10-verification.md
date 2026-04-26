@@ -29,7 +29,7 @@ Verify Stage 4 quiz reading and answer saving end to end.
 - Question `q.json` with `TimeLimitSeconds` overrides root default.
 - Start quiz clears old `QuizAnswers` rows.
 - Start quiz creates rows for first question and active students.
-- Next creates rows for the next question and active students.
+- Next creates rows for the next question and active students without deleting previous question rows.
 - Student answer updates only that student/current-question row.
 - `Answer` and `CorrectAnswer` are compared as strings.
 - Empty `Answer` is marked incorrect.
