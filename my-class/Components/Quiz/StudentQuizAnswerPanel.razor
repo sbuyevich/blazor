@@ -43,7 +43,7 @@ else
                                Color="Color.Secondary"
                                FullWidth="true"
                                Class="quiz-answer-button"
-                               OnClick="() => SubmitAnswerAsync(answer)">
+                               OnClick="() => SubmitAnswerAsync(answer.ToString())">
                         @answer
                     </MudButton>
                 </MudItem>
@@ -152,7 +152,7 @@ else
         }
     }
 
-    private async Task SubmitAnswerAsync(int selectedAnswer)
+    private async Task SubmitAnswerAsync(string selectedAnswer)
     {
         if (_isSubmitting)
         {

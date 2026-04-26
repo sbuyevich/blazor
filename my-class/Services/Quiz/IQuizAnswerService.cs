@@ -13,6 +13,6 @@ public interface IQuizAnswerService
     Task<QuizActionResult> SubmitAnswerAsync(
         LoginState? loginState,
         ClassContextModel currentClass,
-        int selectedAnswer,
+        string selectedAnswer,
         CancellationToken cancellationToken = default);
 }

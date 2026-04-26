@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using MyClass.Data;
 using MyClass.Data.Entities;
@@ -90,10 +89,12 @@ public sealed class QuizAnswerService(
     public async Task<QuizActionResult> SubmitAnswerAsync(
         LoginState? loginState,
         ClassContextModel currentClass,
-        int selectedAnswer,
+        string selectedAnswer,
         CancellationToken cancellationToken = default)
     {
-        if (selectedAnswer is < 1 or > 4)
+        var selectedAnswerText = selectedAnswer.Trim();
+
+        if (selectedAnswerText is not ("1" or "2" or "3" or "4"))
         {
             return QuizActionResult.Failure("Answer must be 1, 2, 3, or 4.");
         }
@@ -156,11 +157,8 @@ public sealed class QuizAnswerService(
             return QuizActionResult.Failure("This question has finished.");
         }
 
-        var submittedAtUtc = DateTime.UtcNow;
-        var selectedAnswerText = selectedAnswer.ToString(CultureInfo.InvariantCulture);
-
         answer.Answer = selectedAnswerText;
-        answer.EndedAtUtc = submittedAtUtc;
+        answer.EndedAtUtc = DateTime.UtcNow;
         answer.IsCorrect = string.Equals(selectedAnswerText, answer.CorrectAnswer, StringComparison.Ordinal);
 
         await dbContext.SaveChangesAsync(cancellationToken);

@@ -1,5 +1,7 @@
 # Task 04 - Student Answer Flow Updates
 
+Status: Complete
+
 ## Goal
 
 Update student answer submission to write the student's answer string into the current denormalized answer row.
