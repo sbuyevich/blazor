@@ -20,7 +20,6 @@
 </ClassContextView>
 
 @code {
-    private const string LoginStateKey = "my-class.loginState";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -29,7 +28,7 @@
             return;
         }
 
-        var state = LoginStateService.Current ?? await SessionStorage.GetAsync<LoginState>(LoginStateKey);
+        var state = LoginStateService.Current ?? await SessionStorage.GetLoginStateAsync();
 
         if (state is null)
         {

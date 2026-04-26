@@ -49,7 +49,18 @@ else if (_stateResult.State is not null)
                         Start
                     </MudButton>
                 }
-                else if (!state.IsComplete)
+                else
+                {
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               Disabled="_isWorking"
+                               OnClick="RestartQuizAsync">
+                        Restart
+                    </MudButton>
+                }
+
+                @if (state.HasSession && !state.IsComplete)
                 {
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Warning"
@@ -87,11 +98,10 @@ else if (_stateResult.State is not null)
                 <MudItem xs="12" md="8">
                     <MudStack Spacing="2">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                            <MudText Typo="Typo.h5">@state.CurrentQuestion.Title</MudText>
                             <MudChip T="string"
                                      Color="@(state.CurrentQuestion.IsInProgress ? Color.Primary : Color.Default)"
                                      Variant="Variant.Filled">
-                                @FormatRemaining(state.CurrentQuestion.Remaining)
+                               Timer: @FormatRemaining(state.CurrentQuestion.Remaining)
                             </MudChip>
                         </MudStack>
 
@@ -133,7 +143,6 @@ else if (_stateResult.State is not null)
 }
 
 @code {
-    private const string LoginStateKey = "my-class.loginState";
 
     [Parameter, EditorRequired]
     public ClassContext CurrentClass { get; set; } = null!;
@@ -185,7 +194,7 @@ else if (_stateResult.State is not null)
         }
 
         _loadedClassId = CurrentClass.ClassId;
-        _loginState = LoginStateService.Current ?? await SessionStorage.GetAsync<LoginState>(LoginStateKey);
+        _loginState = LoginStateService.Current ?? await SessionStorage.GetLoginStateAsync();
         LoginStateService.Set(_loginState);
 
         _stateResult = await QuizSessionService.GetTeacherStateAsync(_loginState, CurrentClass);
@@ -248,7 +257,14 @@ else if (_stateResult.State is not null)
 
     private async Task StartQuestionAsync()
     {
+        _loadedImageQuestionKey = null;
         await RunActionAsync(() => QuizSessionService.StartQuestionAsync(_loginState, CurrentClass));
+    }
+
+    private async Task RestartQuizAsync()
+    {
+        _loadedImageQuestionKey = null;
+        await RunActionAsync(() => QuizSessionService.RestartQuizAsync(_loginState, CurrentClass));
     }
 
     private async Task FinishQuestionAsync()

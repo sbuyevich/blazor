@@ -15,6 +15,11 @@ public interface IQuizSessionService
         ClassContextModel currentClass,
         CancellationToken cancellationToken = default);
 
+    Task<QuizActionResult> RestartQuizAsync(
+        LoginState? loginState,
+        ClassContextModel currentClass,
+        CancellationToken cancellationToken = default);
+
     Task<QuizActionResult> FinishCurrentQuestionAsync(
         LoginState? loginState,
         ClassContextModel currentClass,

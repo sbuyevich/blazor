@@ -57,6 +57,23 @@ public sealed class QuizSessionService(
         ClassContextModel currentClass,
         CancellationToken cancellationToken = default)
     {
+        return await StartOrRestartQuizAsync(loginState, currentClass, "Quiz started.", cancellationToken);
+    }
+
+    public async Task<QuizActionResult> RestartQuizAsync(
+        LoginState? loginState,
+        ClassContextModel currentClass,
+        CancellationToken cancellationToken = default)
+    {
+        return await StartOrRestartQuizAsync(loginState, currentClass, "Quiz restarted.", cancellationToken);
+    }
+
+    private async Task<QuizActionResult> StartOrRestartQuizAsync(
+        LoginState? loginState,
+        ClassContextModel currentClass,
+        string successMessage,
+        CancellationToken cancellationToken)
+    {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
 
         if (authorizationMessage is not null)
@@ -90,7 +107,7 @@ public sealed class QuizSessionService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return QuizActionResult.Success("Quiz started.");
+        return QuizActionResult.Success(successMessage);
     }
 
     public async Task<QuizActionResult> FinishCurrentQuestionAsync(

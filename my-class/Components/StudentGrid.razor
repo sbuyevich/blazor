@@ -100,7 +100,6 @@ else if (_studentsResult.Succeeded)
 }
 
 @code {
-    private const string LoginStateKey = "my-class.loginState";
 
     [Parameter, EditorRequired]
     public ClassContext CurrentClass { get; set; } = null!;
@@ -165,7 +164,7 @@ else if (_studentsResult.Succeeded)
 
         if (_loginState is null)
         {
-            _loginState = await SessionStorage.GetAsync<LoginState>(LoginStateKey);
+            _loginState = await SessionStorage.GetLoginStateAsync();
             LoginStateService.Set(_loginState);
         }
 

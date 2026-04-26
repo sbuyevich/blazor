@@ -53,7 +53,6 @@ else
 }
 
 @code {
-    private const string LoginStateKey = "my-class.loginState";
     private static readonly int[] AnswerChoices = [1, 2, 3, 4];
 
     [Parameter, EditorRequired]
@@ -116,7 +115,7 @@ else
         }
 
         _loadedClassId = CurrentClass.ClassId;
-        _loginState = LoginStateService.Current ?? await SessionStorage.GetAsync<LoginState>(LoginStateKey);
+        _loginState = LoginStateService.Current ?? await SessionStorage.GetLoginStateAsync();
         LoginStateService.Set(_loginState);
 
         _stateResult = await QuizAnswerService.GetAnswerPageStateAsync(_loginState, CurrentClass);
