@@ -18,7 +18,7 @@ Stage 3 adds a teacher-led live quiz flow. The teacher opens the Quiz page, clic
   - Loads the single configured quiz.
   - Teacher clicks the Start button:
     - to show the first question
-    - to create new records for each active student for the current question
+    - to create in-progress answer records for each active student for the current question
     - to show active student status in a grid on the right side of the question image.
   - Shows current question JPG, countdown, Finish, and Next buttons.
   - Shows active students with answered/not answered status only.
@@ -26,9 +26,10 @@ Stage 3 adds a teacher-led live quiz flow. The teacher opens the Quiz page, clic
   - When timeout reaches zero, finishes the question and records failed results for active students who did not answer.
 - Student Quiz Answer page:
   - Shows four large buttons labeled `1`, `2`, `3`, `4`.
-  - Buttons are enabled only while a teacher-started question is active.
-  - Submit saves the selected answer to the database.
-  - After submitting, the student sees an answered/waiting state and cannot submit again for that question.
+  - Answer buttons remain clickable in the UI.
+  - On submit, the backend validates that an in-progress answer record exists for the current student and current question.
+  - If no valid in-progress answer record exists, the submit is rejected and the student sees a waiting/not available message.
+  - If a valid in-progress answer record exists, the backend saves the selected answer and prevents duplicate answers for that question.
 
 ## Public Interfaces / Types
 - Add EF entities/tables:
