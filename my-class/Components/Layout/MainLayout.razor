@@ -1,7 +1,6 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject IClassContextService ClassContextService
-@inject ILoginStateService LoginStateService
 @inject NavigationManager Navigation
 
 <MudThemeProvider Theme="_theme" />
@@ -15,10 +14,7 @@
         <MudText Typo="Typo.h6">My Class</MudText>
         <MudSpacer />
 
-        @if (LoginStateService.Current is not null)
-        {
-            <MudText Typo="Typo.body2" Class="me-3">@GreetingText</MudText>
-        }
+        <AppGreeting />
 
         @if (_currentClass is not null)
         {
@@ -77,27 +73,7 @@
     protected override async Task OnInitializedAsync()
     {
         Navigation.LocationChanged += OnLocationChanged;
-        LoginStateService.Changed += OnLoginStateChanged;
         await LoadClassContextAsync();
-    }
-
-    private string GreetingText
-    {
-        get
-        {
-            var state = LoginStateService.Current;
-
-            if (state is null)
-            {
-                return string.Empty;
-            }
-
-            var displayName = string.IsNullOrWhiteSpace(state.DisplayName)
-                ? state.UserName
-                : state.DisplayName;
-
-            return $"Hi, {displayName}";
-        }
     }
 
     private void ToggleDrawer()
@@ -123,14 +99,8 @@
         _classMessage = result.IsLoaded ? null : result.Message;
     }
 
-    private void OnLoginStateChanged()
-    {
-        _ = InvokeAsync(StateHasChanged);
-    }
-
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
-        LoginStateService.Changed -= OnLoginStateChanged;
     }
 }
