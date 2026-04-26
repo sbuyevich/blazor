@@ -41,6 +41,13 @@ else if (_studentsResult.Succeeded)
                           Clearable="true"
                           Class="flex-grow-1" />
 
+            <MudCheckBox T="bool"
+                         Value="_activeOnly"
+                         ValueChanged="HandleActiveOnlyChangedAsync"
+                         Label="Active only"
+                         Color="Color.Primary"
+                         Dense="true" />
+
             <MudButton Variant="Variant.Outlined"
                        Color="Color.Secondary"
                        StartIcon="@Icons.Material.Filled.RestartAlt"
@@ -104,15 +111,27 @@ else if (_studentsResult.Succeeded)
     private StudentListResult? _studentsResult;
     private LoginState? _loginState;
     private string? _searchText;
+    private bool _activeOnly;
     private int? _loadedClassId;
     private int? _pendingClassId;
     private bool _isLoading = true;
     private bool _isRemoving;
     private bool _isResetting;
 
-    private string EmptyStateText => string.IsNullOrWhiteSpace(_searchText)
-        ? "No students are registered for this class yet."
-        : "No students match that name search.";
+    private string EmptyStateText
+    {
+        get
+        {
+            if (_activeOnly && string.IsNullOrWhiteSpace(_searchText))
+            {
+                return "No active students are in this class yet.";
+            }
+
+            return string.IsNullOrWhiteSpace(_searchText)
+                ? "No students are registered for this class yet."
+                : "No students match those filters.";
+        }
+    }
 
     protected override void OnParametersSet()
     {
@@ -150,7 +169,7 @@ else if (_studentsResult.Succeeded)
             LoginStateService.Set(_loginState);
         }
 
-        _studentsResult = await StudentService.GetStudentsForClassAsync(_loginState, currentClass, _searchText);
+        _studentsResult = await StudentService.GetStudentsForClassAsync(_loginState, currentClass, _searchText, _activeOnly);
         _isLoading = false;
 
         await StudentsLoaded.InvokeAsync(_studentsResult);
@@ -159,6 +178,14 @@ else if (_studentsResult.Succeeded)
     private async Task HandleSearchChangedAsync(string value)
     {
         _searchText = value;
+        _isLoading = true;
+
+        await LoadStudentsAsync(CurrentClass);
+    }
+
+    private async Task HandleActiveOnlyChangedAsync(bool value)
+    {
+        _activeOnly = value;
         _isLoading = true;
 
         await LoadStudentsAsync(CurrentClass);

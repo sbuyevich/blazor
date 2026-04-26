@@ -15,6 +15,7 @@ public sealed class StudentService(
         LoginState? loginState,
         ClassContextModel currentClass,
         string? searchText = null,
+        bool activeOnly = false,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -38,6 +39,11 @@ public sealed class StudentService(
                 student.FirstName.Contains(normalizedSearchText) ||
                 student.LastName.Contains(normalizedSearchText) ||
                 student.DisplayName.Contains(normalizedSearchText));
+        }
+
+        if (activeOnly)
+        {
+            query = query.Where(student => student.IsActive);
         }
 
         var students = await query
