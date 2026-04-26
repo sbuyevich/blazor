@@ -8,13 +8,19 @@ Stage 3 adds a teacher-led live quiz flow. The teacher opens the Quiz page, clic
   - `Quiz:RootFolder`: folder containing the single configured quiz.
   - `Quiz:StatusRefreshMilliseconds`: teacher grid polling interval, default `1500`.
 - Use this file contract:
-  - Root `quiz.json`: `{ "title": "...", "questions": [{ "id": "q1", "folder": "q1" }] }`
-  - Each question folder contains `question.json`: `{ "title": "...", "timeoutSeconds": 30, "correctAnswer": 1, "imageFile": "question.jpg" }`
-  - Each question folder contains the JPG referenced by `imageFile`.
+  - Root `quiz.json`: `{ "title": "..." }`
+  - The app discovers questions by reading immediate subfolders under `Quiz:RootFolder`.
+  - Question order is the alphabetical order of subfolder names.
+  - Each question folder contains `question.json`: `{ "title": "...", "timeoutSeconds": 30, "correctAnswer": 1 }`
+  - Each question folder contains exactly one JPG question image.
 - Add teacher navigation item `Quiz` under Teacher and student navigation item `Quiz Answer` after login.
 - Teacher Quiz page:
   - Loads the single configured quiz.
-  - Shows current question JPG, countdown, Start, Finish, and Next buttons.
+  - Teacher clicks the Start button:
+    - to show the first question
+    - to create new records for each active student for the current question
+    - to show active student status in a grid on the right side of the question image.
+  - Shows current question JPG, countdown, Finish, and Next buttons.
   - Shows active students with answered/not answered status only.
   - Auto-refreshes status using configured polling interval.
   - When timeout reaches zero, finishes the question and records failed results for active students who did not answer.
@@ -51,6 +57,7 @@ Stage 3 adds a teacher-led live quiz flow. The teacher opens the Quiz page, clic
 
 ## Assumptions
 - Stage 3 supports one configured quiz only.
+- Each question subfolder must contain exactly one JPG image.
 - Students do not see the question image in their own page; the teacher displays it on the shared screen.
 - Teacher status grid shows answered/not answered only, not selected answer or correctness.
 - Correctness is stored for results/failure tracking but not shown live in the teacher grid.
