@@ -9,7 +9,7 @@
 ## Assumptions
 Question subfolders have the same named files:
 - q.jpg presents the question when the quiz starts.
-- a.json presents data for answer validation.
+- q.json presents data for answer validation.
 
 # Quiz Answer Saving
 
@@ -20,5 +20,4 @@ Question subfolders have the same named files:
 - end time is update as well as answer and IaCorrect
 
     
-
 

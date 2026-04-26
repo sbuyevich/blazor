@@ -14,8 +14,8 @@ Update quiz loading to match the real `.assets/quiz` file structure and populate
 - Discover question subfolders under `Quiz:RootFolder`.
 - Keep question order sorted by subfolder name.
 - Require each question subfolder to contain `q.jpg`.
-- Require each question subfolder to contain `a.json`.
-- Map question `a.json` fields:
+- Require each question subfolder to contain `q.json`.
+- Map question `q.json` fields:
   - string `correctAnswer` to `QuizQuestion.CorrectAnswer`
   - optional `TimeLimitSeconds` to `QuizQuestion.TimeLimitSeconds`
 - Apply timeout precedence:
@@ -26,7 +26,7 @@ Update quiz loading to match the real `.assets/quiz` file structure and populate
 
 - Updated Quiz and QuizQuestion content models
 - Updated quiz content loading service
-- Validation for `quiz.json`, `q.jpg`, and `a.json`
+- Validation for `quiz.json`, `q.jpg`, and `q.json`
 - Safe image reference for `q.jpg`
 
 ## Acceptance Criteria
@@ -34,7 +34,7 @@ Update quiz loading to match the real `.assets/quiz` file structure and populate
 - Root `quiz.json` with `title` and `TimeLimitSeconds` loads successfully.
 - Missing or invalid root `quiz.json` returns a clear error.
 - Question folders are discovered and ordered by folder name.
-- Missing `q.jpg` or `a.json` returns a clear error.
+- Missing `q.jpg` or `q.json` returns a clear error.
 - `correctAnswer` is loaded as a string.
 - Question-specific `TimeLimitSeconds` overrides root `TimeLimitSeconds`.
 - Questions without `TimeLimitSeconds` use the root default.

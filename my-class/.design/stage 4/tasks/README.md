@@ -14,6 +14,6 @@ Implement quiz file model updates and denormalized live answer saving for the ex
 
 - Stage 4 supports one live quiz session at a time.
 - Root `quiz.json` uses `title` and `TimeLimitSeconds`.
-- Question subfolders contain `q.jpg` and `a.json`.
+- Question subfolders contain `q.jpg` and `q.json`.
 - `correctAnswer` and student `Answer` are strings.
 - Empty student `Answer` is treated as incorrect.

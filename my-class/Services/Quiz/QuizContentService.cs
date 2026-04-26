@@ -163,11 +163,11 @@ public sealed class QuizContentService(
             return ValueResult<QuizQuestionContent>.Failure("Question subfolder has an invalid name.");
         }
 
-        var metadataPath = Path.Combine(questionFolder, "a.json");
+        var metadataPath = Path.Combine(questionFolder, "q.json");
 
         if (!File.Exists(metadataPath))
         {
-            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must contain a.json.");
+            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must contain q.json.");
         }
 
         var questionMetadata = await ReadJsonAsync<QuestionMetadata>(metadataPath, cancellationToken);

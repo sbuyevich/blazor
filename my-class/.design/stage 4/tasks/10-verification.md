@@ -25,8 +25,8 @@ Verify Stage 4 quiz reading and answer saving end to end.
 
 - `dotnet build .\MyClass.slnx` succeeds with no warnings or errors.
 - Root `quiz.json` with `title` and `TimeLimitSeconds` loads successfully.
-- Question `a.json` with no `TimeLimitSeconds` uses root default.
-- Question `a.json` with `TimeLimitSeconds` overrides root default.
+- Question `q.json` with no `TimeLimitSeconds` uses root default.
+- Question `q.json` with `TimeLimitSeconds` overrides root default.
 - Start quiz clears old `QuizAnswers` rows.
 - Start quiz creates rows for first question and active students.
 - Next creates rows for the next question and active students.

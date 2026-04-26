@@ -6,8 +6,8 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
 ## Key Changes
 - Update quiz file reading:
   - Root `quiz.json` maps to `Quiz` with `title` and `TimeLimitSeconds`.
-  - Question subfolders contain `q.jpg` and `a.json`.
-  - `a.json` maps to `QuizQuestion` with string `correctAnswer` and optional `TimeLimitSeconds`.
+  - Question subfolders contain `q.jpg` and `q.json`.
+  - `q.json` maps to `QuizQuestion` with string `correctAnswer` and optional `TimeLimitSeconds`.
   - `Quiz.TimeLimitSeconds` is the default; `QuizQuestion.TimeLimitSeconds` overrides it when present.
 - Update answer storage:
   - Use one denormalized `QuizAnswers` table for the current live quiz only.
@@ -33,8 +33,8 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
 
 ## Test Plan
 - Root `quiz.json` with `title` and `TimeLimitSeconds` loads successfully.
-- Question `a.json` with no `TimeLimitSeconds` uses root default.
-- Question `a.json` with `TimeLimitSeconds` overrides root default.
+- Question `q.json` with no `TimeLimitSeconds` uses root default.
+- Question `q.json` with `TimeLimitSeconds` overrides root default.
 - `correctAnswer` string matches submitted answer string.
 - Start quiz clears previous `QuizAnswers` rows and creates first-question rows for active students.
 - Next creates rows for each active student for the new question.
@@ -46,7 +46,7 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
 ## Assumptions
 - Use `title`, not `name`, in root `quiz.json`.
 - Use the correctly spelled class names `Quiz` and `QuizQuestion`.
-- `a.json` is the source of answer-validation data.
+- `q.json` is the source of answer-validation data.
 - `q.jpg` is the displayed question image.
 - Stage 4 supports one live quiz session at a time.
 
