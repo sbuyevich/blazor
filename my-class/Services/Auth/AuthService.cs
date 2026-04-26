@@ -117,7 +117,8 @@ public sealed class AuthService(
             LastName = normalizedLastName,
             DisplayName = $"{normalizedFirstName} {normalizedLastName}",
             PasswordHash = passwordHashService.Hash(password),
-            CreatedAtUtc = DateTime.UtcNow
+            IsActive = true,
+			CreatedAtUtc = DateTime.UtcNow
         };
 
         dbContext.Students.Add(student);
