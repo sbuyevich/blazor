@@ -11,6 +11,12 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
     public DbSet<Student> Students => Set<Student>();
 
+    public DbSet<QuizSession> QuizSessions => Set<QuizSession>();
+
+    public DbSet<QuizSessionQuestion> QuizSessionQuestions => Set<QuizSessionQuestion>();
+
+    public DbSet<QuizAnswer> QuizAnswers => Set<QuizAnswer>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -74,6 +80,64 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
             entity.HasIndex(student => new { student.ClassId, student.UserName })
                 .IsUnique();
+        });
+
+        modelBuilder.Entity<QuizSession>(entity =>
+        {
+            entity.Property(session => session.Title)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(session => session.Status)
+                .IsRequired();
+
+            entity.HasIndex(session => new { session.ClassId, session.Status });
+
+            entity.HasOne(session => session.Class)
+                .WithMany()
+                .HasForeignKey(session => session.ClassId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(session => session.Questions)
+                .WithOne(question => question.QuizSession)
+                .HasForeignKey(question => question.QuizSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<QuizSessionQuestion>(entity =>
+        {
+            entity.Property(question => question.QuestionKey)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(question => question.Title)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(question => question.Status)
+                .IsRequired();
+
+            entity.HasIndex(question => new { question.QuizSessionId, question.QuestionIndex })
+                .IsUnique();
+
+            entity.HasMany(question => question.Answers)
+                .WithOne(answer => answer.QuizSessionQuestion)
+                .HasForeignKey(answer => answer.QuizSessionQuestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<QuizAnswer>(entity =>
+        {
+            entity.Property(answer => answer.Status)
+                .IsRequired();
+
+            entity.HasIndex(answer => new { answer.QuizSessionQuestionId, answer.StudentId })
+                .IsUnique();
+
+            entity.HasOne(answer => answer.Student)
+                .WithMany()
+                .HasForeignKey(answer => answer.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

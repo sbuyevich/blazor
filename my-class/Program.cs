@@ -5,6 +5,7 @@ using MyClass.Options;
 using MyClass.Services.Auth;
 using MyClass.Services.BrowserStorage;
 using MyClass.Services.ClassContext;
+using MyClass.Services.Quiz;
 using MyClass.Services.Students;
 using MudBlazor.Services;
 
@@ -18,9 +19,13 @@ builder.Services.AddMudServices();
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.Configure<Teacher>(builder.Configuration.GetSection("Teacher"));
+builder.Services.Configure<QuizOptions>(builder.Configuration.GetSection("Quiz"));
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILoginStateService, LoginStateService>();
 builder.Services.AddScoped<IClassContextService, ClassContextService>();
+builder.Services.AddScoped<IQuizContentService, QuizContentService>();
+builder.Services.AddScoped<IQuizSessionService, QuizSessionService>();
+builder.Services.AddScoped<IQuizAnswerService, QuizAnswerService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ISessionStorageService, SessionStorageService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
