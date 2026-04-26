@@ -7,7 +7,7 @@
 
 @if (_isLoading)
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+    <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="2">
         <MudProgressCircular Indeterminate="true" Size="Size.Small" />
         <MudText Typo="Typo.body2">Loading students...</MudText>
     </MudStack>
@@ -27,7 +27,7 @@ else if (!_studentsResult.Succeeded)
 else if (_studentsResult.Succeeded)
 {
     <MudStack Spacing="3">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="2">
             <MudTextField T="string"
                           Value="_searchText"
                           ValueChanged="HandleSearchChangedAsync"
@@ -67,17 +67,17 @@ else if (_studentsResult.Succeeded)
         {
             <MudTable Items="_studentsResult.Students" Dense="true" Hover="true" Elevation="1">
                 <HeaderContent>
-                    <MudTh>Last name</MudTh>
-                    <MudTh>First name</MudTh>
-                    <MudTh>Username</MudTh>
-                    <MudTh>Active</MudTh>
-                    <MudTh>Actions</MudTh>
+                    <MudTh>Last Name</MudTh>
+                    <MudTh>First Name</MudTh>
+                    <MudTh>User Name</MudTh>
+                    <MudTh Style="text-align:center;">Active</MudTh>
+                    <MudTh Style="text-align:center;">Delete</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Last name">@context.LastName</MudTd>
-                    <MudTd DataLabel="First name">@context.FirstName</MudTd>
-                    <MudTd DataLabel="Username">@context.UserName</MudTd>
-                    <MudTd DataLabel="Active">
+                    <MudTd DataLabel="Last Name">@context.LastName</MudTd>
+                    <MudTd DataLabel="First Name">@context.FirstName</MudTd>
+                    <MudTd DataLabel="User Name">@context.UserName</MudTd>
+                    <MudTd DataLabel="Active" Style="text-align:center;">
                         <MudChip T="string"
                                  Size="Size.Small"
                                  Color="@(context.IsActive ? Color.Success : Color.Default)"
@@ -85,7 +85,7 @@ else if (_studentsResult.Succeeded)
                             @(context.IsActive ? "Active" : "Inactive")
                         </MudChip>
                     </MudTd>
-                    <MudTd DataLabel="Actions">
+                    <MudTd DataLabel="Delete" Style="text-align:center;">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                        Color="Color.Error"
                                        Size="Size.Small"
