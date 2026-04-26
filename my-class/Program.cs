@@ -22,7 +22,7 @@ builder.Services.AddDataProtection()
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.Configure<Teacher>(builder.Configuration.GetSection("Teacher"));
+builder.Services.Configure<TeacherOptions>(builder.Configuration.GetSection("Teacher"));
 builder.Services.Configure<QuizOptions>(builder.Configuration.GetSection("Quiz"));
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILoginStateService, LoginStateService>();

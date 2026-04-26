@@ -9,7 +9,7 @@ namespace MyClass.Services.Students;
 
 public sealed class StudentService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
-    IOptions<Teacher> teacherOptions) : IStudentService
+    IOptions<TeacherOptions> teacherOptions) : IStudentService
 {
     public async Task<StudentListResult> GetStudentsForClassAsync(
         LoginState? loginState,

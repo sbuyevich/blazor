@@ -1,6 +1,6 @@
 namespace MyClass.Options;
 
-public sealed class Teacher
+public sealed class TeacherOptions
 {
     public string UserName { get; set; } = string.Empty;
 

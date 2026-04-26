@@ -18,6 +18,7 @@ else
     <MudStack Spacing="3" Class="quiz-answer-shell">
         <div>
             <MudText Typo="Typo.h4">Quiz Answer</MudText>
+            <MudText Typo="Typo.h6">Select correct answer number:</MudText>
             <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
         </div>
 
@@ -34,12 +35,12 @@ else
             </MudAlert>
         }
 
-        <MudGrid Spacing="2">
+        <MudGrid Spacing="20">
             @foreach (var answer in AnswerChoices)
             {
-                <MudItem xs="6">
+                <MudItem>
                     <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
+                               Color="Color.Secondary"
                                FullWidth="true"
                                Class="quiz-answer-button"
                                OnClick="() => SubmitAnswerAsync(answer)">

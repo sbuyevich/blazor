@@ -11,7 +11,7 @@ namespace MyClass.Services.Quiz;
 public sealed class QuizSessionService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IQuizContentService quizContentService,
-    IOptions<Teacher> teacherOptions) : IQuizSessionService
+    IOptions<TeacherOptions> teacherOptions) : IQuizSessionService
 {
     public async Task<QuizTeacherStateResult> GetTeacherStateAsync(
         LoginState? loginState,
