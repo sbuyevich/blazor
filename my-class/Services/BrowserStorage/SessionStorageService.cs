@@ -1,10 +1,12 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
+using MyClass.Services.Auth;
 
 namespace MyClass.Services.BrowserStorage;
 
 public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorageService
 {
+    private const string LoginStateKey = "my-class.loginState";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async ValueTask<T?> GetAsync<T>(string key)
@@ -25,5 +27,20 @@ public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorag
     public ValueTask RemoveAsync(string key)
     {
         return jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", key);
+    }
+
+    public ValueTask<LoginState?> GetLoginStateAsync()
+    {
+        return GetAsync<LoginState>(LoginStateKey);
+    }
+
+    public ValueTask SetLoginStateAsync(LoginState state)
+    {
+        return SetAsync(LoginStateKey, state);
+    }
+
+    public ValueTask RemoveLoginStateAsync()
+    {
+        return RemoveAsync(LoginStateKey);
     }
 }

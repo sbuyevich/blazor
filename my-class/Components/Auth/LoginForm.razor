@@ -52,8 +52,6 @@
 </MudStack>
 
 @code {
-    private const string LoginStateKey = "my-class.loginState";
-
     [Parameter, EditorRequired]
     public ClassContext CurrentClass { get; set; } = null!;
 
@@ -97,7 +95,7 @@
 
         if (!result.Succeeded || result.State is null)
         {
-            await SessionStorage.RemoveAsync(LoginStateKey);
+            await SessionStorage.RemoveLoginStateAsync();
             LoginStateService.Set(null);
             _messageSeverity = Severity.Error;
             _message = result.Message;
@@ -105,7 +103,7 @@
             return;
         }
 
-        await SessionStorage.SetAsync(LoginStateKey, result.State);
+        await SessionStorage.SetLoginStateAsync(result.State);
         LoginStateService.Set(result.State);
         _isSubmitting = false;
 

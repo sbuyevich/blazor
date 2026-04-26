@@ -32,8 +32,6 @@
 }
 
 @code {
-    private const string LoginStateKey = "my-class.loginState";
-
     [Parameter]
     public ClassContext? CurrentClass { get; set; }
 
@@ -56,7 +54,7 @@
             return;
         }
 
-        var state = await SessionStorage.GetAsync<LoginState>(LoginStateKey);
+        var state = await SessionStorage.GetLoginStateAsync();
         LoginStateService.Set(state);
         _loadedLoginState = true;
         StateHasChanged();

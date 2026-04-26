@@ -9,8 +9,6 @@
 }
 
 @code {
-    private const string LoginStateKey = "my-class.loginState";
-
     private string GreetingText
     {
         get
@@ -42,7 +40,7 @@
             return;
         }
 
-        var state = await SessionStorage.GetAsync<LoginState>(LoginStateKey);
+        var state = await SessionStorage.GetLoginStateAsync();
 
         if (state is not null)
         {
