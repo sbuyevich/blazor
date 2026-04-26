@@ -10,10 +10,16 @@
             <MudNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
         }
 
+        @if (IsStudent)
+        {
+            <MudNavLink Href="/quiz-answer" Icon="@Icons.Material.Filled.CheckCircle">Quiz Answer</MudNavLink>
+        }
+
         @if (IsTeacher)
         {
             <MudDivider Class="my-2" />
             <MudText Typo="Typo.overline" Color="Color.Secondary" Class="px-4">Teacher</MudText>
+            <MudNavLink Href="/quiz" Icon="@Icons.Material.Filled.Quiz">Quiz</MudNavLink>
             <MudNavLink Href="/students" Icon="@Icons.Material.Filled.Groups">Students</MudNavLink>
         }
     </MudNavMenu>
@@ -23,6 +29,8 @@
     private bool IsSignedIn => LoginStateService.Current is not null;
 
     private bool IsTeacher => LoginStateService.Current?.IsTeacher == true;
+
+    private bool IsStudent => LoginStateService.Current is { IsTeacher: false };
 
     protected override void OnInitialized()
     {

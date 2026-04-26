@@ -1,0 +1,73 @@
+@rendermode InteractiveServer
+@implements IDisposable
+@inject ISessionStorageService SessionStorage
+@inject ILoginStateService LoginStateService
+
+@if (!_loadedLoginState)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        <MudText Typo="Typo.body2">Checking access...</MudText>
+    </MudStack>
+}
+else if (LoginStateService.Current is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+        Sign in to continue.
+    </MudAlert>
+}
+else if (RequireTeacher && LoginStateService.Current.IsTeacher)
+{
+    @ChildContent
+}
+else if (!RequireTeacher && !LoginStateService.Current.IsTeacher)
+{
+    @ChildContent
+}
+else
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+        @DeniedMessage
+    </MudAlert>
+}
+
+@code {
+    [Parameter]
+    public bool RequireTeacher { get; set; }
+
+    [Parameter]
+    public string DeniedMessage { get; set; } = "You do not have access to this page.";
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private bool _loadedLoginState;
+
+    protected override void OnInitialized()
+    {
+        LoginStateService.Changed += OnLoginStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var state = LoginStateService.Current ?? await SessionStorage.GetLoginStateAsync();
+        LoginStateService.Set(state);
+        _loadedLoginState = true;
+        StateHasChanged();
+    }
+
+    private void OnLoginStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        LoginStateService.Changed -= OnLoginStateChanged;
+    }
+}

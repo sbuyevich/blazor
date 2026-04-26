@@ -5,6 +5,8 @@
 
 <ClassContextView>
     <ChildContent Context="currentClass">
-        <TeacherQuizPanel CurrentClass="currentClass" />
+        <RoleGate RequireTeacher="true" DeniedMessage="Only teachers can use the Quiz page.">
+            <TeacherQuizPanel CurrentClass="currentClass" />
+        </RoleGate>
     </ChildContent>
 </ClassContextView>
