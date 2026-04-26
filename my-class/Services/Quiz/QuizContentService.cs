@@ -48,6 +48,11 @@ public sealed class QuizContentService(
             return QuizContentResult.Failure("Root quiz.json must define a non-empty title.");
         }
 
+        if (quizMetadata.Value.TimeLimitSeconds <= 0)
+        {
+            return QuizContentResult.Failure("Root quiz.json must define a positive TimeLimitSeconds value.");
+        }
+
         var questionFolders = Directory
             .EnumerateDirectories(rootFolder)
             .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
@@ -62,7 +67,11 @@ public sealed class QuizContentService(
 
         for (var index = 0; index < questionFolders.Count; index++)
         {
-            var questionResult = await LoadQuestionAsync(questionFolders[index], index, cancellationToken);
+            var questionResult = await LoadQuestionAsync(
+                questionFolders[index],
+                index,
+                quizMetadata.Value.TimeLimitSeconds,
+                cancellationToken);
 
             if (!questionResult.Succeeded || questionResult.Value is null)
             {
@@ -72,7 +81,7 @@ public sealed class QuizContentService(
             questions.Add(questionResult.Value);
         }
 
-        return QuizContentResult.Success(new QuizContent(quizTitle, questions));
+        return QuizContentResult.Success(new QuizContent(quizTitle, quizMetadata.Value.TimeLimitSeconds, questions));
     }
 
     public async Task<QuizImageResult> LoadQuestionImageAsync(
@@ -101,17 +110,17 @@ public sealed class QuizContentService(
             return QuizImageResult.Failure("Question image folder was not found.");
         }
 
-        var jpgFiles = GetJpgFiles(fullQuestionFolder);
+        var imagePath = GetQuestionImagePath(fullQuestionFolder);
 
-        if (jpgFiles.Count != 1)
+        if (imagePath is null)
         {
-            return QuizImageResult.Failure($"Question folder '{questionKey}' must contain exactly one JPG image.");
+            return QuizImageResult.Failure($"Question folder '{questionKey}' must contain q.jpg.");
         }
 
         try
         {
-            var bytes = await File.ReadAllBytesAsync(jpgFiles[0], cancellationToken);
-            var mediaType = string.Equals(Path.GetExtension(jpgFiles[0]), ".jpeg", StringComparison.OrdinalIgnoreCase)
+            var bytes = await File.ReadAllBytesAsync(imagePath, cancellationToken);
+            var mediaType = string.Equals(Path.GetExtension(imagePath), ".jpeg", StringComparison.OrdinalIgnoreCase)
                 ? "image/jpeg"
                 : "image/jpg";
 
@@ -144,6 +153,7 @@ public sealed class QuizContentService(
     private static async Task<ValueResult<QuizQuestionContent>> LoadQuestionAsync(
         string questionFolder,
         int index,
+        int defaultTimeLimitSeconds,
         CancellationToken cancellationToken)
     {
         var questionKey = Path.GetFileName(questionFolder);
@@ -153,11 +163,11 @@ public sealed class QuizContentService(
             return ValueResult<QuizQuestionContent>.Failure("Question subfolder has an invalid name.");
         }
 
-        var metadataPath = Path.Combine(questionFolder, "question.json");
+        var metadataPath = Path.Combine(questionFolder, "a.json");
 
         if (!File.Exists(metadataPath))
         {
-            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must contain question.json.");
+            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must contain a.json.");
         }
 
         var questionMetadata = await ReadJsonAsync<QuestionMetadata>(metadataPath, cancellationToken);
@@ -167,28 +177,32 @@ public sealed class QuizContentService(
             return ValueResult<QuizQuestionContent>.Failure(questionMetadata.Message);
         }
 
-        var title = questionMetadata.Value.Title?.Trim();
+        var title = questionMetadata.Value.Question?.Trim();
 
         if (string.IsNullOrWhiteSpace(title))
         {
-            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define a non-empty title.");
+            title = questionKey;
         }
 
-        if (questionMetadata.Value.TimeoutSeconds <= 0)
+        var timeoutSeconds = questionMetadata.Value.TimeLimitSeconds ?? defaultTimeLimitSeconds;
+
+        if (timeoutSeconds <= 0)
         {
-            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define a positive timeoutSeconds value.");
+            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define a positive TimeLimitSeconds value.");
         }
 
-        if (questionMetadata.Value.CorrectAnswer is < 1 or > 4)
+        var correctAnswer = questionMetadata.Value.CorrectAnswer?.Trim();
+
+        if (correctAnswer is not ("1" or "2" or "3" or "4"))
         {
-            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define correctAnswer between 1 and 4.");
+            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define correctAnswer as \"1\", \"2\", \"3\", or \"4\".");
         }
 
-        var jpgFiles = GetJpgFiles(questionFolder);
+        var imagePath = GetQuestionImagePath(questionFolder);
 
-        if (jpgFiles.Count != 1)
+        if (imagePath is null)
         {
-            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must contain exactly one JPG image.");
+            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must contain q.jpg.");
         }
 
         return ValueResult<QuizQuestionContent>.Success(
@@ -196,19 +210,22 @@ public sealed class QuizContentService(
                 questionKey,
                 index,
                 title,
-                questionMetadata.Value.TimeoutSeconds,
-                questionMetadata.Value.CorrectAnswer,
+                timeoutSeconds,
+                correctAnswer,
                 Uri.EscapeDataString(questionKey)));
     }
 
-    private static List<string> GetJpgFiles(string questionFolder)
+    private static string? GetQuestionImagePath(string questionFolder)
     {
-        return Directory
+        var matches = Directory
             .EnumerateFiles(questionFolder)
             .Where(file =>
-                string.Equals(Path.GetExtension(file), ".jpg", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(Path.GetExtension(file), ".jpeg", StringComparison.OrdinalIgnoreCase))
+                string.Equals(Path.GetFileNameWithoutExtension(file), "q", StringComparison.OrdinalIgnoreCase) &&
+                (string.Equals(Path.GetExtension(file), ".jpg", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(Path.GetExtension(file), ".jpeg", StringComparison.OrdinalIgnoreCase)))
             .ToList();
+
+        return matches.Count == 1 ? matches[0] : null;
     }
 
     private static async Task<ValueResult<T>> ReadJsonAsync<T>(string path, CancellationToken cancellationToken)
@@ -236,9 +253,9 @@ public sealed class QuizContentService(
         }
     }
 
-    private sealed record QuizMetadata(string? Title);
+    private sealed record QuizMetadata(string? Title, int TimeLimitSeconds);
 
-    private sealed record QuestionMetadata(string? Title, int TimeoutSeconds, int CorrectAnswer);
+    private sealed record QuestionMetadata(string? Question, string? CorrectAnswer, int? TimeLimitSeconds);
 
     private sealed record ValueResult<T>(bool Succeeded, string Message, T? Value)
     {

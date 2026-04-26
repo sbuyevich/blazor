@@ -5,5 +5,5 @@ public sealed record QuizQuestionContent(
     int Index,
     string Title,
     int TimeoutSeconds,
-    int CorrectAnswer,
+    string CorrectAnswer,
     string ImageReference);

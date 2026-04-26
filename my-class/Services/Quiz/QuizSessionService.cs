@@ -275,7 +275,7 @@ public sealed class QuizSessionService(
             QuestionKey = questionContent.Key,
             Title = questionContent.Title,
             TimeoutSeconds = questionContent.TimeoutSeconds,
-            CorrectAnswer = questionContent.CorrectAnswer,
+            CorrectAnswer = int.Parse(questionContent.CorrectAnswer),
             Status = QuizQuestionStatus.InProgress,
             StartedAtUtc = DateTime.UtcNow,
             Answers = activeStudents

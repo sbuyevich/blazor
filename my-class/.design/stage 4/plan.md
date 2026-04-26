@@ -52,7 +52,7 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
 
 ## Task Breakdown
 
-- [ ] [Task 01 - Quiz File Model and Loading](tasks/01-quiz-file-model-and-loading.md)
+- [x] [Task 01 - Quiz File Model and Loading](tasks/01-quiz-file-model-and-loading.md)
 - [ ] [Task 02 - Denormalized QuizAnswers Table](tasks/02-denormalized-quizanswers-table.md)
 - [ ] [Task 03 - Teacher Quiz Flow Updates](tasks/03-teacher-quiz-flow-updates.md)
 - [ ] [Task 04 - Student Answer Flow Updates](tasks/04-student-answer-flow-updates.md)
