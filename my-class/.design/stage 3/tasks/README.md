@@ -6,8 +6,8 @@ Implement the teacher-led live quiz flow for the existing `my-class` Blazor app.
 
 1. [x] [Task 01 - Quiz Configuration and Content](01-quiz-configuration-and-content.md)
 2. [x] [Task 02 - Quiz Data and Services](02-quiz-data-and-services.md)
-3. [ ] [Task 03 - Teacher Quiz Page](03-teacher-quiz-page.md)
-4. [ ] [Task 04 - Student Quiz Answer Page](04-student-quiz-answer-page.md)
+3. [x] [Task 03 - Teacher Quiz Page](03-teacher-quiz-page.md)
+4. [x] [Task 04 - Student Quiz Answer Page](04-student-quiz-answer-page.md)
 5. [ ] [Task 05 - Navigation and Security](05-navigation-and-security.md)
 10. [ ] [Task 10 - Verification](10-verification.md)
 

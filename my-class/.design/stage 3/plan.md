@@ -68,7 +68,7 @@ Stage 3 adds a teacher-led live quiz flow. The teacher opens the Quiz page, clic
 
 - [x] [Task 01 - Quiz Configuration and Content](tasks/01-quiz-configuration-and-content.md)
 - [x] [Task 02 - Quiz Data and Services](tasks/02-quiz-data-and-services.md)
-- [ ] [Task 03 - Teacher Quiz Page](tasks/03-teacher-quiz-page.md)
-- [ ] [Task 04 - Student Quiz Answer Page](tasks/04-student-quiz-answer-page.md)
+- [x] [Task 03 - Teacher Quiz Page](tasks/03-teacher-quiz-page.md)
+- [x] [Task 04 - Student Quiz Answer Page](tasks/04-student-quiz-answer-page.md)
 - [ ] [Task 05 - Navigation and Security](tasks/05-navigation-and-security.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)

@@ -1,0 +1,10 @@
+@page "/quiz"
+@rendermode InteractiveServer
+
+<PageTitle>Quiz</PageTitle>
+
+<ClassContextView>
+    <ChildContent Context="currentClass">
+        <TeacherQuizPanel CurrentClass="currentClass" />
+    </ChildContent>
+</ClassContextView>

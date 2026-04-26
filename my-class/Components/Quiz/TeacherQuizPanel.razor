@@ -1,0 +1,304 @@
+@rendermode InteractiveServer
+@implements IDisposable
+@inject ILoginStateService LoginStateService
+@inject ISessionStorageService SessionStorage
+@inject IQuizContentService QuizContentService
+@inject IQuizSessionService QuizSessionService
+@inject IOptions<QuizOptions> QuizOptions
+@inject ISnackbar Snackbar
+
+@if (_isLoading)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        <MudText Typo="Typo.body2">Loading quiz...</MudText>
+    </MudStack>
+}
+else if (_stateResult is null)
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Unable to load quiz.</MudAlert>
+}
+else if (!_stateResult.Succeeded)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">@_stateResult.Message</MudAlert>
+}
+else if (_stateResult.State is not null)
+{
+    var state = _stateResult.State;
+
+    <MudStack Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <div>
+                <MudText Typo="Typo.h4">@state.QuizTitle</MudText>
+                @if (state.CurrentQuestion is not null)
+                {
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                        Question @(state.CurrentQuestion.QuestionIndex + 1) of @state.CurrentQuestion.QuestionCount
+                    </MudText>
+                }
+            </div>
+
+            <MudStack Row="true" Spacing="1">
+                @if (!state.HasSession)
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.PlayArrow"
+                               Disabled="_isWorking"
+                               OnClick="StartQuestionAsync">
+                        Start
+                    </MudButton>
+                }
+                else if (!state.IsComplete)
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Warning"
+                               StartIcon="@Icons.Material.Filled.Stop"
+                               Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress != true)"
+                               OnClick="FinishQuestionAsync">
+                        Finish
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               EndIcon="@Icons.Material.Filled.SkipNext"
+                               Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress == true)"
+                               OnClick="MoveNextQuestionAsync">
+                        Next
+                    </MudButton>
+                }
+            </MudStack>
+        </MudStack>
+
+        @if (state.IsComplete)
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled">
+                Quiz complete.
+            </MudAlert>
+        }
+        else if (state.CurrentQuestion is null)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                Start the quiz when students are ready.
+            </MudAlert>
+        }
+        else
+        {
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="8">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h5">@state.CurrentQuestion.Title</MudText>
+                            <MudChip T="string"
+                                     Color="@(state.CurrentQuestion.IsInProgress ? Color.Primary : Color.Default)"
+                                     Variant="Variant.Filled">
+                                @FormatRemaining(state.CurrentQuestion.Remaining)
+                            </MudChip>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_imageMessage))
+                        {
+                            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">@_imageMessage</MudAlert>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(_imageDataUri))
+                        {
+                            <img class="quiz-question-image"
+                                 src="@_imageDataUri"
+                                 alt="@state.CurrentQuestion.Title" />
+                        }
+                    </MudStack>
+                </MudItem>
+
+                <MudItem xs="12" md="4">
+                    <MudTable Items="state.Students" Dense="true" Hover="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Student</MudTh>
+                            <MudTh>Status</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Student">@context.DisplayName</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@GetStatusColor(context)"
+                                         Variant="Variant.Filled">
+                                    @GetStatusText(context)
+                                </MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudStack>
+}
+
+@code {
+    private const string LoginStateKey = "my-class.loginState";
+
+    [Parameter, EditorRequired]
+    public ClassContext CurrentClass { get; set; } = null!;
+
+    private QuizTeacherStateResult? _stateResult;
+    private LoginState? _loginState;
+    private CancellationTokenSource? _pollingCancellation;
+    private int? _loadedClassId;
+    private int? _pendingClassId;
+    private string? _loadedImageQuestionKey;
+    private string? _imageDataUri;
+    private string? _imageMessage;
+    private bool _isLoading = true;
+    private bool _isWorking;
+
+    protected override void OnParametersSet()
+    {
+        if (_loadedClassId == CurrentClass.ClassId)
+        {
+            return;
+        }
+
+        _pendingClassId = CurrentClass.ClassId;
+        _isLoading = true;
+        _stateResult = null;
+        _loadedImageQuestionKey = null;
+        _imageDataUri = null;
+        _imageMessage = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingClassId != CurrentClass.ClassId)
+        {
+            return;
+        }
+
+        _pendingClassId = null;
+        await LoadStateAsync(showLoading: true);
+        StartPolling();
+        StateHasChanged();
+    }
+
+    private async Task LoadStateAsync(bool showLoading)
+    {
+        if (showLoading)
+        {
+            _isLoading = true;
+        }
+
+        _loadedClassId = CurrentClass.ClassId;
+        _loginState = LoginStateService.Current ?? await SessionStorage.GetAsync<LoginState>(LoginStateKey);
+        LoginStateService.Set(_loginState);
+
+        _stateResult = await QuizSessionService.GetTeacherStateAsync(_loginState, CurrentClass);
+        await LoadCurrentImageAsync();
+        _isLoading = false;
+    }
+
+    private async Task LoadCurrentImageAsync()
+    {
+        var question = _stateResult?.State?.CurrentQuestion;
+
+        if (question is null || question.QuestionKey == _loadedImageQuestionKey)
+        {
+            return;
+        }
+
+        _loadedImageQuestionKey = question.QuestionKey;
+        _imageDataUri = null;
+        _imageMessage = null;
+
+        var imageResult = await QuizContentService.LoadQuestionImageAsync(question.QuestionKey);
+
+        if (!imageResult.Succeeded)
+        {
+            _imageMessage = imageResult.Message;
+            return;
+        }
+
+        _imageDataUri = imageResult.DataUri;
+    }
+
+    private void StartPolling()
+    {
+        _pollingCancellation?.Cancel();
+        _pollingCancellation?.Dispose();
+        _pollingCancellation = new CancellationTokenSource();
+        _ = PollAsync(_pollingCancellation.Token);
+    }
+
+    private async Task PollAsync(CancellationToken cancellationToken)
+    {
+        var interval = Math.Max(500, QuizOptions.Value.StatusRefreshMilliseconds);
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(interval));
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                await InvokeAsync(async () =>
+                {
+                    await LoadStateAsync(showLoading: false);
+                    StateHasChanged();
+                });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task StartQuestionAsync()
+    {
+        await RunActionAsync(() => QuizSessionService.StartQuestionAsync(_loginState, CurrentClass));
+    }
+
+    private async Task FinishQuestionAsync()
+    {
+        await RunActionAsync(() => QuizSessionService.FinishCurrentQuestionAsync(_loginState, CurrentClass));
+    }
+
+    private async Task MoveNextQuestionAsync()
+    {
+        _loadedImageQuestionKey = null;
+        await RunActionAsync(() => QuizSessionService.MoveNextQuestionAsync(_loginState, CurrentClass));
+    }
+
+    private async Task RunActionAsync(Func<Task<QuizActionResult>> action)
+    {
+        _isWorking = true;
+        var result = await action();
+        Snackbar.Add(result.Message, result.Succeeded ? Severity.Success : Severity.Warning);
+        await LoadStateAsync(showLoading: false);
+        _isWorking = false;
+    }
+
+    private static string FormatRemaining(TimeSpan remaining)
+    {
+        return $"{(int)remaining.TotalMinutes:00}:{remaining.Seconds:00}";
+    }
+
+    private static Color GetStatusColor(QuizStudentAnswerStatus status)
+    {
+        if (status.HasAnswered)
+        {
+            return Color.Success;
+        }
+
+        return status.FailedNoAnswer ? Color.Error : Color.Default;
+    }
+
+    private static string GetStatusText(QuizStudentAnswerStatus status)
+    {
+        if (status.HasAnswered)
+        {
+            return "Answered";
+        }
+
+        return status.FailedNoAnswer ? "Failed" : "Not answered";
+    }
+
+    public void Dispose()
+    {
+        _pollingCancellation?.Cancel();
+        _pollingCancellation?.Dispose();
+    }
+}
