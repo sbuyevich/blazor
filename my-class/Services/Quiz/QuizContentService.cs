@@ -13,8 +13,17 @@ public sealed class QuizContentService(
         PropertyNameCaseInsensitive = true
     };
 
+    private QuizContent? _cachedQuiz;
+    private DateTime _cacheTime = DateTime.MinValue;
+    
+
     public async Task<QuizContentResult> LoadQuizAsync(CancellationToken cancellationToken = default)
     {
+        if (_cachedQuiz != null)
+        {
+            return QuizContentResult.Success(_cachedQuiz);
+        }
+
         var rootFolder = ResolveRootFolder();
 
         if (string.IsNullOrWhiteSpace(rootFolder))
@@ -81,7 +90,10 @@ public sealed class QuizContentService(
             questions.Add(questionResult.Value);
         }
 
-        return QuizContentResult.Success(new QuizContent(quizTitle, quizMetadata.Value.TimeLimitSeconds, questions));
+        _cachedQuiz = new QuizContent(quizTitle, quizMetadata.Value.TimeLimitSeconds, questions);
+        _cacheTime = DateTime.UtcNow;
+
+        return QuizContentResult.Success(_cachedQuiz);
     }
 
     public async Task<QuizImageResult> LoadQuestionImageAsync(
