@@ -64,6 +64,8 @@ public static class DatabaseInitializer
 
     private static async Task EnsureQuizTablesAsync(ApplicationDbContext dbContext)
     {
+        await DropLegacyQuizTablesAsync(dbContext);
+
         await dbContext.Database.ExecuteSqlRawAsync(
             """
             CREATE TABLE IF NOT EXISTS QuizAnswers (
@@ -101,6 +103,21 @@ public static class DatabaseInitializer
 
         await dbContext.Database.ExecuteSqlRawAsync(
             "CREATE INDEX IF NOT EXISTS IX_QuizAnswers_QuestionKey_StudentId ON QuizAnswers (QuestionKey, StudentId)");
+    }
+
+    private static async Task DropLegacyQuizTablesAsync(ApplicationDbContext dbContext)
+    {
+        var quizAnswerColumns = await dbContext.Database
+            .SqlQueryRaw<string>("SELECT name AS Value FROM pragma_table_info('QuizAnswers')")
+            .ToListAsync();
+
+        if (quizAnswerColumns.Contains("QuizSessionQuestionId", StringComparer.OrdinalIgnoreCase))
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS QuizAnswers");
+        }
+
+        await dbContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS QuizSessionQuestions");
+        await dbContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS QuizSessions");
     }
 
     private static async Task EnsureQuizAnswerCompatibilityColumnsAsync(ApplicationDbContext dbContext)

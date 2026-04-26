@@ -56,4 +56,4 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and uses
 - [x] [Task 02 - Denormalized QuizAnswers Table](tasks/02-denormalized-quizanswers-table.md)
 - [x] [Task 03 - Teacher Quiz Flow Updates](tasks/03-teacher-quiz-flow-updates.md)
 - [x] [Task 04 - Student Answer Flow Updates](tasks/04-student-answer-flow-updates.md)
-- [ ] [Task 10 - Verification](tasks/10-verification.md)
+- [x] [Task 10 - Verification](tasks/10-verification.md)
