@@ -34,27 +34,19 @@ public sealed class QuizSessionService(
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var now = DateTime.UtcNow;
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Quiz, now, cancellationToken);
 
-        var session = await GetActiveSessionAsync(dbContext, currentClass.ClassId, cancellationToken);
-        var currentQuestion = session is null
-            ? null
-            : await GetCurrentQuestionAsync(dbContext, session.Id, session.ActiveQuestionIndex, cancellationToken);
-
-        if (session is not null &&
-            currentQuestion is not null &&
-            currentQuestion.Status == QuizQuestionStatus.InProgress &&
-            HasQuestionExpired(currentQuestion, now))
+        if (currentQuestion is not null && currentQuestion.HasOpenAnswers && currentQuestion.IsExpired)
         {
-            await FinishQuestionAsync(dbContext, session, currentQuestion, contentResult.Quiz.Questions.Count, now, cancellationToken);
+            await FinishQuestionRowsAsync(dbContext, currentQuestion, now, cancellationToken);
+            currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Quiz, now, cancellationToken);
         }
 
         var state = await BuildTeacherStateAsync(
             dbContext,
             currentClass.ClassId,
             contentResult.Quiz,
-            session,
             currentQuestion,
-            now,
             cancellationToken);
 
         return QuizTeacherStateResult.Success(state);
@@ -81,57 +73,24 @@ public sealed class QuizSessionService(
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-        var session = await GetActiveSessionAsync(dbContext, currentClass.ClassId, cancellationToken);
+        await dbContext.QuizAnswers.ExecuteDeleteAsync(cancellationToken);
 
-        if (session is null)
-        {
-            session = new QuizSession
-            {
-                ClassId = currentClass.ClassId,
-                Title = contentResult.Quiz.Title,
-                Status = QuizSessionStatus.InProgress,
-                ActiveQuestionIndex = 0,
-                StartedAtUtc = DateTime.UtcNow
-            };
-
-            var firstQuestion = await CreateQuestionAsync(
-                dbContext,
-                currentClass.ClassId,
-                session,
-                contentResult.Quiz.Questions[0],
-                cancellationToken);
-
-            session.Questions.Add(firstQuestion);
-            dbContext.QuizSessions.Add(session);
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            return QuizActionResult.Success("Quiz started.");
-        }
-
-        var currentQuestion = await GetCurrentQuestionAsync(
-            dbContext,
-            session.Id,
-            session.ActiveQuestionIndex,
-            cancellationToken);
-
-        if (currentQuestion is not null)
-        {
-            return currentQuestion.Status == QuizQuestionStatus.InProgress
-                ? QuizActionResult.Success("Question is already in progress.")
-                : QuizActionResult.Failure("Use Next to advance to the next question.");
-        }
-
-        var questionContent = contentResult.Quiz.Questions[session.ActiveQuestionIndex];
-        dbContext.QuizSessionQuestions.Add(await CreateQuestionAsync(
+        var createdCount = await CreateQuestionRowsAsync(
             dbContext,
             currentClass.ClassId,
-            session,
-            questionContent,
-            cancellationToken));
+            contentResult.Quiz.Questions[0],
+            DateTime.UtcNow,
+            cancellationToken);
+
+        if (createdCount == 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return QuizActionResult.Failure("No active students are available for this quiz.");
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return QuizActionResult.Success("Question started.");
+        return QuizActionResult.Success("Quiz started.");
     }
 
     public async Task<QuizActionResult> FinishCurrentQuestionAsync(
@@ -154,37 +113,19 @@ public sealed class QuizSessionService(
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Quiz, DateTime.UtcNow, cancellationToken);
 
-        var session = await GetActiveSessionAsync(dbContext, currentClass.ClassId, cancellationToken);
-
-        if (session is null)
-        {
-            return QuizActionResult.Failure("No quiz session is in progress.");
-        }
-
-        var question = await GetCurrentQuestionAsync(
-            dbContext,
-            session.Id,
-            session.ActiveQuestionIndex,
-            cancellationToken);
-
-        if (question is null)
+        if (currentQuestion is null)
         {
             return QuizActionResult.Failure("No question is in progress.");
         }
 
-        if (question.Status == QuizQuestionStatus.Finished)
+        if (!currentQuestion.HasOpenAnswers)
         {
             return QuizActionResult.Success("Question is already finished.");
         }
 
-        await FinishQuestionAsync(
-            dbContext,
-            session,
-            question,
-            contentResult.Quiz.Questions.Count,
-            DateTime.UtcNow,
-            cancellationToken);
+        await FinishQuestionRowsAsync(dbContext, currentQuestion, DateTime.UtcNow, cancellationToken);
 
         return QuizActionResult.Success("Question finished.");
     }
@@ -209,169 +150,184 @@ public sealed class QuizSessionService(
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var now = DateTime.UtcNow;
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Quiz, now, cancellationToken);
 
-        var session = await GetActiveSessionAsync(dbContext, currentClass.ClassId, cancellationToken);
-
-        if (session is null)
+        if (currentQuestion is null)
         {
             return QuizActionResult.Failure("No quiz session is in progress.");
         }
 
-        var currentQuestion = await GetCurrentQuestionAsync(
-            dbContext,
-            session.Id,
-            session.ActiveQuestionIndex,
-            cancellationToken);
+        if (currentQuestion.HasOpenAnswers && currentQuestion.IsExpired)
+        {
+            await FinishQuestionRowsAsync(dbContext, currentQuestion, now, cancellationToken);
+            currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Quiz, now, cancellationToken);
+        }
 
-        if (currentQuestion is not null && currentQuestion.Status == QuizQuestionStatus.InProgress)
+        if (currentQuestion?.IsInProgress == true)
         {
             return QuizActionResult.Failure("Finish the current question before moving next.");
         }
 
-        var nextIndex = session.ActiveQuestionIndex + 1;
+        var nextIndex = currentQuestion!.QuestionIndex + 1;
 
         if (nextIndex >= contentResult.Quiz.Questions.Count)
         {
-            session.Status = QuizSessionStatus.Completed;
-            session.CompletedAtUtc ??= DateTime.UtcNow;
-            await dbContext.SaveChangesAsync(cancellationToken);
-
             return QuizActionResult.Success("Quiz complete.");
         }
 
-        session.ActiveQuestionIndex = nextIndex;
-
-        dbContext.QuizSessionQuestions.Add(await CreateQuestionAsync(
+        var createdCount = await CreateQuestionRowsAsync(
             dbContext,
             currentClass.ClassId,
-            session,
             contentResult.Quiz.Questions[nextIndex],
-            cancellationToken));
+            now,
+            cancellationToken);
+
+        if (createdCount == 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return QuizActionResult.Failure("No active students are available for the next question.");
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return QuizActionResult.Success("Next question started.");
     }
 
-    private async Task<QuizSessionQuestion> CreateQuestionAsync(
+    private static async Task<int> CreateQuestionRowsAsync(
         ApplicationDbContext dbContext,
         int classId,
-        QuizSession session,
         QuizQuestionContent questionContent,
+        DateTime startedAtUtc,
         CancellationToken cancellationToken)
     {
-        var activeStudents = await dbContext.Students
-            .Where(student => student.ClassId == classId && student.IsActive)
-            .OrderBy(student => student.LastName)
-            .ThenBy(student => student.FirstName)
-            .ThenBy(student => student.UserName)
-            .ToListAsync(cancellationToken);
-
-        var startedAtUtc = DateTime.UtcNow;
-
         await dbContext.QuizAnswers
             .Where(answer =>
                 answer.QuestionIndex == questionContent.Index &&
                 answer.QuestionKey == questionContent.Key)
             .ExecuteDeleteAsync(cancellationToken);
 
-        dbContext.QuizAnswers.AddRange(activeStudents
-            .Select(student => new QuizAnswer
-            {
-                StudentId = student.Id,
-                StudentUserName = student.UserName,
-                StudentFirstName = student.FirstName,
-                StudentLastName = student.LastName,
-                StudentDisplayName = student.DisplayName,
-                QuestionKey = questionContent.Key,
-                QuestionIndex = questionContent.Index,
-                QuestionText = questionContent.Title,
-                CorrectAnswer = questionContent.CorrectAnswer,
-                Answer = string.Empty,
-                StartedAtUtc = startedAtUtc,
-                IsCorrect = false
-            }));
+        var activeStudents = await dbContext.Students
+            .AsNoTracking()
+            .Where(student => student.ClassId == classId && student.IsActive)
+            .OrderBy(student => student.LastName)
+            .ThenBy(student => student.FirstName)
+            .ThenBy(student => student.UserName)
+            .ToListAsync(cancellationToken);
 
-        return new QuizSessionQuestion
+        dbContext.QuizAnswers.AddRange(activeStudents.Select(student => new QuizAnswer
         {
-            QuizSession = session,
-            QuizSessionId = session.Id,
-            QuestionIndex = questionContent.Index,
+            StudentId = student.Id,
+            StudentUserName = student.UserName,
+            StudentFirstName = student.FirstName,
+            StudentLastName = student.LastName,
+            StudentDisplayName = student.DisplayName,
             QuestionKey = questionContent.Key,
-            Title = questionContent.Title,
-            TimeoutSeconds = questionContent.TimeoutSeconds,
-            CorrectAnswer = int.Parse(questionContent.CorrectAnswer),
-            Status = QuizQuestionStatus.InProgress,
-            StartedAtUtc = startedAtUtc
-        };
+            QuestionIndex = questionContent.Index,
+            QuestionText = questionContent.Title,
+            CorrectAnswer = questionContent.CorrectAnswer,
+            Answer = string.Empty,
+            StartedAtUtc = startedAtUtc,
+            IsCorrect = false
+        }));
+
+        return activeStudents.Count;
     }
 
-    private static async Task<QuizSession?> GetActiveSessionAsync(
+    private static async Task FinishQuestionRowsAsync(
         ApplicationDbContext dbContext,
-        int classId,
+        LiveQuestionState question,
+        DateTime endedAtUtc,
         CancellationToken cancellationToken)
     {
-        return await dbContext.QuizSessions
-            .Where(session => session.ClassId == classId && session.Status == QuizSessionStatus.InProgress)
-            .OrderByDescending(session => session.StartedAtUtc)
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
-    private static async Task<QuizSessionQuestion?> GetCurrentQuestionAsync(
-        ApplicationDbContext dbContext,
-        int sessionId,
-        int activeQuestionIndex,
-        CancellationToken cancellationToken)
-    {
-        return await dbContext.QuizSessionQuestions
-            .SingleOrDefaultAsync(
-                question =>
-                    question.QuizSessionId == sessionId &&
-                    question.QuestionIndex == activeQuestionIndex,
-                cancellationToken);
-    }
-
-    private static async Task FinishQuestionAsync(
-        ApplicationDbContext dbContext,
-        QuizSession session,
-        QuizSessionQuestion question,
-        int questionCount,
-        DateTime finishedAtUtc,
-        CancellationToken cancellationToken)
-    {
-        question.Status = QuizQuestionStatus.Finished;
-        question.FinishedAtUtc ??= finishedAtUtc;
-
         var answers = await dbContext.QuizAnswers
             .Where(answer =>
                 answer.QuestionIndex == question.QuestionIndex &&
-                answer.QuestionKey == question.QuestionKey &&
-                answer.EndedAtUtc == null)
+                answer.QuestionKey == question.QuestionKey)
             .ToListAsync(cancellationToken);
 
         foreach (var answer in answers)
         {
-            answer.EndedAtUtc = finishedAtUtc;
+            answer.EndedAtUtc ??= endedAtUtc;
             answer.IsCorrect = answer.Answer.Length > 0 &&
                 string.Equals(answer.Answer, answer.CorrectAnswer, StringComparison.Ordinal);
         }
 
-        if (question.QuestionIndex >= questionCount - 1)
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task<LiveQuestionState?> GetCurrentLiveQuestionAsync(
+        ApplicationDbContext dbContext,
+        QuizContent quiz,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var latestQuestion = await dbContext.QuizAnswers
+            .AsNoTracking()
+            .OrderByDescending(answer => answer.QuestionIndex)
+            .ThenByDescending(answer => answer.StartedAtUtc)
+            .Select(answer => new
+            {
+                answer.QuestionIndex,
+                answer.QuestionKey,
+                answer.QuestionText
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (latestQuestion is null)
         {
-            session.Status = QuizSessionStatus.Completed;
-            session.CompletedAtUtc ??= finishedAtUtc;
+            return null;
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        var rows = await dbContext.QuizAnswers
+            .AsNoTracking()
+            .Where(answer =>
+                answer.QuestionIndex == latestQuestion.QuestionIndex &&
+                answer.QuestionKey == latestQuestion.QuestionKey)
+            .Select(answer => new
+            {
+                answer.StartedAtUtc,
+                answer.EndedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
+        if (rows.Count == 0)
+        {
+            return null;
+        }
+
+        var questionContent = quiz.Questions.FirstOrDefault(question =>
+            question.Index == latestQuestion.QuestionIndex &&
+            string.Equals(question.Key, latestQuestion.QuestionKey, StringComparison.OrdinalIgnoreCase));
+
+        var startedAtUtc = rows.Min(row => row.StartedAtUtc);
+        var timeoutSeconds = questionContent?.TimeoutSeconds ?? quiz.TimeLimitSeconds;
+        var hasOpenAnswers = rows.Any(row => row.EndedAtUtc is null);
+        var isExpired = now >= startedAtUtc.AddSeconds(timeoutSeconds);
+        var isInProgress = hasOpenAnswers && !isExpired;
+        var finishedAtUtc = hasOpenAnswers ? null : rows.Max(row => row.EndedAtUtc);
+        var remaining = isInProgress
+            ? startedAtUtc.AddSeconds(timeoutSeconds) - now
+            : TimeSpan.Zero;
+
+        return new LiveQuestionState(
+            latestQuestion.QuestionIndex,
+            latestQuestion.QuestionKey,
+            questionContent?.Title ?? latestQuestion.QuestionText,
+            timeoutSeconds,
+            startedAtUtc,
+            finishedAtUtc,
+            hasOpenAnswers,
+            isExpired,
+            isInProgress,
+            remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero);
     }
 
     private static async Task<QuizTeacherState> BuildTeacherStateAsync(
         ApplicationDbContext dbContext,
         int classId,
         QuizContent quiz,
-        QuizSession? session,
-        QuizSessionQuestion? currentQuestion,
-        DateTime now,
+        LiveQuestionState? currentQuestion,
         CancellationToken cancellationToken)
     {
         var studentStatuses = await BuildStudentStatusesAsync(
@@ -380,10 +336,14 @@ public sealed class QuizSessionService(
             currentQuestion,
             cancellationToken);
 
+        var isComplete = currentQuestion is not null &&
+            currentQuestion.QuestionIndex >= quiz.Questions.Count - 1 &&
+            !currentQuestion.IsInProgress;
+
         return new QuizTeacherState(
             quiz.Title,
-            session is not null,
-            session?.Status == QuizSessionStatus.Completed,
+            currentQuestion is not null,
+            isComplete,
             currentQuestion is null
                 ? null
                 : new QuizTeacherQuestionState(
@@ -394,15 +354,15 @@ public sealed class QuizSessionService(
                     currentQuestion.TimeoutSeconds,
                     currentQuestion.StartedAtUtc,
                     currentQuestion.FinishedAtUtc,
-                    currentQuestion.Status == QuizQuestionStatus.InProgress,
-                    GetRemaining(currentQuestion, now)),
+                    currentQuestion.IsInProgress,
+                    currentQuestion.Remaining),
             studentStatuses);
     }
 
     private static async Task<IReadOnlyList<QuizStudentAnswerStatus>> BuildStudentStatusesAsync(
         ApplicationDbContext dbContext,
         int classId,
-        QuizSessionQuestion? currentQuestion,
+        LiveQuestionState? currentQuestion,
         CancellationToken cancellationToken)
     {
         var activeStudents = await dbContext.Students
@@ -426,7 +386,7 @@ public sealed class QuizSessionService(
                 .ToList();
         }
 
-        var answers = (await dbContext.QuizAnswers
+        var answers = await dbContext.QuizAnswers
             .AsNoTracking()
             .Where(answer =>
                 answer.QuestionIndex == currentQuestion.QuestionIndex &&
@@ -435,14 +395,9 @@ public sealed class QuizSessionService(
             {
                 answer.StudentId,
                 answer.Answer,
-                answer.EndedAtUtc,
-                answer.StartedAtUtc
+                answer.EndedAtUtc
             })
-            .ToListAsync(cancellationToken))
-            .GroupBy(answer => answer.StudentId)
-            .ToDictionary(
-                group => group.Key,
-                group => group.OrderByDescending(answer => answer.StartedAtUtc).First());
+            .ToDictionaryAsync(answer => answer.StudentId, cancellationToken);
 
         return activeStudents
             .Select(student =>
@@ -457,23 +412,6 @@ public sealed class QuizSessionService(
                     answer is not null && answer.EndedAtUtc is not null && answer.Answer.Length == 0);
             })
             .ToList();
-    }
-
-    private static bool HasQuestionExpired(QuizSessionQuestion question, DateTime now)
-    {
-        return now >= question.StartedAtUtc.AddSeconds(question.TimeoutSeconds);
-    }
-
-    private static TimeSpan GetRemaining(QuizSessionQuestion question, DateTime now)
-    {
-        if (question.Status == QuizQuestionStatus.Finished)
-        {
-            return TimeSpan.Zero;
-        }
-
-        var remaining = question.StartedAtUtc.AddSeconds(question.TimeoutSeconds) - now;
-
-        return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
     }
 
     private string? ValidateTeacherAccess(LoginState? loginState, ClassContextModel currentClass)
@@ -499,4 +437,16 @@ public sealed class QuizSessionService(
             ? null
             : "Teacher login is required to manage quizzes.";
     }
+
+    private sealed record LiveQuestionState(
+        int QuestionIndex,
+        string QuestionKey,
+        string Title,
+        int TimeoutSeconds,
+        DateTime StartedAtUtc,
+        DateTime? FinishedAtUtc,
+        bool HasOpenAnswers,
+        bool IsExpired,
+        bool IsInProgress,
+        TimeSpan Remaining);
 }

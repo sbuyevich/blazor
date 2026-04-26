@@ -1,5 +1,7 @@
 # Task 03 - Teacher Quiz Flow Updates
 
+Status: Complete
+
 ## Goal
 
 Update teacher quiz controls to use the in-memory quiz model and denormalized live answer rows.
