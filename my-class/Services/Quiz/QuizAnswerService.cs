@@ -73,7 +73,7 @@ public sealed class QuizAnswerService(
         if (answer.Answer.Length > 0)
         {
             return QuizAnswerPageStateResult.Success(
-                new QuizAnswerPageState(false, true, false, "Answer submitted. Waiting for the next question."));
+                new QuizAnswerPageState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question."));
         }
 
         if (answer.EndedAtUtc is not null)

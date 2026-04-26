@@ -17,8 +17,8 @@ else
 {
     <MudStack Spacing="3" Class="quiz-answer-shell">
         <div>
-            <MudText Typo="Typo.h4">Quiz Answer</MudText>
-            <MudText Typo="Typo.h6">Select correct answer number:</MudText>
+            <MudText Typo="Typo.h4">Answer</MudText>
+            <MudText Typo="Typo.h6">Select correct answer number</MudText>
             <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
         </div>
 
@@ -28,12 +28,12 @@ else
                 @_stateResult.Message
             </MudAlert>
         }
-        else if (_lastSubmitMessage is not null)
+        @* else if (_lastSubmitMessage is not null)
         {
             <MudAlert Severity="@(_lastSubmitSucceeded ? Severity.Success : Severity.Warning)" Variant="Variant.Filled">
                 @_lastSubmitMessage
             </MudAlert>
-        }
+        } *@
 
         <MudGrid Spacing="20">
             @foreach (var answer in AnswerChoices)
@@ -163,7 +163,7 @@ else
         var result = await QuizAnswerService.SubmitAnswerAsync(_loginState, CurrentClass, selectedAnswer);
         _lastSubmitSucceeded = result.Succeeded;
         _lastSubmitMessage = result.Message;
-        Snackbar.Add(result.Message, result.Succeeded ? Severity.Success : Severity.Warning);
+       // Snackbar.Add(result.Message, result.Succeeded ? Severity.Success : Severity.Warning);
         await LoadStateAsync(showLoading: false);
 
         _isSubmitting = false;
