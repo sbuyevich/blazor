@@ -66,37 +66,6 @@ public static class DatabaseInitializer
     {
         await dbContext.Database.ExecuteSqlRawAsync(
             """
-            CREATE TABLE IF NOT EXISTS QuizSessions (
-                Id INTEGER NOT NULL CONSTRAINT PK_QuizSessions PRIMARY KEY AUTOINCREMENT,
-                ClassId INTEGER NOT NULL,
-                Title TEXT NOT NULL,
-                Status INTEGER NOT NULL,
-                ActiveQuestionIndex INTEGER NOT NULL,
-                StartedAtUtc TEXT NOT NULL,
-                CompletedAtUtc TEXT NULL,
-                CONSTRAINT FK_QuizSessions_Classes_ClassId FOREIGN KEY (ClassId) REFERENCES Classes (Id) ON DELETE CASCADE
-            )
-            """);
-
-        await dbContext.Database.ExecuteSqlRawAsync(
-            """
-            CREATE TABLE IF NOT EXISTS QuizSessionQuestions (
-                Id INTEGER NOT NULL CONSTRAINT PK_QuizSessionQuestions PRIMARY KEY AUTOINCREMENT,
-                QuizSessionId INTEGER NOT NULL,
-                QuestionIndex INTEGER NOT NULL,
-                QuestionKey TEXT NOT NULL,
-                Title TEXT NOT NULL,
-                TimeoutSeconds INTEGER NOT NULL,
-                CorrectAnswer INTEGER NOT NULL,
-                Status INTEGER NOT NULL,
-                StartedAtUtc TEXT NOT NULL,
-                FinishedAtUtc TEXT NULL,
-                CONSTRAINT FK_QuizSessionQuestions_QuizSessions_QuizSessionId FOREIGN KEY (QuizSessionId) REFERENCES QuizSessions (Id) ON DELETE CASCADE
-            )
-            """);
-
-        await dbContext.Database.ExecuteSqlRawAsync(
-            """
             CREATE TABLE IF NOT EXISTS QuizAnswers (
                 Id INTEGER NOT NULL CONSTRAINT PK_QuizAnswers PRIMARY KEY AUTOINCREMENT,
                 StudentId INTEGER NOT NULL,
@@ -117,12 +86,6 @@ public static class DatabaseInitializer
             """);
 
         await EnsureQuizAnswerCompatibilityColumnsAsync(dbContext);
-
-        await dbContext.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS IX_QuizSessions_ClassId_Status ON QuizSessions (ClassId, Status)");
-
-        await dbContext.Database.ExecuteSqlRawAsync(
-            "CREATE UNIQUE INDEX IF NOT EXISTS IX_QuizSessionQuestions_QuizSessionId_QuestionIndex ON QuizSessionQuestions (QuizSessionId, QuestionIndex)");
 
         await dbContext.Database.ExecuteSqlRawAsync(
             "CREATE INDEX IF NOT EXISTS IX_QuizAnswers_QuestionIndex ON QuizAnswers (QuestionIndex)");

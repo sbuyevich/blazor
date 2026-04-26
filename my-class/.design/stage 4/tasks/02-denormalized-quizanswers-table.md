@@ -27,13 +27,14 @@ Replace live quiz answer persistence with one denormalized `QuizAnswers` table r
   - `IsCorrect`
 - Ensure `Answer` can be empty.
 - Treat empty `Answer` as incorrect.
-- Stop using session-question answer rows as the live answer source.
+- Do not create `QuizSessions` or `QuizSessionQuestions`.
+- Use `QuizAnswers` as the active quiz-run source.
 
 ## Deliverables
 
 - Updated `QuizAnswer` entity/table shape
 - Updated DbContext mapping
-- Compatibility/startup database updates for local SQLite
+- Startup database updates for local SQLite
 - Service queries updated to use the denormalized table
 
 ## Acceptance Criteria
@@ -43,9 +44,9 @@ Replace live quiz answer persistence with one denormalized `QuizAnswers` table r
 - `CorrectAnswer` is stored as a string.
 - Empty `Answer` is valid storage and means no answer was submitted.
 - Empty `Answer` produces `IsCorrect = false`.
-- Stage 4 live answer queries use `QuizAnswers` directly instead of `QuizSessionQuestionId`.
+- Stage 4 live answer queries use `QuizAnswers` directly with `QuestionIndex`, `QuestionKey`, and `StudentId`.
+- Stage 4 database model does not include `QuizSessions` or `QuizSessionQuestions`.
 
 ## Notes
 
-- Existing old quiz tables may remain in the database.
 - Stage 4 should use the denormalized `QuizAnswers` table as the active quiz-run source of truth.

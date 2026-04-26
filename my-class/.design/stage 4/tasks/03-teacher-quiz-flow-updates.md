@@ -35,9 +35,10 @@ Update teacher quiz controls to use the in-memory quiz model and denormalized li
 - Finish updates end time and correctness for current question rows.
 - Timeout updates end time and correctness for current question rows.
 - Teacher grid shows answered/not answered based on `Answer`.
-- Teacher grid does not use old session tables.
+- Teacher grid reads the current question from the latest `QuizAnswers` rows.
+- Teacher flow does not create or query `QuizSessions` or `QuizSessionQuestions`.
 
 ## Notes
 
-- Stage 4 supports one live quiz session at a time.
+- Stage 4 supports one active quiz run at a time.
 - Teacher still displays question image on the shared screen.

@@ -1,7 +1,7 @@
 # Stage 4 Quiz Reading And Answer Saving Plan
 
 ## Summary
-Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and replaces the session-based answer model with one denormalized active-run `QuizAnswers` table. The teacher loads one quiz into memory when opening the Quiz page. Starting a quiz clears prior answers once, and each newly started question adds answer rows for all active students.
+Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and uses one denormalized active-run `QuizAnswers` table. The teacher loads one quiz into memory when opening the Quiz page. Starting a quiz clears prior answers once, and each newly started question adds answer rows for all active students.
 
 ## Key Changes
 - Update quiz file reading:
@@ -21,7 +21,7 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
   - Start quiz clears old rows and starts the first question.
   - Next starts the next question and appends rows for that question.
   - Finish/timeout updates end time, empty answer where needed, and `IsCorrect`.
-  - Stop using session tables for live quiz behavior; existing old tables may remain but should no longer be queried or written by the quiz flow.
+  - Do not use or create `QuizSessions` or `QuizSessionQuestions`; active quiz state comes from `QuizAnswers`.
 
 ## Public Interfaces / Types
 - Add/update in-memory quiz models:
@@ -29,7 +29,7 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
   - `QuizQuestion`: folder key, image path/reference, `CorrectAnswer`, effective `TimeLimitSeconds`.
 - Replace answer persistence contract with denormalized answer records:
   - `QuizAnswer`: student snapshot fields, question snapshot fields, `Answer`, `CorrectAnswer`, `IsCorrect`, start/end timestamps.
-- Update services so teacher and student pages use the new live `QuizAnswers` table rather than session-based tables.
+- Update services so teacher and student pages use `QuizAnswers` directly.
 
 ## Test Plan
 - Root `quiz.json` with `title` and `TimeLimitSeconds` loads successfully.
@@ -48,7 +48,7 @@ Stage 4 aligns quiz loading with the real `.assets/quiz` file structure and repl
 - Use the correctly spelled class names `Quiz` and `QuizQuestion`.
 - `q.json` is the source of answer-validation data.
 - `q.jpg` is the displayed question image.
-- Stage 4 supports one live quiz session at a time.
+- Stage 4 supports one active quiz run at a time.
 
 ## Task Breakdown
 
