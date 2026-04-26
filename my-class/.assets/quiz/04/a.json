@@ -1,3 +1,4 @@
 {
+    "question": "What is the default value of an int variable declared at the class level?",
     "correctAnswer": "4"
 }
