@@ -1,0 +1,57 @@
+# Stage 3 Quiz Plan
+
+## Summary
+Stage 3 adds a teacher-led live quiz flow. The teacher opens the Quiz page, clicks Start, displays the current question image on the shared screen, and students submit answers from a simple Quiz Answer page with four large buttons. Answers and missed-answer failures are persisted in the database.
+
+## Key Changes
+- Add quiz configuration in `appsettings.json`:
+  - `Quiz:RootFolder`: folder containing the single configured quiz.
+  - `Quiz:StatusRefreshMilliseconds`: teacher grid polling interval, default `1500`.
+- Use this file contract:
+  - Root `quiz.json`: `{ "title": "...", "questions": [{ "id": "q1", "folder": "q1" }] }`
+  - Each question folder contains `question.json`: `{ "title": "...", "timeoutSeconds": 30, "correctAnswer": 1, "imageFile": "question.jpg" }`
+  - Each question folder contains the JPG referenced by `imageFile`.
+- Add teacher navigation item `Quiz` under Teacher and student navigation item `Quiz Answer` after login.
+- Teacher Quiz page:
+  - Loads the single configured quiz.
+  - Shows current question JPG, countdown, Start, Finish, and Next buttons.
+  - Shows active students with answered/not answered status only.
+  - Auto-refreshes status using configured polling interval.
+  - When timeout reaches zero, finishes the question and records failed results for active students who did not answer.
+- Student Quiz Answer page:
+  - Shows four large buttons labeled `1`, `2`, `3`, `4`.
+  - Buttons are enabled only while a teacher-started question is active.
+  - Submit saves the selected answer to the database.
+  - After submitting, the student sees an answered/waiting state and cannot submit again for that question.
+
+## Public Interfaces / Types
+- Add EF entities/tables:
+  - `QuizSession`: current classroom quiz run, class scope, title, status, active question index.
+  - `QuizSessionQuestion`: per-session question state, started/finished timestamps, timeout, correct answer.
+  - `QuizAnswer`: student answer per session question, selected answer, correctness, submitted timestamp, failure flag for timeout/no answer.
+- Add quiz services:
+  - `IQuizContentService` reads and validates configured quiz files and serves question image references.
+  - `IQuizSessionService` starts/finishes/advances questions and records timeout failures.
+  - `IQuizAnswerService` submits student answers and returns current answer-page state.
+- Add a local image endpoint or component-safe file serving path for configured JPG files; do not expose arbitrary filesystem paths.
+- Keep authorization rules server-side: only teachers can start/finish/advance quizzes, only students in the current class can submit answers.
+
+## Test Plan
+- `dotnet build .\MyClass.slnx` succeeds.
+- App fails gracefully with a clear message if quiz folder or JSON is missing/invalid.
+- Teacher can start the first question and see image, countdown, and active student grid.
+- Student can open Quiz Answer page and submit one answer for the active question.
+- Duplicate student submissions for the same question are rejected.
+- Teacher grid changes from not answered to answered after polling.
+- Timeout finishes the question and creates failed results for active non-answering students.
+- Finish manually closes submissions and records failures for non-answering active students.
+- Next advances to the next question; after the last question, the quiz shows complete.
+- Students from another class cannot answer the current class quiz.
+- Non-teachers cannot access teacher Quiz controls.
+
+## Assumptions
+- Stage 3 supports one configured quiz only.
+- Students do not see the question image in their own page; the teacher displays it on the shared screen.
+- Teacher status grid shows answered/not answered only, not selected answer or correctness.
+- Correctness is stored for results/failure tracking but not shown live in the teacher grid.
+- Auto-refresh uses polling, not SignalR push.
