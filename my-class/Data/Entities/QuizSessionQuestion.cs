@@ -23,6 +23,4 @@ public sealed class QuizSessionQuestion
     public DateTime? FinishedAtUtc { get; set; }
 
     public QuizSession QuizSession { get; set; } = null!;
-
-    public ICollection<QuizAnswer> Answers { get; set; } = [];
 }

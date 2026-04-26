@@ -99,17 +99,24 @@ public static class DatabaseInitializer
             """
             CREATE TABLE IF NOT EXISTS QuizAnswers (
                 Id INTEGER NOT NULL CONSTRAINT PK_QuizAnswers PRIMARY KEY AUTOINCREMENT,
-                QuizSessionQuestionId INTEGER NOT NULL,
                 StudentId INTEGER NOT NULL,
-                Status INTEGER NOT NULL,
-                SelectedAnswer INTEGER NULL,
-                IsCorrect INTEGER NULL,
-                CreatedAtUtc TEXT NOT NULL,
-                SubmittedAtUtc TEXT NULL,
-                CONSTRAINT FK_QuizAnswers_QuizSessionQuestions_QuizSessionQuestionId FOREIGN KEY (QuizSessionQuestionId) REFERENCES QuizSessionQuestions (Id) ON DELETE CASCADE,
+                StudentUserName TEXT NOT NULL,
+                StudentFirstName TEXT NOT NULL,
+                StudentLastName TEXT NOT NULL,
+                StudentDisplayName TEXT NOT NULL,
+                QuestionKey TEXT NOT NULL,
+                QuestionIndex INTEGER NOT NULL,
+                QuestionText TEXT NOT NULL,
+                CorrectAnswer TEXT NOT NULL,
+                Answer TEXT NOT NULL DEFAULT '',
+                StartedAtUtc TEXT NOT NULL,
+                EndedAtUtc TEXT NULL,
+                IsCorrect INTEGER NOT NULL DEFAULT 0,
                 CONSTRAINT FK_QuizAnswers_Students_StudentId FOREIGN KEY (StudentId) REFERENCES Students (Id) ON DELETE CASCADE
             )
             """);
+
+        await EnsureQuizAnswerCompatibilityColumnsAsync(dbContext);
 
         await dbContext.Database.ExecuteSqlRawAsync(
             "CREATE INDEX IF NOT EXISTS IX_QuizSessions_ClassId_Status ON QuizSessions (ClassId, Status)");
@@ -118,9 +125,111 @@ public static class DatabaseInitializer
             "CREATE UNIQUE INDEX IF NOT EXISTS IX_QuizSessionQuestions_QuizSessionId_QuestionIndex ON QuizSessionQuestions (QuizSessionId, QuestionIndex)");
 
         await dbContext.Database.ExecuteSqlRawAsync(
-            "CREATE UNIQUE INDEX IF NOT EXISTS IX_QuizAnswers_QuizSessionQuestionId_StudentId ON QuizAnswers (QuizSessionQuestionId, StudentId)");
+            "CREATE INDEX IF NOT EXISTS IX_QuizAnswers_QuestionIndex ON QuizAnswers (QuestionIndex)");
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "CREATE INDEX IF NOT EXISTS IX_QuizAnswers_QuestionKey ON QuizAnswers (QuestionKey)");
 
         await dbContext.Database.ExecuteSqlRawAsync(
             "CREATE INDEX IF NOT EXISTS IX_QuizAnswers_StudentId ON QuizAnswers (StudentId)");
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "CREATE INDEX IF NOT EXISTS IX_QuizAnswers_QuestionIndex_StudentId ON QuizAnswers (QuestionIndex, StudentId)");
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "CREATE INDEX IF NOT EXISTS IX_QuizAnswers_QuestionKey_StudentId ON QuizAnswers (QuestionKey, StudentId)");
+    }
+
+    private static async Task EnsureQuizAnswerCompatibilityColumnsAsync(ApplicationDbContext dbContext)
+    {
+        var quizAnswerColumns = await dbContext.Database
+            .SqlQueryRaw<string>("SELECT name AS Value FROM pragma_table_info('QuizAnswers')")
+            .ToListAsync();
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "StudentUserName",
+            "ALTER TABLE QuizAnswers ADD COLUMN StudentUserName TEXT NOT NULL DEFAULT ''");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "StudentFirstName",
+            "ALTER TABLE QuizAnswers ADD COLUMN StudentFirstName TEXT NOT NULL DEFAULT ''");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "StudentLastName",
+            "ALTER TABLE QuizAnswers ADD COLUMN StudentLastName TEXT NOT NULL DEFAULT ''");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "StudentDisplayName",
+            "ALTER TABLE QuizAnswers ADD COLUMN StudentDisplayName TEXT NOT NULL DEFAULT ''");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "QuestionKey",
+            "ALTER TABLE QuizAnswers ADD COLUMN QuestionKey TEXT NOT NULL DEFAULT ''");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "QuestionIndex",
+            "ALTER TABLE QuizAnswers ADD COLUMN QuestionIndex INTEGER NOT NULL DEFAULT 0");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "QuestionText",
+            "ALTER TABLE QuizAnswers ADD COLUMN QuestionText TEXT NOT NULL DEFAULT ''");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "CorrectAnswer",
+            "ALTER TABLE QuizAnswers ADD COLUMN CorrectAnswer TEXT NOT NULL DEFAULT ''");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "Answer",
+            "ALTER TABLE QuizAnswers ADD COLUMN Answer TEXT NOT NULL DEFAULT ''");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "StartedAtUtc",
+            "ALTER TABLE QuizAnswers ADD COLUMN StartedAtUtc TEXT NOT NULL DEFAULT '0001-01-01T00:00:00.0000000Z'");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "EndedAtUtc",
+            "ALTER TABLE QuizAnswers ADD COLUMN EndedAtUtc TEXT NULL");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "IsCorrect",
+            "ALTER TABLE QuizAnswers ADD COLUMN IsCorrect INTEGER NOT NULL DEFAULT 0");
+    }
+
+    private static async Task AddQuizAnswerColumnIfMissingAsync(
+        ApplicationDbContext dbContext,
+        IReadOnlyCollection<string> columns,
+        string columnName,
+        string sql)
+    {
+        if (columns.Contains(columnName, StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        await dbContext.Database.ExecuteSqlRawAsync(sql);
     }
 }

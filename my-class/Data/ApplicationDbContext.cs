@@ -120,19 +120,56 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             entity.HasIndex(question => new { question.QuizSessionId, question.QuestionIndex })
                 .IsUnique();
 
-            entity.HasMany(question => question.Answers)
-                .WithOne(answer => answer.QuizSessionQuestion)
-                .HasForeignKey(answer => answer.QuizSessionQuestionId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<QuizAnswer>(entity =>
         {
-            entity.Property(answer => answer.Status)
+            entity.Property(answer => answer.StudentUserName)
+                .HasMaxLength(100)
                 .IsRequired();
 
-            entity.HasIndex(answer => new { answer.QuizSessionQuestionId, answer.StudentId })
-                .IsUnique();
+            entity.Property(answer => answer.StudentFirstName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(answer => answer.StudentLastName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(answer => answer.StudentDisplayName)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(answer => answer.QuestionKey)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(answer => answer.QuestionText)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(answer => answer.CorrectAnswer)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(answer => answer.Answer)
+                .HasMaxLength(50)
+                .HasDefaultValue(string.Empty)
+                .IsRequired();
+
+            entity.Property(answer => answer.IsCorrect)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entity.HasIndex(answer => answer.QuestionIndex);
+
+            entity.HasIndex(answer => answer.QuestionKey);
+
+            entity.HasIndex(answer => answer.StudentId);
+
+            entity.HasIndex(answer => new { answer.QuestionIndex, answer.StudentId });
+
+            entity.HasIndex(answer => new { answer.QuestionKey, answer.StudentId });
 
             entity.HasOne(answer => answer.Student)
                 .WithMany()

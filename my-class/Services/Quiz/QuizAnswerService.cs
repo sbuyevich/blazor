@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using MyClass.Data;
 using MyClass.Data.Entities;
@@ -39,34 +40,46 @@ public sealed class QuizAnswerService(
         }
 
         var answer = await dbContext.QuizAnswers
-            .SingleOrDefaultAsync(
+            .AsNoTracking()
+            .Where(
                 answer =>
-                    answer.QuizSessionQuestionId == current.Question.Id &&
-                    answer.StudentId == studentResult.Student.Id,
-                cancellationToken);
+                    answer.QuestionIndex == current.Question.QuestionIndex &&
+                    answer.QuestionKey == current.Question.QuestionKey &&
+                    answer.StudentId == studentResult.Student.Id)
+            .OrderByDescending(answer => answer.StartedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (HasQuestionExpired(current.Question, DateTime.UtcNow))
         {
             await FinishExpiredQuestionAsync(dbContext, current, contentResult.Quiz.Questions.Count, cancellationToken);
 
-            return answer?.Status == QuizAnswerStatus.Answered
+            return answer is not null && answer.Answer.Length > 0
                 ? QuizAnswerPageStateResult.Success(
                     new QuizAnswerPageState(false, true, false, "Answer submitted. Waiting for the next question."))
                 : QuizAnswerPageStateResult.Success(
                     new QuizAnswerPageState(false, false, true, "This question has finished."));
         }
 
-        return answer?.Status switch
+        if (answer is null)
         {
-            QuizAnswerStatus.InProgress => QuizAnswerPageStateResult.Success(
-                new QuizAnswerPageState(true, false, false, "Choose an answer.")),
-            QuizAnswerStatus.Answered => QuizAnswerPageStateResult.Success(
-                new QuizAnswerPageState(false, true, false, "Answer submitted. Waiting for the next question.")),
-            QuizAnswerStatus.FailedNoAnswer => QuizAnswerPageStateResult.Success(
-                new QuizAnswerPageState(false, false, true, "This question has finished.")),
-            _ => QuizAnswerPageStateResult.Success(
-                new QuizAnswerPageState(false, false, false, "Waiting for the teacher to start a question."))
-        };
+            return QuizAnswerPageStateResult.Success(
+                new QuizAnswerPageState(false, false, false, "Waiting for the teacher to start a question."));
+        }
+
+        if (answer.Answer.Length > 0)
+        {
+            return QuizAnswerPageStateResult.Success(
+                new QuizAnswerPageState(false, true, false, "Answer submitted. Waiting for the next question."));
+        }
+
+        if (answer.EndedAtUtc is not null)
+        {
+            return QuizAnswerPageStateResult.Success(
+                new QuizAnswerPageState(false, false, true, "This question has finished."));
+        }
+
+        return QuizAnswerPageStateResult.Success(
+            new QuizAnswerPageState(true, false, false, "Choose an answer."));
     }
 
     public async Task<QuizActionResult> SubmitAnswerAsync(
@@ -111,48 +124,38 @@ public sealed class QuizAnswerService(
         }
 
         var answer = await dbContext.QuizAnswers
-            .AsNoTracking()
             .Where(answer =>
-                answer.QuizSessionQuestionId == current.Question.Id &&
+                answer.QuestionIndex == current.Question.QuestionIndex &&
+                answer.QuestionKey == current.Question.QuestionKey &&
                 answer.StudentId == studentResult.Student.Id)
-            .Select(answer => new
-            {
-                answer.Id,
-                answer.Status
-            })
-            .SingleOrDefaultAsync(cancellationToken);
+            .OrderByDescending(answer => answer.StartedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (answer is null)
         {
             return QuizActionResult.Failure("No answer record is available yet. Wait for the teacher to start.");
         }
 
-        if (answer.Status == QuizAnswerStatus.Answered)
+        if (answer.Answer.Length > 0)
         {
             return QuizActionResult.Failure("You already answered this question.");
         }
 
-        if (answer.Status == QuizAnswerStatus.FailedNoAnswer)
+        if (answer.EndedAtUtc is not null)
         {
             return QuizActionResult.Failure("This question has finished.");
         }
 
         var submittedAtUtc = DateTime.UtcNow;
-        var isCorrect = selectedAnswer == current.Question.CorrectAnswer;
+        var selectedAnswerText = selectedAnswer.ToString(CultureInfo.InvariantCulture);
 
-        var updatedCount = await dbContext.QuizAnswers
-            .Where(dbAnswer => dbAnswer.Id == answer.Id && dbAnswer.Status == QuizAnswerStatus.InProgress)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(dbAnswer => dbAnswer.Status, QuizAnswerStatus.Answered)
-                    .SetProperty(dbAnswer => dbAnswer.SelectedAnswer, selectedAnswer)
-                    .SetProperty(dbAnswer => dbAnswer.IsCorrect, isCorrect)
-                    .SetProperty(dbAnswer => dbAnswer.SubmittedAtUtc, submittedAtUtc),
-                cancellationToken);
+        answer.Answer = selectedAnswerText;
+        answer.EndedAtUtc = submittedAtUtc;
+        answer.IsCorrect = string.Equals(selectedAnswerText, answer.CorrectAnswer, StringComparison.Ordinal);
 
-        return updatedCount == 1
-            ? QuizActionResult.Success("Answer submitted.")
-            : QuizActionResult.Failure("You already answered this question.");
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return QuizActionResult.Success("Answer submitted.");
     }
 
     private static async Task<StudentAccessResult> ValidateStudentAccessAsync(
@@ -227,15 +230,19 @@ public sealed class QuizAnswerService(
         current.Question.Status = QuizQuestionStatus.Finished;
         current.Question.FinishedAtUtc ??= finishedAtUtc;
 
-        await dbContext.QuizAnswers
+        var answers = await dbContext.QuizAnswers
             .Where(answer =>
-                answer.QuizSessionQuestionId == current.Question.Id &&
-                answer.Status == QuizAnswerStatus.InProgress)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(answer => answer.Status, QuizAnswerStatus.FailedNoAnswer)
-                    .SetProperty(answer => answer.IsCorrect, false),
-                cancellationToken);
+                answer.QuestionIndex == current.Question.QuestionIndex &&
+                answer.QuestionKey == current.Question.QuestionKey &&
+                answer.EndedAtUtc == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var answer in answers)
+        {
+            answer.EndedAtUtc = finishedAtUtc;
+            answer.IsCorrect = answer.Answer.Length > 0 &&
+                string.Equals(answer.Answer, answer.CorrectAnswer, StringComparison.Ordinal);
+        }
 
         if (current.Question.QuestionIndex >= questionCount - 1)
         {

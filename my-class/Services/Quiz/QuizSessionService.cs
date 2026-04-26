@@ -267,6 +267,31 @@ public sealed class QuizSessionService(
             .ThenBy(student => student.UserName)
             .ToListAsync(cancellationToken);
 
+        var startedAtUtc = DateTime.UtcNow;
+
+        await dbContext.QuizAnswers
+            .Where(answer =>
+                answer.QuestionIndex == questionContent.Index &&
+                answer.QuestionKey == questionContent.Key)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        dbContext.QuizAnswers.AddRange(activeStudents
+            .Select(student => new QuizAnswer
+            {
+                StudentId = student.Id,
+                StudentUserName = student.UserName,
+                StudentFirstName = student.FirstName,
+                StudentLastName = student.LastName,
+                StudentDisplayName = student.DisplayName,
+                QuestionKey = questionContent.Key,
+                QuestionIndex = questionContent.Index,
+                QuestionText = questionContent.Title,
+                CorrectAnswer = questionContent.CorrectAnswer,
+                Answer = string.Empty,
+                StartedAtUtc = startedAtUtc,
+                IsCorrect = false
+            }));
+
         return new QuizSessionQuestion
         {
             QuizSession = session,
@@ -277,15 +302,7 @@ public sealed class QuizSessionService(
             TimeoutSeconds = questionContent.TimeoutSeconds,
             CorrectAnswer = int.Parse(questionContent.CorrectAnswer),
             Status = QuizQuestionStatus.InProgress,
-            StartedAtUtc = DateTime.UtcNow,
-            Answers = activeStudents
-                .Select(student => new QuizAnswer
-                {
-                    StudentId = student.Id,
-                    Status = QuizAnswerStatus.InProgress,
-                    CreatedAtUtc = DateTime.UtcNow
-                })
-                .ToList()
+            StartedAtUtc = startedAtUtc
         };
     }
 
@@ -325,15 +342,19 @@ public sealed class QuizSessionService(
         question.Status = QuizQuestionStatus.Finished;
         question.FinishedAtUtc ??= finishedAtUtc;
 
-        await dbContext.QuizAnswers
+        var answers = await dbContext.QuizAnswers
             .Where(answer =>
-                answer.QuizSessionQuestionId == question.Id &&
-                answer.Status == QuizAnswerStatus.InProgress)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(answer => answer.Status, QuizAnswerStatus.FailedNoAnswer)
-                    .SetProperty(answer => answer.IsCorrect, false),
-                cancellationToken);
+                answer.QuestionIndex == question.QuestionIndex &&
+                answer.QuestionKey == question.QuestionKey &&
+                answer.EndedAtUtc == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var answer in answers)
+        {
+            answer.EndedAtUtc = finishedAtUtc;
+            answer.IsCorrect = answer.Answer.Length > 0 &&
+                string.Equals(answer.Answer, answer.CorrectAnswer, StringComparison.Ordinal);
+        }
 
         if (question.QuestionIndex >= questionCount - 1)
         {
@@ -356,7 +377,7 @@ public sealed class QuizSessionService(
         var studentStatuses = await BuildStudentStatusesAsync(
             dbContext,
             classId,
-            currentQuestion?.Id,
+            currentQuestion,
             cancellationToken);
 
         return new QuizTeacherState(
@@ -381,7 +402,7 @@ public sealed class QuizSessionService(
     private static async Task<IReadOnlyList<QuizStudentAnswerStatus>> BuildStudentStatusesAsync(
         ApplicationDbContext dbContext,
         int classId,
-        int? currentQuestionId,
+        QuizSessionQuestion? currentQuestion,
         CancellationToken cancellationToken)
     {
         var activeStudents = await dbContext.Students
@@ -398,22 +419,30 @@ public sealed class QuizSessionService(
             })
             .ToListAsync(cancellationToken);
 
-        if (currentQuestionId is null)
+        if (currentQuestion is null)
         {
             return activeStudents
                 .Select(student => new QuizStudentAnswerStatus(student.Id, student.UserName, student.DisplayName, false, false))
                 .ToList();
         }
 
-        var answers = await dbContext.QuizAnswers
+        var answers = (await dbContext.QuizAnswers
             .AsNoTracking()
-            .Where(answer => answer.QuizSessionQuestionId == currentQuestionId)
+            .Where(answer =>
+                answer.QuestionIndex == currentQuestion.QuestionIndex &&
+                answer.QuestionKey == currentQuestion.QuestionKey)
             .Select(answer => new
             {
                 answer.StudentId,
-                answer.Status
+                answer.Answer,
+                answer.EndedAtUtc,
+                answer.StartedAtUtc
             })
-            .ToDictionaryAsync(answer => answer.StudentId, cancellationToken);
+            .ToListAsync(cancellationToken))
+            .GroupBy(answer => answer.StudentId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.OrderByDescending(answer => answer.StartedAtUtc).First());
 
         return activeStudents
             .Select(student =>
@@ -424,8 +453,8 @@ public sealed class QuizSessionService(
                     student.Id,
                     student.UserName,
                     student.DisplayName,
-                    answer?.Status == QuizAnswerStatus.Answered,
-                    answer?.Status == QuizAnswerStatus.FailedNoAnswer);
+                    answer is not null && answer.Answer.Length > 0,
+                    answer is not null && answer.EndedAtUtc is not null && answer.Answer.Length == 0);
             })
             .ToList();
     }

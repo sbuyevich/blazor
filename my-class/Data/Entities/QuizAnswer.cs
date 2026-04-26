@@ -4,21 +4,31 @@ public sealed class QuizAnswer
 {
     public int Id { get; set; }
 
-    public int QuizSessionQuestionId { get; set; }
-
     public int StudentId { get; set; }
 
-    public QuizAnswerStatus Status { get; set; } = QuizAnswerStatus.InProgress;
+    public string StudentUserName { get; set; } = string.Empty;
 
-    public int? SelectedAnswer { get; set; }
+    public string StudentFirstName { get; set; } = string.Empty;
 
-    public bool? IsCorrect { get; set; }
+    public string StudentLastName { get; set; } = string.Empty;
 
-    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public string StudentDisplayName { get; set; } = string.Empty;
 
-    public DateTime? SubmittedAtUtc { get; set; }
+    public string QuestionKey { get; set; } = string.Empty;
 
-    public QuizSessionQuestion QuizSessionQuestion { get; set; } = null!;
+    public int QuestionIndex { get; set; }
 
-    public Student Student { get; set; } = null!;
+    public string QuestionText { get; set; } = string.Empty;
+
+    public string CorrectAnswer { get; set; } = string.Empty;
+
+    public string Answer { get; set; } = string.Empty;
+
+    public DateTime StartedAtUtc { get; set; } = DateTime.UtcNow;
+
+    public DateTime? EndedAtUtc { get; set; }
+
+    public bool IsCorrect { get; set; }
+
+    public Student? Student { get; set; }
 }
