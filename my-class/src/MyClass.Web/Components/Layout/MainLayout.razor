@@ -13,7 +13,10 @@
 
 <MudLayout>
     <MudAppBar Elevation="1" Color="Color.Primary">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        @if (!IsPublicAuthRoute())
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        }
         <MudText Typo="Typo.h6">My Class</MudText>
         <MudSpacer />
         <AppGreeting />
@@ -33,9 +36,12 @@
         }
     </MudAppBar>
 
-    <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Elevation="1">
-        <NavMenu CurrentClass="CurrentClass" />
-    </MudDrawer>
+    @if (!IsPublicAuthRoute())
+    {
+        <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Elevation="1">
+            <NavMenu CurrentClass="CurrentClass" />
+        </MudDrawer>
+    }
 
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
