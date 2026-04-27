@@ -1,0 +1,33 @@
+@page "/students"
+@rendermode InteractiveServer
+
+<PageTitle>My Class</PageTitle>
+
+<MudStack Spacing="3">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <div>
+            <MudText Typo="Typo.h4">Students</MudText>
+        </div>
+
+        @if (_studentsResult?.Succeeded == true)
+        {
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
+                @_studentsResult.Students.Count student@(_studentsResult.Students.Count == 1 ? string.Empty : "s")
+            </MudChip>
+        }
+    </MudStack>
+
+    <StudentGrid CurrentClass="CurrentClass" StudentsLoaded="OnStudentsLoaded" />
+</MudStack>
+
+@code {
+    [CascadingParameter]
+    public ClassContext CurrentClass { get; set; } = null!;
+
+    private StudentListResult? _studentsResult;
+
+    private void OnStudentsLoaded(StudentListResult result)
+    {
+        _studentsResult = result;
+    }
+}

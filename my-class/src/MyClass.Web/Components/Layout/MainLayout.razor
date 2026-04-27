@@ -1,0 +1,216 @@
+@using MyClass.Web.Components.Auth
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject IClassContextService ClassContextService
+@inject IClassContextState ClassContextState
+@inject ISessionStorageService SessionStorage
+@inject NavigationManager Navigation
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6">My Class</MudText>
+        <MudSpacer />
+        <AppGreeting />
+        <MudSpacer />
+
+        @if (CurrentClass is not null)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudChip T="string" Size="Size.Large" Color="Color.Info">@CurrentClass.ClassName</MudChip>
+                in
+                <MudChip T="string" Size="Size.Large" Color="Color.Secondary">@CurrentClass.SchoolName</MudChip>
+            </MudStack>
+        }
+        else if (!string.IsNullOrWhiteSpace(ClassMessage))
+        {
+            <MudText Typo="Typo.body2" Color="Color.Inherit">@ClassMessage</MudText>
+        }
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Elevation="1">
+        <NavMenu CurrentClass="CurrentClass" />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+            @if (ClassContextState.Result is null)
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+                    <MudText Typo="Typo.body2">Loading class...</MudText>
+                </MudStack>
+            }
+            else if (!ClassContextState.Result.IsLoaded)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@ClassContextState.Result.Message</MudAlert>
+            }
+            else
+            {
+                <CascadingValue Value="CurrentClass">
+                    @Body
+                </CascadingValue>
+            }
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@if (!IsPublicAuthRoute())
+{
+    <AuthGate CurrentClass="CurrentClass" />
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">x</span>
+</div>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _sessionStorageChecked;
+
+    private ClassContext? CurrentClass => ClassContextState.CurrentClass;
+
+    private string? ClassMessage =>
+        ClassContextState.Result is { IsLoaded: false } result
+            ? result.Message
+            : null;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#2563eb",
+            Secondary = "#0f766e",
+            AppbarBackground = "#2563eb",
+            Background = "#f8fafc",
+            Surface = "#ffffff"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "6px",
+            DrawerWidthLeft = "240px"
+        }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        ClassContextState.Changed += OnClassContextChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+
+        var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
+
+        if (!string.IsNullOrWhiteSpace(classCode))
+        {
+            await LoadClassContextAsync(classCode);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _sessionStorageChecked = true;
+        var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
+
+        if (!string.IsNullOrWhiteSpace(classCode))
+        {
+            await PersistResolvedClassCodeAsync();
+            return;
+        }
+
+        var storedClassCode = await SessionStorage.GetClassCodeAsync();
+
+        if (string.IsNullOrWhiteSpace(storedClassCode))
+        {
+            await LoadClassContextAsync(null);
+        }
+        else
+        {
+            await LoadClassContextAsync(storedClassCode);
+        }
+    }
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        await InvokeAsync(async () =>
+        {
+            var classCode = ClassContextService.GetClassCodeFromUri(args.Location);
+
+            if (!string.IsNullOrWhiteSpace(classCode))
+            {
+                await LoadClassContextAsync(classCode);
+                await PersistResolvedClassCodeAsync();
+            }
+            else if (CurrentClass is null && _sessionStorageChecked)
+            {
+                await LoadClassContextAsync(null);
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadClassContextAsync(string? classCode)
+    {
+        var result = await ClassContextService.ResolveAsync(classCode);
+        ClassContextState.Set(result);
+    }
+
+    private async Task PersistResolvedClassCodeAsync()
+    {
+        if (CurrentClass is not null)
+        {
+            await SessionStorage.SetClassCodeAsync(CurrentClass.Code);
+        }
+    }
+
+    private void OnClassContextChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private bool IsPublicAuthRoute()
+    {
+        var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var pathEnd = relativePath.Length;
+        var queryIndex = relativePath.IndexOf('?');
+        var fragmentIndex = relativePath.IndexOf('#');
+
+        if (queryIndex >= 0)
+        {
+            pathEnd = queryIndex;
+        }
+
+        if (fragmentIndex >= 0 && fragmentIndex < pathEnd)
+        {
+            pathEnd = fragmentIndex;
+        }
+
+        var path = relativePath[..pathEnd].Trim('/');
+
+        return string.IsNullOrEmpty(path)
+            || string.Equals(path, "login", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "register", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        ClassContextState.Changed -= OnClassContextChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

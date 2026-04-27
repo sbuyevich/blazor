@@ -1,0 +1,16 @@
+@page "/home"
+
+<PageTitle>My Class</PageTitle>
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">@CurrentClass.ClassName</MudText>
+    <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@CurrentClass.SchoolName</MudText>
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudText>Welcome to My Class.</MudText>
+    </MudPaper>
+</MudStack>
+
+@code {
+    [CascadingParameter]
+    public ClassContext CurrentClass { get; set; } = null!;
+}
