@@ -30,13 +30,6 @@ coverage/
 # Publish artifacts
 publish/
 
-# SQLite local databases
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
-
 # Local secrets and environment files
 appsettings.Development.json
 .env
