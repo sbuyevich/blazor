@@ -21,7 +21,7 @@ else
             <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
         </div>
 
-        @if (_stateResult?.Succeeded == false)
+        @* @if (_stateResult?.Succeeded == false)
         {
             <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
                 @_stateResult.Message
@@ -32,7 +32,7 @@ else
             <MudAlert Severity="@(_lastSubmitSucceeded ? Severity.Success : Severity.Warning)" Variant="Variant.Filled">
                 @_lastSubmitMessage
             </MudAlert>
-        }
+        } *@
 
         <MudGrid Spacing="20">
             @foreach (var answer in AnswerChoices)
