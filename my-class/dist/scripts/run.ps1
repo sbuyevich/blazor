@@ -6,6 +6,90 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Add-DotNetToProcessPath {
+    if ([string]::IsNullOrWhiteSpace($env:ProgramFiles)) {
+        return
+    }
+
+    $dotnetPath = Join-Path $env:ProgramFiles "dotnet"
+
+    if (-not (Test-Path -LiteralPath $dotnetPath)) {
+        return
+    }
+
+    $pathParts = $env:Path -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    if ($pathParts -contains $dotnetPath) {
+        return
+    }
+
+    $env:Path = "$dotnetPath;$env:Path"
+}
+
+function Get-InstalledDotNetSdkVersions {
+    Add-DotNetToProcessPath
+
+    $dotnetCommand = Get-Command dotnet -ErrorAction SilentlyContinue
+
+    if (-not $dotnetCommand) {
+        return @()
+    }
+
+    try {
+        $sdkLines = & $dotnetCommand.Source --list-sdks 2>$null
+    }
+    catch {
+        return @()
+    }
+
+    return @(
+        $sdkLines | ForEach-Object {
+            if ($_ -match '^(?<Version>\d+\.\d+\.\d+)') {
+                $Matches.Version
+            }
+        }
+    )
+}
+
+function Test-DotNet10SdkInstalled {
+    $sdkVersions = Get-InstalledDotNetSdkVersions
+    return [bool]($sdkVersions | Where-Object { $_ -like "10.*" } | Select-Object -First 1)
+}
+
+function Install-DotNet10Sdk {
+    if (-not $IsWindows -and $PSVersionTable.PSEdition -eq "Core") {
+        throw ".NET 10 SDK was not found. Automatic SDK installation is only supported by this script on Windows. Install the SDK from https://dotnet.microsoft.com/download/dotnet/10.0 and run this script again."
+    }
+
+    $wingetCommand = Get-Command winget -ErrorAction SilentlyContinue
+
+    if (-not $wingetCommand) {
+        throw ".NET 10 SDK was not found, and winget is not available. Install the SDK from https://dotnet.microsoft.com/download/dotnet/10.0 and run this script again."
+    }
+
+    Write-Host ".NET 10 SDK was not found. Installing Microsoft.DotNet.SDK.10 with winget..."
+
+    & $wingetCommand.Source install --id Microsoft.DotNet.SDK.10 --source winget --accept-package-agreements --accept-source-agreements
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "winget failed to install Microsoft.DotNet.SDK.10. Install .NET 10 SDK manually from https://dotnet.microsoft.com/download/dotnet/10.0 and run this script again."
+    }
+
+    Add-DotNetToProcessPath
+}
+
+function Assert-DotNet10SdkInstalled {
+    if (Test-DotNet10SdkInstalled) {
+        return
+    }
+
+    Install-DotNet10Sdk
+
+    if (-not (Test-DotNet10SdkInstalled)) {
+        throw ".NET 10 SDK installation completed, but this PowerShell session still cannot find a 10.x SDK. Open a new PowerShell window and run this script again."
+    }
+}
+
 function Test-PrivateIPv4Address {
     param([string]$Address)
 
@@ -188,6 +272,8 @@ $scriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $My
 $distRoot = Split-Path -Parent $scriptRoot
 $exePath = Join-Path $distRoot "app\MyClass.exe"
 $pidPath = Join-Path $distRoot "myclass.pid"
+
+Assert-DotNet10SdkInstalled
 
 if (-not (Test-Path -LiteralPath $exePath)) {
     throw "Published app not found at $exePath."
