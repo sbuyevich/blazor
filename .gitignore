@@ -2,7 +2,6 @@
 bin/
 obj/
 out/
-dist/
 
 # User-specific files
 *.user

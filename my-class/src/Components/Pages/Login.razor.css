@@ -1,0 +1,17 @@
+.login-shell {
+    display: flex;
+    justify-content: center;
+    padding-top: 2rem;
+}
+
+.login-panel {
+    width: min(100%, 22rem);
+}
+
+@media (min-width: 641px) {
+    .login-panel {
+        width: 50%;
+        min-width: 24rem;
+        max-width: none;
+    }
+}

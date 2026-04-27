@@ -1,0 +1,107 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject IClassContextService ClassContextService
+@inject NavigationManager Navigation
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6">My Class</MudText>
+        <MudSpacer />
+        <AppGreeting />
+        <MudSpacer />
+
+        @if (_currentClass is not null)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudChip T="string" Size="Size.Large" Color="Color.Info">@_currentClass.ClassName</MudChip>
+                in
+                <MudChip T="string" Size="Size.Large" Color="Color.Secondary">@_currentClass.SchoolName</MudChip>
+            </MudStack>
+        }
+        else if (!string.IsNullOrWhiteSpace(_classMessage))
+        {
+            <MudText Typo="Typo.body2" Color="Color.Inherit">@_classMessage</MudText>
+        }
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Elevation="1">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+<AuthGate CurrentClass="_currentClass" />
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">x</span>
+</div>
+
+@code {
+    private bool _drawerOpen = true;
+    private ClassContext? _currentClass;
+    private string? _classMessage;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#2563eb",
+            Secondary = "#0f766e",
+            AppbarBackground = "#2563eb",
+            Background = "#f8fafc",
+            Surface = "#ffffff"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "6px",
+            DrawerWidthLeft = "240px"
+        }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        await LoadClassContextAsync();
+    }
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadClassContextAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadClassContextAsync()
+    {
+        var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
+        var result = await ClassContextService.ResolveAsync(classCode);
+
+        _currentClass = result.CurrentClass;
+        _classMessage = result.IsLoaded ? null : result.Message;
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}
