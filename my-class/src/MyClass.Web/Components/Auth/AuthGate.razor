@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
+@inject IClassContextService ClassContextService
 @inject NavigationManager Navigation
 
 @if (ShouldShowGate)
@@ -17,13 +18,13 @@
             }
             else if (_showRegistration)
             {
-                <StudentRegistrationForm CurrentClass="CurrentClass"
+                <StudentRegistrationForm CurrentClass="CurrentClass!"
                                          Succeeded="HandleAuthSucceededAsync"
                                          LoginRequested="ShowLogin" />
             }
             else
             {
-                <LoginForm CurrentClass="CurrentClass"
+                <LoginForm CurrentClass="CurrentClass!"
                            Succeeded="HandleAuthSucceededAsync"
                            RegisterRequested="ShowRegistration" />
             }
@@ -63,7 +64,7 @@
     private async Task HandleAuthSucceededAsync(LoginState state)
     {
         _showRegistration = false;
-        await InvokeAsync(() => Navigation.NavigateTo("/home"));
+        await InvokeAsync(() => Navigation.NavigateTo(ClassContextService.GetPathWithClassCode("/home", state.ClassCode)));
     }
 
     private void ShowRegistration()

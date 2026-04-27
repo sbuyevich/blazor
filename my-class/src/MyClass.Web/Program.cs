@@ -1,4 +1,4 @@
-using MyClass.Components;
+using MyClass.Web.Components;
 using MyClass.Core.Data;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;

@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using MyClass.Web.Components.Layout
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,7 +12,7 @@
     <link rel="stylesheet" href="@Assets["MyClass.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
 <body>

@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
+@inject IClassContextService ClassContextService
 @inject NavigationManager Navigation
 
 <PageTitle>My Class</PageTitle>
@@ -36,18 +37,25 @@
         }
 
         LoginStateService.Set(state);
-        Navigation.NavigateTo("/home");
+        Navigation.NavigateTo(GetClassPath("/home", state.ClassCode));
     }
 
     private Task HandleSucceededAsync(LoginState state)
     {
-        Navigation.NavigateTo("/home");
+        Navigation.NavigateTo(GetClassPath("/home", state.ClassCode));
 
         return Task.CompletedTask;
     }
 
     private void GoToRegister()
     {
-        Navigation.NavigateTo("/register");
+        Navigation.NavigateTo(GetClassPath("/register"));
+    }
+
+    private string GetClassPath(string path, string? classCode = null)
+    {
+        return ClassContextService.GetPathWithClassCode(
+            path,
+            classCode ?? ClassContextService.GetClassCodeFromUri(Navigation.Uri));
     }
 }

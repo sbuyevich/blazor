@@ -1,3 +1,4 @@
+@using MyClass.Web.Components.Auth
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject IClassContextService ClassContextService
@@ -31,7 +32,7 @@
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Elevation="1">
-        <NavMenu />
+        <NavMenu CurrentClass="_currentClass" />
     </MudDrawer>
 
     <MudMainContent>
@@ -41,7 +42,10 @@
     </MudMainContent>
 </MudLayout>
 
-<AuthGate CurrentClass="_currentClass" />
+@if (!IsPublicAuthRoute())
+{
+    <AuthGate CurrentClass="_currentClass" />
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -98,6 +102,30 @@
 
         _currentClass = result.CurrentClass;
         _classMessage = result.IsLoaded ? null : result.Message;
+    }
+
+    private bool IsPublicAuthRoute()
+    {
+        var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var pathEnd = relativePath.Length;
+        var queryIndex = relativePath.IndexOf('?');
+        var fragmentIndex = relativePath.IndexOf('#');
+
+        if (queryIndex >= 0)
+        {
+            pathEnd = queryIndex;
+        }
+
+        if (fragmentIndex >= 0 && fragmentIndex < pathEnd)
+        {
+            pathEnd = fragmentIndex;
+        }
+
+        var path = relativePath[..pathEnd].Trim('/');
+
+        return string.IsNullOrEmpty(path)
+            || string.Equals(path, "login", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "register", StringComparison.OrdinalIgnoreCase);
     }
 
     public void Dispose()
