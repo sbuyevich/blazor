@@ -27,6 +27,7 @@ builder.Services.Configure<QuizOptions>(builder.Configuration.GetSection("Quiz")
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILoginStateService, LoginStateService>();
 builder.Services.AddScoped<IClassContextService, ClassContextService>();
+builder.Services.AddScoped<IClassContextState, ClassContextState>();
 builder.Services.AddScoped<IQuizContentService, QuizContentService>();
 builder.Services.AddScoped<IQuizSessionService, QuizSessionService>();
 builder.Services.AddScoped<IQuizAnswerService, QuizAnswerService>();

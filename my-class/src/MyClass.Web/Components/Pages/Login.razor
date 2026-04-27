@@ -3,24 +3,21 @@
 @rendermode InteractiveServer
 @inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
-@inject IClassContextService ClassContextService
 @inject NavigationManager Navigation
 
 <PageTitle>My Class</PageTitle>
 
-<ClassContextView>
-    <ChildContent Context="currentClass">
-        <div class="login-shell">
-            <MudPaper Class="login-panel pa-5" Elevation="2">
-                <LoginForm CurrentClass="currentClass"
-                           Succeeded="HandleSucceededAsync"
-                           RegisterRequested="GoToRegister" />
-            </MudPaper>
-        </div>
-    </ChildContent>
-</ClassContextView>
+<div class="login-shell">
+    <MudPaper Class="login-panel pa-5" Elevation="2">
+        <LoginForm CurrentClass="CurrentClass"
+                   Succeeded="HandleSucceededAsync"
+                   RegisterRequested="GoToRegister" />
+    </MudPaper>
+</div>
 
 @code {
+    [CascadingParameter]
+    public ClassContext CurrentClass { get; set; } = null!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -37,25 +34,18 @@
         }
 
         LoginStateService.Set(state);
-        Navigation.NavigateTo(GetClassPath("/home", state.ClassCode));
+        Navigation.NavigateTo("/home");
     }
 
     private Task HandleSucceededAsync(LoginState state)
     {
-        Navigation.NavigateTo(GetClassPath("/home", state.ClassCode));
+        Navigation.NavigateTo("/home");
 
         return Task.CompletedTask;
     }
 
     private void GoToRegister()
     {
-        Navigation.NavigateTo(GetClassPath("/register"));
-    }
-
-    private string GetClassPath(string path, string? classCode = null)
-    {
-        return ClassContextService.GetPathWithClassCode(
-            path,
-            classCode ?? ClassContextService.GetClassCodeFromUri(Navigation.Uri));
+        Navigation.NavigateTo("/register");
     }
 }

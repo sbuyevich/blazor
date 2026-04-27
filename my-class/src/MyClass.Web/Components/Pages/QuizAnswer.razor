@@ -3,10 +3,11 @@
 
 <PageTitle>My Class</PageTitle>
 
-<ClassContextView>
-    <ChildContent Context="currentClass">
-        <RoleGate RequireTeacher="false" DeniedMessage="Only students can submit quiz answers.">
-            <StudentQuizAnswerPanel CurrentClass="currentClass" />
-        </RoleGate>
-    </ChildContent>
-</ClassContextView>
+<RoleGate RequireTeacher="false" DeniedMessage="Only students can submit quiz answers.">
+    <StudentQuizAnswerPanel CurrentClass="CurrentClass" />
+</RoleGate>
+
+@code {
+    [CascadingParameter]
+    public ClassContext CurrentClass { get; set; } = null!;
+}

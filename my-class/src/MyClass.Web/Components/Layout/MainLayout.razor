@@ -2,6 +2,8 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject IClassContextService ClassContextService
+@inject IClassContextState ClassContextState
+@inject ISessionStorageService SessionStorage
 @inject NavigationManager Navigation
 
 <MudThemeProvider Theme="_theme" />
@@ -17,34 +19,50 @@
         <AppGreeting />
         <MudSpacer />
 
-        @if (_currentClass is not null)
+        @if (CurrentClass is not null)
         {
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                <MudChip T="string" Size="Size.Large" Color="Color.Info">@_currentClass.ClassName</MudChip>
+                <MudChip T="string" Size="Size.Large" Color="Color.Info">@CurrentClass.ClassName</MudChip>
                 in
-                <MudChip T="string" Size="Size.Large" Color="Color.Secondary">@_currentClass.SchoolName</MudChip>
+                <MudChip T="string" Size="Size.Large" Color="Color.Secondary">@CurrentClass.SchoolName</MudChip>
             </MudStack>
         }
-        else if (!string.IsNullOrWhiteSpace(_classMessage))
+        else if (!string.IsNullOrWhiteSpace(ClassMessage))
         {
-            <MudText Typo="Typo.body2" Color="Color.Inherit">@_classMessage</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Inherit">@ClassMessage</MudText>
         }
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Elevation="1">
-        <NavMenu CurrentClass="_currentClass" />
+        <NavMenu CurrentClass="CurrentClass" />
     </MudDrawer>
 
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
-            @Body
+            @if (ClassContextState.Result is null)
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+                    <MudText Typo="Typo.body2">Loading class...</MudText>
+                </MudStack>
+            }
+            else if (!ClassContextState.Result.IsLoaded)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@ClassContextState.Result.Message</MudAlert>
+            }
+            else
+            {
+                <CascadingValue Value="CurrentClass">
+                    @Body
+                </CascadingValue>
+            }
         </MudContainer>
     </MudMainContent>
 </MudLayout>
 
 @if (!IsPublicAuthRoute())
 {
-    <AuthGate CurrentClass="_currentClass" />
+    <AuthGate CurrentClass="CurrentClass" />
 }
 
 <div id="blazor-error-ui" data-nosnippet>
@@ -55,8 +73,14 @@
 
 @code {
     private bool _drawerOpen = true;
-    private ClassContext? _currentClass;
-    private string? _classMessage;
+    private bool _sessionStorageChecked;
+
+    private ClassContext? CurrentClass => ClassContextState.CurrentClass;
+
+    private string? ClassMessage =>
+        ClassContextState.Result is { IsLoaded: false } result
+            ? result.Message
+            : null;
 
     private readonly MudTheme _theme = new()
     {
@@ -77,8 +101,43 @@
 
     protected override async Task OnInitializedAsync()
     {
+        ClassContextState.Changed += OnClassContextChanged;
         Navigation.LocationChanged += OnLocationChanged;
-        await LoadClassContextAsync();
+
+        var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
+
+        if (!string.IsNullOrWhiteSpace(classCode))
+        {
+            await LoadClassContextAsync(classCode);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _sessionStorageChecked = true;
+        var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
+
+        if (!string.IsNullOrWhiteSpace(classCode))
+        {
+            await PersistResolvedClassCodeAsync();
+            return;
+        }
+
+        var storedClassCode = await SessionStorage.GetClassCodeAsync();
+
+        if (string.IsNullOrWhiteSpace(storedClassCode))
+        {
+            await LoadClassContextAsync(null);
+        }
+        else
+        {
+            await LoadClassContextAsync(storedClassCode);
+        }
     }
 
     private void ToggleDrawer()
@@ -90,18 +149,39 @@
     {
         await InvokeAsync(async () =>
         {
-            await LoadClassContextAsync();
+            var classCode = ClassContextService.GetClassCodeFromUri(args.Location);
+
+            if (!string.IsNullOrWhiteSpace(classCode))
+            {
+                await LoadClassContextAsync(classCode);
+                await PersistResolvedClassCodeAsync();
+            }
+            else if (CurrentClass is null && _sessionStorageChecked)
+            {
+                await LoadClassContextAsync(null);
+            }
+
             StateHasChanged();
         });
     }
 
-    private async Task LoadClassContextAsync()
+    private async Task LoadClassContextAsync(string? classCode)
     {
-        var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
         var result = await ClassContextService.ResolveAsync(classCode);
+        ClassContextState.Set(result);
+    }
 
-        _currentClass = result.CurrentClass;
-        _classMessage = result.IsLoaded ? null : result.Message;
+    private async Task PersistResolvedClassCodeAsync()
+    {
+        if (CurrentClass is not null)
+        {
+            await SessionStorage.SetClassCodeAsync(CurrentClass.Code);
+        }
+    }
+
+    private void OnClassContextChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
     }
 
     private bool IsPublicAuthRoute()
@@ -130,6 +210,7 @@
 
     public void Dispose()
     {
+        ClassContextState.Changed -= OnClassContextChanged;
         Navigation.LocationChanged -= OnLocationChanged;
     }
 }

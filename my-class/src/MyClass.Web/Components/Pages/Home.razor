@@ -2,14 +2,15 @@
 
 <PageTitle>My Class</PageTitle>
 
-<ClassContextView>
-    <ChildContent Context="currentClass">
-        <MudStack Spacing="3">
-            <MudText Typo="Typo.h4">@currentClass.ClassName</MudText>
-            <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@currentClass.SchoolName</MudText>
-            <MudPaper Elevation="1" Class="pa-4">
-                <MudText>Welcome to My Class.</MudText>
-            </MudPaper>
-        </MudStack>
-    </ChildContent>
-</ClassContextView>
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">@CurrentClass.ClassName</MudText>
+    <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@CurrentClass.SchoolName</MudText>
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudText>Welcome to My Class.</MudText>
+    </MudPaper>
+</MudStack>
+
+@code {
+    [CascadingParameter]
+    public ClassContext CurrentClass { get; set; } = null!;
+}

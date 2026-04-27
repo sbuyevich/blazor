@@ -15,6 +15,12 @@ public interface ISessionStorageService
     ValueTask SetLoginStateAsync(LoginState state);
 
     ValueTask RemoveLoginStateAsync();
+
+    ValueTask<string?> GetClassCodeAsync();
+
+    ValueTask SetClassCodeAsync(string classCode);
+
+    ValueTask RemoveClassCodeAsync();
 }
 
 

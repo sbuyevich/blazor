@@ -2,7 +2,6 @@
 @implements IDisposable
 @inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
-@inject IClassContextService ClassContextService
 @inject NavigationManager Navigation
 
 @if (ShouldShowGate)
@@ -64,7 +63,7 @@
     private async Task HandleAuthSucceededAsync(LoginState state)
     {
         _showRegistration = false;
-        await InvokeAsync(() => Navigation.NavigateTo(ClassContextService.GetPathWithClassCode("/home", state.ClassCode)));
+        await InvokeAsync(() => Navigation.NavigateTo("/home"));
     }
 
     private void ShowRegistration()

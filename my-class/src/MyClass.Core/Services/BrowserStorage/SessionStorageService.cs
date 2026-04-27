@@ -7,6 +7,7 @@ namespace MyClass.Core.Services.BrowserStorage;
 public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorageService
 {
     private const string LoginStateKey = "my-class.loginState";
+    private const string ClassCodeKey = "my-class.classCode";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async ValueTask<T?> GetAsync<T>(string key)
@@ -42,6 +43,21 @@ public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorag
     public ValueTask RemoveLoginStateAsync()
     {
         return RemoveAsync(LoginStateKey);
+    }
+
+    public ValueTask<string?> GetClassCodeAsync()
+    {
+        return GetAsync<string>(ClassCodeKey);
+    }
+
+    public ValueTask SetClassCodeAsync(string classCode)
+    {
+        return SetAsync(ClassCodeKey, classCode);
+    }
+
+    public ValueTask RemoveClassCodeAsync()
+    {
+        return RemoveAsync(ClassCodeKey);
     }
 }
 

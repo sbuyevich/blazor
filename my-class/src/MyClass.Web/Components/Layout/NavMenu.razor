@@ -1,27 +1,26 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject ILoginStateService LoginStateService
-@inject IClassContextService ClassContextService
 
 <MudStack Spacing="0" Class="pa-3">
        
     <MudNavMenu Dense="true" Rounded="true">
         @if (IsSignedIn)
         {
-            <MudNavLink Href='@GetClassPath("/home")' Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+            <MudNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
         }
 
         @if (IsStudent)
         {
-            <MudNavLink Href='@GetClassPath("/quiz-answer")' Icon="@Icons.Material.Filled.CheckCircle">Quiz Answer</MudNavLink>
+            <MudNavLink Href="/quiz-answer" Icon="@Icons.Material.Filled.CheckCircle">Quiz Answer</MudNavLink>
         }
 
         @if (IsTeacher)
         {
             <MudDivider Class="my-2" />
             <MudText Typo="Typo.overline" Color="Color.Secondary" Class="px-4">Teacher</MudText>
-            <MudNavLink Href='@GetClassPath("/quiz")' Icon="@Icons.Material.Filled.Quiz">Quiz</MudNavLink>
-            <MudNavLink Href='@GetClassPath("/students")' Icon="@Icons.Material.Filled.Groups">Students</MudNavLink>
+            <MudNavLink Href="/quiz" Icon="@Icons.Material.Filled.Quiz">Quiz</MudNavLink>
+            <MudNavLink Href="/students" Icon="@Icons.Material.Filled.Groups">Students</MudNavLink>
         }
     </MudNavMenu>
 </MudStack>
@@ -44,11 +43,6 @@
     private void OnLoginStateChanged()
     {
         _ = InvokeAsync(StateHasChanged);
-    }
-
-    private string GetClassPath(string path)
-    {
-        return ClassContextService.GetPathWithClassCode(path, CurrentClass?.Code);
     }
 
     public void Dispose()
