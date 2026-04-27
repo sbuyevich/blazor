@@ -4,7 +4,6 @@
 @inject ISessionStorageService SessionStorage
 @inject IQuizAnswerService QuizAnswerService
 @inject IOptions<QuizOptions> QuizOptions
-@inject ISnackbar Snackbar
 
 @if (_isLoading)
 {
@@ -28,12 +27,12 @@ else
                 @_stateResult.Message
             </MudAlert>
         }
-        @* else if (_lastSubmitMessage is not null)
+        else if (_lastSubmitMessage is not null)
         {
             <MudAlert Severity="@(_lastSubmitSucceeded ? Severity.Success : Severity.Warning)" Variant="Variant.Filled">
                 @_lastSubmitMessage
             </MudAlert>
-        } *@
+        }
 
         <MudGrid Spacing="20">
             @foreach (var answer in AnswerChoices)
@@ -158,15 +157,20 @@ else
             return;
         }
 
-        _isSubmitting = true;
+        try
+        {
+            _isSubmitting = true;
 
-        var result = await QuizAnswerService.SubmitAnswerAsync(_loginState, CurrentClass, selectedAnswer);
-        _lastSubmitSucceeded = result.Succeeded;
-        _lastSubmitMessage = result.Message;
-       // Snackbar.Add(result.Message, result.Succeeded ? Severity.Success : Severity.Warning);
-        await LoadStateAsync(showLoading: false);
+            var result = await QuizAnswerService.SubmitAnswerAsync(_loginState, CurrentClass, selectedAnswer);
+            _lastSubmitSucceeded = result.Succeeded;
+            _lastSubmitMessage = result.Message;
 
-        _isSubmitting = false;
+            await LoadStateAsync(showLoading: false);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
     }
 
     public void Dispose()
