@@ -51,3 +51,4 @@ Thumbs.db
 .dotnet-home/
 .agents/
 .keys/
+/my-class/src/.dotnet-cli-home/.dotnet
