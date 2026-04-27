@@ -1,4 +1,4 @@
-namespace MyClass.Data.Entities;
+namespace MyClass.Core.Data.Entities;
 
 public sealed class QuizAnswer
 {
@@ -32,3 +32,5 @@ public sealed class QuizAnswer
 
     public Student Student { get; set; } = null!;
 }
+
+

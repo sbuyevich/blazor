@@ -1,4 +1,4 @@
-namespace MyClass.Services.ClassContext;
+namespace MyClass.Core.Services.ClassContext;
 
 public interface IClassContextService
 {
@@ -8,3 +8,5 @@ public interface IClassContextService
 
     string GetPathWithClassCode(string path, string? classCode);
 }
+
+

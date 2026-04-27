@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using MyClass.Data;
-using MyClass.Options;
-using MyClass.Services.Auth;
-using ClassContextModel = MyClass.Services.ClassContext.ClassContext;
+using MyClass.Core.Data; 
+using MyClass.Core.Options;
+using MyClass.Core.Services.Auth;
+using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
 
-namespace MyClass.Services.Students;
+namespace MyClass.Core.Services.Students;   
 
 public sealed class StudentService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
@@ -143,3 +143,5 @@ public sealed class StudentService(
             : "Teacher login is required to manage students.";
     }
 }
+
+

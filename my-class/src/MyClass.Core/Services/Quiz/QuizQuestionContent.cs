@@ -1,4 +1,4 @@
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public sealed record QuizQuestionContent(
     string Key,
@@ -7,3 +7,5 @@ public sealed record QuizQuestionContent(
     int TimeoutSeconds,
     string CorrectAnswer,
     string ImageReference);
+
+

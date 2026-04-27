@@ -1,7 +1,7 @@
-using MyClass.Services.Auth;
-using ClassContextModel = MyClass.Services.ClassContext.ClassContext;
+using MyClass.Core.Services.Auth;
+using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
 
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public interface IQuizSessionService
 {
@@ -30,3 +30,5 @@ public interface IQuizSessionService
         ClassContextModel currentClass,
         CancellationToken cancellationToken = default);
 }
+
+

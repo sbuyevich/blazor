@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using MyClass.Data;
-using MyClass.Data.Entities;
-using MyClass.Options;
-using MyClass.Services.Auth;
-using ClassContextModel = MyClass.Services.ClassContext.ClassContext;
-
-namespace MyClass.Services.Quiz;
+using MyClass.Core.Data;
+using MyClass.Core.Data.Entities;
+using MyClass.Core.Options;
+using MyClass.Core.Services.Auth;
+using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
+namespace MyClass.Core.Services.Quiz;
 
 public sealed class QuizSessionService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
@@ -461,3 +460,5 @@ public sealed class QuizSessionService(
         bool IsInProgress,
         TimeSpan Remaining);
 }
+
+

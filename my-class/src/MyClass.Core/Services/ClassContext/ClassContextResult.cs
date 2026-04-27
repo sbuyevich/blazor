@@ -1,4 +1,4 @@
-namespace MyClass.Services.ClassContext;
+namespace MyClass.Core.Services.ClassContext;
 
 public enum ClassContextStatus
 {
@@ -14,3 +14,5 @@ public sealed record ClassContextResult(
 {
     public bool IsLoaded => Status == ClassContextStatus.Loaded && CurrentClass is not null;
 }
+
+

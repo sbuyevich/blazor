@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
-using MyClass.Data;
+using MyClass.Core.Data;
 
-namespace MyClass.Services.ClassContext;
+namespace MyClass.Core.Services.ClassContext;
 
 public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> dbContextFactory) : IClassContextService
 {
@@ -73,3 +73,5 @@ public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> 
             : QueryHelpers.AddQueryString(normalizedPath, ClassCodeQueryParameter, classCode.Trim());
     }
 }
+
+

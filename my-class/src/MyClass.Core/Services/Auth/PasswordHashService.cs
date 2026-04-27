@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace MyClass.Services.Auth;
+namespace MyClass.Core.Services.Auth;
 
 public sealed class PasswordHashService : IPasswordHashService
 {
@@ -44,3 +44,5 @@ public sealed class PasswordHashService : IPasswordHashService
         return CryptographicOperations.FixedTimeEquals(actualKey, expectedKey);
     }
 }
+
+

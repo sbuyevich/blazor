@@ -1,4 +1,4 @@
-namespace MyClass.Services.Auth;
+namespace MyClass.Core.Services.Auth;
 
 public sealed record LoginResult(
     bool Succeeded,
@@ -9,3 +9,5 @@ public sealed record LoginResult(
 
     public static LoginResult Failure(string message) => new(false, null, message);
 }
+
+

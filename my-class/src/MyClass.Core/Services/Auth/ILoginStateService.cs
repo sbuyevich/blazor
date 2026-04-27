@@ -1,4 +1,4 @@
-namespace MyClass.Services.Auth;
+namespace MyClass.Core.Services.Auth;
 
 public interface ILoginStateService
 {
@@ -8,3 +8,5 @@ public interface ILoginStateService
 
     void Set(LoginState? state);
 }
+
+

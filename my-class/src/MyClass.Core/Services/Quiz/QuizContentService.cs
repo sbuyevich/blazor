@@ -1,9 +1,9 @@
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using MyClass.Options;
+using MyClass.Core.Options;
 
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public sealed class QuizContentService(
     IOptions<QuizOptions> quizOptions,
@@ -277,3 +277,5 @@ public sealed class QuizContentService(
         public static ValueResult<T> Failure(string message) => new(false, message, default);
     }
 }
+
+

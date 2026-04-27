@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using MyClass.Data.Entities;
+using MyClass.Core.Data.Entities;
 
-namespace MyClass.Data;
+namespace MyClass.Core.Data;
 
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
@@ -134,3 +134,5 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
         });
     }
 }
+
+

@@ -1,6 +1,6 @@
-using MyClass.Services.Auth;
+using MyClass.Core.Services.Auth;
 
-namespace MyClass.Services.BrowserStorage;
+namespace MyClass.Core.Services.BrowserStorage;
 
 public interface ISessionStorageService
 {
@@ -16,3 +16,5 @@ public interface ISessionStorageService
 
     ValueTask RemoveLoginStateAsync();
 }
+
+

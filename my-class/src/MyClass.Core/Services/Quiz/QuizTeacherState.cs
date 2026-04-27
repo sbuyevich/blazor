@@ -1,4 +1,4 @@
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public sealed record QuizTeacherState(
     string QuizTitle,
@@ -6,3 +6,5 @@ public sealed record QuizTeacherState(
     bool IsComplete,
     QuizTeacherQuestionState? CurrentQuestion,
     IReadOnlyList<QuizStudentAnswerStatus> Students);
+
+

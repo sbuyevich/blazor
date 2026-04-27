@@ -1,4 +1,4 @@
-namespace MyClass.Services.Auth;
+namespace MyClass.Core.Services.Auth;
 
 public interface IPasswordHashService
 {
@@ -6,3 +6,5 @@ public interface IPasswordHashService
 
     bool Verify(string password, string passwordHash);
 }
+
+

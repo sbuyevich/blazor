@@ -1,4 +1,4 @@
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public interface IQuizContentService
 {
@@ -8,3 +8,5 @@ public interface IQuizContentService
         string questionKey,
         CancellationToken cancellationToken = default);
 }
+
+

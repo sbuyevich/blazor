@@ -1,4 +1,4 @@
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public sealed record QuizStudentAnswerStatus(
     int StudentId,
@@ -6,3 +6,5 @@ public sealed record QuizStudentAnswerStatus(
     string DisplayName,
     bool HasAnswered,
     bool FailedNoAnswer);
+
+

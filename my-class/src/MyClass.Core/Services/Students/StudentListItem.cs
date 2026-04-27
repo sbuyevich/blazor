@@ -1,4 +1,4 @@
-namespace MyClass.Services.Students;
+namespace MyClass.Core.Services.Students;
 
 public sealed record StudentListItem(
     int Id,
@@ -8,3 +8,5 @@ public sealed record StudentListItem(
     string DisplayName,
     bool IsActive,
     DateTime CreatedAtUtc);
+
+

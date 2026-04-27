@@ -1,4 +1,4 @@
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public sealed record QuizImageResult(
     bool Succeeded,
@@ -9,3 +9,5 @@ public sealed record QuizImageResult(
 
     public static QuizImageResult Failure(string message) => new(false, message, null);
 }
+
+

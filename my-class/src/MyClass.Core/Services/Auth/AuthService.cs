@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using MyClass.Data;
-using MyClass.Data.Entities;
-using MyClass.Options;
+using MyClass.Core.Data;
+using MyClass.Core.Data.Entities;
+using MyClass.Core.Options;
 
-namespace MyClass.Services.Auth;
+namespace MyClass.Core.Services.Auth;
 
 public sealed class AuthService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
@@ -135,3 +135,5 @@ public sealed class AuthService(
         return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));
     }
 }
+
+

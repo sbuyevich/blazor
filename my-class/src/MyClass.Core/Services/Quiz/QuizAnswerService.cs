@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using MyClass.Data;
-using MyClass.Data.Entities;
-using MyClass.Services.Auth;
-using ClassContextModel = MyClass.Services.ClassContext.ClassContext;
+using MyClass.Core.Data;
+using MyClass.Core.Data.Entities;
+using MyClass.Core.Services.Auth;
+using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
 
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public sealed class QuizAnswerService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
@@ -304,3 +304,5 @@ public sealed class QuizAnswerService(
         DateTime StartedAtUtc,
         bool IsExpired);
 }
+
+

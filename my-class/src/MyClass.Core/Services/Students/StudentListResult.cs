@@ -1,4 +1,4 @@
-namespace MyClass.Services.Students;
+namespace MyClass.Core.Services.Students;
 
 public sealed record StudentListResult(
     bool Succeeded,
@@ -11,3 +11,5 @@ public sealed record StudentListResult(
     public static StudentListResult Failure(string message) =>
         new(false, [], message);
 }
+
+

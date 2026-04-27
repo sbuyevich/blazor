@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using MyClass.Data.Entities;
+using MyClass.Core.Data.Entities;
 
-namespace MyClass.Data;
+namespace MyClass.Core.Data;
 
 public static class DatabaseInitializer
 {
@@ -214,3 +214,5 @@ public static class DatabaseInitializer
         await dbContext.Database.ExecuteSqlRawAsync(sql);
     }
 }
+
+

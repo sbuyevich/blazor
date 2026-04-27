@@ -1,4 +1,4 @@
-namespace MyClass.Services.Quiz;
+namespace MyClass.Core.Services.Quiz;
 
 public sealed record QuizTeacherQuestionState(
     int QuestionIndex,
@@ -10,3 +10,5 @@ public sealed record QuizTeacherQuestionState(
     DateTime? FinishedAtUtc,
     bool IsInProgress,
     TimeSpan Remaining);
+
+

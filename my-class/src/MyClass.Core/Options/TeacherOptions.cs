@@ -1,4 +1,4 @@
-namespace MyClass.Options;
+namespace MyClass.Core.Options;
 
 public sealed class TeacherOptions
 {
@@ -6,3 +6,5 @@ public sealed class TeacherOptions
 
     public string Password { get; set; } = string.Empty;
 }
+
+

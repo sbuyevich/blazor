@@ -1,4 +1,4 @@
-namespace MyClass.Data.Entities;
+namespace MyClass.Core.Data.Entities;
 
 public sealed class Class
 {
@@ -14,3 +14,5 @@ public sealed class Class
 
     public ICollection<Student> Students { get; set; } = [];
 }
+
+

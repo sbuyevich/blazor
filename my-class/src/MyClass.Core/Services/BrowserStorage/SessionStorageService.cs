@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
-using MyClass.Services.Auth;
+using MyClass.Core.Services.Auth;
 
-namespace MyClass.Services.BrowserStorage;
+namespace MyClass.Core.Services.BrowserStorage;
 
 public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorageService
 {
@@ -44,3 +44,5 @@ public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorag
         return RemoveAsync(LoginStateKey);
     }
 }
+
+

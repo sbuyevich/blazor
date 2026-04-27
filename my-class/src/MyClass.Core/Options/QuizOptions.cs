@@ -1,4 +1,4 @@
-namespace MyClass.Options;
+namespace MyClass.Core.Options;
 
 public sealed class QuizOptions
 {
@@ -6,3 +6,5 @@ public sealed class QuizOptions
 
     public int StatusRefreshMilliseconds { get; set; } = 1500;
 }
+
+

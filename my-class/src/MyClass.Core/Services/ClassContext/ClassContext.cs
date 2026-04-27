@@ -1,4 +1,4 @@
-namespace MyClass.Services.ClassContext;
+namespace MyClass.Core.Services.ClassContext;
 
 public sealed record ClassContext(
     int SchoolId,
@@ -6,3 +6,5 @@ public sealed record ClassContext(
     int ClassId,
     string ClassName,
     string Code);
+
+

@@ -1,4 +1,4 @@
-namespace MyClass.Services.Auth;
+namespace MyClass.Core.Services.Auth;
 
 public interface IAuthService
 {
@@ -17,3 +17,5 @@ public interface IAuthService
         string classCode,
         CancellationToken cancellationToken = default);
 }
+
+

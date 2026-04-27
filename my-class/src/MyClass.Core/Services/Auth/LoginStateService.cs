@@ -1,4 +1,4 @@
-namespace MyClass.Services.Auth;
+namespace MyClass.Core.Services.Auth;
 
 public sealed class LoginStateService : ILoginStateService
 {
@@ -12,3 +12,5 @@ public sealed class LoginStateService : ILoginStateService
         Changed?.Invoke();
     }
 }
+
+

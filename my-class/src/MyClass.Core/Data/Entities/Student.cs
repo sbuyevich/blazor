@@ -1,4 +1,4 @@
-namespace MyClass.Data.Entities;
+namespace MyClass.Core.Data.Entities;
 
 public sealed class Student
 {
@@ -22,3 +22,5 @@ public sealed class Student
 
     public Class Class { get; set; } = null!;
 }
+
+

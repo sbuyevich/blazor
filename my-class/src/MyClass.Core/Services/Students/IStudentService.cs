@@ -1,7 +1,7 @@
-using MyClass.Services.Auth;
-using ClassContextModel = MyClass.Services.ClassContext.ClassContext;
+using MyClass.Core.Services.Auth;
+using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
 
-namespace MyClass.Services.Students;
+namespace MyClass.Core.Services.Students;
 
 public interface IStudentService
 {
@@ -23,3 +23,5 @@ public interface IStudentService
         ClassContextModel currentClass,
         CancellationToken cancellationToken = default);
 }
+
+
