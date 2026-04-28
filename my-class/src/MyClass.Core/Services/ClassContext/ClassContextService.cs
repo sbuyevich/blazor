@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using MyClass.Core.Data;
+using MyClass.Core.Models;
 
 namespace  MyClass.Core.Services;
 

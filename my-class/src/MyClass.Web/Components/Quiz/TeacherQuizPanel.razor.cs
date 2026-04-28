@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MyClass.Core.Models;
-using MyClass.Core.Services;
 
 namespace MyClass.Web.Components.Quiz;
 

@@ -1,6 +1,5 @@
 using MyClass.Core.Models;
-using MyClass.Core.Services;
-using ClassContext =  MyClass.Core.Services.ClassContext;
+using ClassContext = MyClass.Core.Models.ClassContext;
 
 namespace MyClass.Core.Services;
 

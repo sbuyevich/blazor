@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
-using  MyClass.Core.Services;
+using MyClass.Core.Models;
 using MyClass.Core.Services;
 
 namespace MyClass.Web.Hubs;

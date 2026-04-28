@@ -2,11 +2,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using MyClass.Core.Data;
+using MyClass.Core.Models;
 using MyClass.Core.Options;
-using MyClass.Core.Services;
-using  MyClass.Core.Services;
-using  MyClass.Core.Services;
-using MyClass.Core.Services;
 using MyClass.Core.Services;
 using MyClass.Web.Components;
 using MyClass.Web.Hubs;
@@ -16,16 +13,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
 builder.Services.AddSignalR();
 builder.Services.AddMudServices();
-builder.Services.AddDataProtection()
+
+builder.Services.AddDataProtection() // do i need it?
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, ".keys")))
     .SetApplicationName("MyClass");
 
+// database
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// options
 builder.Services.Configure<TeacherOptions>(builder.Configuration.GetSection("Teacher"));
 builder.Services.Configure<QuizOptions>(builder.Configuration.GetSection("Quiz"));
+
+// services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILoginStateService, LoginStateService>();
 builder.Services.AddScoped<IClassContextService, ClassContextService>();

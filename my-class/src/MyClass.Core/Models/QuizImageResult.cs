@@ -1,4 +1,4 @@
-namespace MyClass.Core.Services;
+namespace MyClass.Core.Models;
 
 public sealed record QuizImageResult(
     bool Succeeded,

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using MyClass.Core.Models;
 using MyClass.Core.Options;
 
 namespace MyClass.Core.Services;
