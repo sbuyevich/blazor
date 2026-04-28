@@ -1,27 +1,44 @@
 # Current Plan
 
-## Feature
+## Product Direction
 
-Build a Blazor Contacts CRUD application with:
-- `.NET 10`
-- Blazor Web App
-- `Interactive Server`
-- `Individual` authentication
-- SQLite persistence
+`MyClass` is a classroom app for a teacher and students on a local Wi-Fi network. The current implementation centers on:
 
-## Task Pack
+- teacher/student access
+- class context from links such as `/?c=demo`
+- student registration and participation
+- live quiz flow backed by SQLite
+- MudBlazor UI with interactive server rendering
+- SignalR refresh notifications for student quiz pages
 
-The current implementation task pack lives in `sample/.design/`:
+## Current Implementation State
 
-- `01-scaffold-blazor-app.md`
-- `02-configure-auth-and-sqlite.md`
-- `03-add-contacts-data-model.md`
-- `04-build-contacts-service-layer.md`
-- `05-build-contacts-ui-pages.md`
-- `06-wire-navigation-and-protection.md`
-- `07-add-migrations-and-db-setup.md`
-- `08-verify-and-test.md`
+Stages 1 through 4 are implemented in the source tree. Stage 5, answer count and SignalR, has implementation tasks marked complete except final verification in:
+
+- `my-class/.design/stage 5/plan.md`
+- `my-class/.design/stage 5/tasks/`
+
+The latest open product notes are in:
+
+- `my-class/.design/todo.md`
+
+Current TODO themes:
+
+- add teacher "Show Answer" behavior for quiz questions
+- add answer time and correctness columns to student answer grids
+- create a teacher-only quiz result page with CSV export from `QuizAnswers`
+- create a teacher-only school/class management page with student search
+- keep configurable answer counts and SignalR behavior aligned with quiz content
+
+## Durable Constraints
+
+- Preserve custom authentication; do not introduce ASP.NET Core Identity or cookie auth unless explicitly requested.
+- Preserve startup database initialization; do not switch to EF migrations unless explicitly requested.
+- Preserve the current quiz data model: `QuizAnswers` stores denormalized live quiz rows and is not connected to quiz session tables.
+- Use services in `MyClass.Core\Services` for business rules and keep Razor components focused on rendering and interaction.
+- Use `IDbContextFactory<ApplicationDbContext>` in services.
+- Avoid mutating local database files unless the task requires seed/current data changes.
 
 ## Intended Use
 
-When implementing the app, use the design task files as the primary checklist and keep any new project-specific guidance in this repo-local plugin.
+When implementing features, use the relevant `.design` plan/task files as the primary checklist, then update `AGENTS.md`, `README.md`, and this repo-local plugin when durable project guidance changes.

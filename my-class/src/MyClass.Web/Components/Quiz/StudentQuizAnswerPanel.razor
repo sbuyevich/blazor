@@ -3,6 +3,7 @@
 @inject ILoginStateService LoginStateService
 @inject ISessionStorageService SessionStorage
 @inject IQuizAnswerService QuizAnswerService
+@inject IQuizContentService QuizContentService
 @inject IOptions<QuizOptions> QuizOptions
 @inject NavigationManager Navigation
 
@@ -16,14 +17,40 @@
 else
 {
     <MudStack Spacing="3" Class="quiz-answer-shell">
-        <div>
-            <MudText Typo="Typo.h4">Answer</MudText>
-            <MudText Typo="Typo.h6">Select correct answer number</MudText>
-            <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
-        </div>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+            <div>
+                <MudText Typo="Typo.h5">@QuizTitle</MudText>
+                @if (!string.IsNullOrWhiteSpace(QuestionPositionText))
+                {
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">@QuestionPositionText</MudText>
+                }
+                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
+            </div>
+
+            @if (ShowTimer)
+            {
+                <MudChip T="string"
+                         Color="@(IsTimerRunning ? Color.Primary : Color.Default)"
+                         Variant="Variant.Filled">
+                    Timer: @FormatRemaining(TimerRemaining)
+                </MudChip>
+            }
+        </MudStack>
+
+        @if (!string.IsNullOrWhiteSpace(_imageMessage))
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">@_imageMessage</MudAlert>
+        }
+        else if (!string.IsNullOrWhiteSpace(_imageDataUri))
+        {
+            <img class="quiz-answer-question-image"
+                 src="@_imageDataUri"
+                 alt="@QuestionImageAltText" />
+        }
 
         @if (AnswerChoices.Count > 0)
         {
+            <MudText typo="Typo.subtitle2" Color="Color.Secondary">Click on button with correct answer number</MudText>
             <MudGrid Spacing="20">
                 @foreach (var answer in AnswerChoices)
                 {

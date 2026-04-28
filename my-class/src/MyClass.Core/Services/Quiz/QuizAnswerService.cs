@@ -39,7 +39,7 @@ public sealed class QuizAnswerService(
 
         if (current is null)
         {
-            return QuizAnswerPageStateResult.Success(CreateState(false, false, false, "Waiting for the teacher to start a question."));
+            return QuizAnswerPageStateResult.Success(CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Quiz.Title));
         }
 
         var answerChoices = CreateAnswerChoices(current.AnswerCount);
@@ -60,31 +60,31 @@ public sealed class QuizAnswerService(
 
             return answer is not null && answer.Answer.Length > 0
                 ? QuizAnswerPageStateResult.Success(
-                    CreateState(false, true, false, "Answer submitted. Waiting for the next question."))
+                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Quiz.Title, current))
                 : QuizAnswerPageStateResult.Success(
-                    CreateState(false, false, true, "This question has finished."));
+                    CreateState(false, false, true, "This question has finished.", contentResult.Quiz.Title, current));
         }
 
         if (answer is null)
         {
             return QuizAnswerPageStateResult.Success(
-                CreateState(false, false, false, "Waiting for the teacher to start a question."));
+                CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Quiz.Title));
         }
 
         if (answer.Answer.Length > 0)
         {
             return QuizAnswerPageStateResult.Success(
-                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", answerChoices));
+                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", contentResult.Quiz.Title, current, answerChoices));
         }
 
         if (answer.EndedAtUtc is not null)
         {
             return QuizAnswerPageStateResult.Success(
-                CreateState(false, false, true, "This question has finished."));
+                CreateState(false, false, true, "This question has finished.", contentResult.Quiz.Title, current));
         }
 
         return QuizAnswerPageStateResult.Success(
-            CreateState(true, false, false, "Choose an answer.", answerChoices));
+            CreateState(true, false, false, "Choose an answer.", contentResult.Quiz.Title, current, answerChoices));
     }
 
     public async Task<QuizActionResult> SubmitAnswerAsync(
@@ -254,14 +254,20 @@ public sealed class QuizAnswerService(
         var timeoutSeconds = questionContent?.TimeoutSeconds ?? quiz.TimeLimitSeconds;
         var hasOpenAnswers = rows.Any(row => row.EndedAtUtc is null);
         var isExpired = hasOpenAnswers && now >= startedAtUtc.AddSeconds(timeoutSeconds);
+        var remaining = isExpired || !hasOpenAnswers
+            ? TimeSpan.Zero
+            : startedAtUtc.AddSeconds(timeoutSeconds) - now;
 
         return new CurrentQuestion(
             latestQuestion.QuestionIndex,
             latestQuestion.QuestionKey,
             questionContent?.Title ?? latestQuestion.QuestionText,
             questionContent?.AnswerCount ?? 4,
+            quiz.Questions.Count,
             timeoutSeconds,
             startedAtUtc,
+            hasOpenAnswers && !isExpired,
+            remaining,
             isExpired);
     }
 
@@ -270,6 +276,8 @@ public sealed class QuizAnswerService(
         bool alreadyAnswered,
         bool failedNoAnswer,
         string message,
+        string quizTitle = "Quiz Answer",
+        CurrentQuestion? currentQuestion = null,
         IReadOnlyList<string>? answerChoices = null)
     {
         return new QuizAnswerPageState(
@@ -277,6 +285,13 @@ public sealed class QuizAnswerService(
             alreadyAnswered,
             failedNoAnswer,
             message,
+            quizTitle,
+            currentQuestion?.QuestionKey,
+            currentQuestion?.Title,
+            currentQuestion?.QuestionIndex,
+            currentQuestion?.QuestionCount,
+            currentQuestion?.IsInProgress == true,
+            currentQuestion?.Remaining ?? TimeSpan.Zero,
             answerChoices ?? []);
     }
 
@@ -333,8 +348,11 @@ public sealed class QuizAnswerService(
         string QuestionKey,
         string Title,
         int AnswerCount,
+        int QuestionCount,
         int TimeoutSeconds,
         DateTime StartedAtUtc,
+        bool IsInProgress,
+        TimeSpan Remaining,
         bool IsExpired);
 }
 

@@ -1,4 +1,4 @@
 name: blazor-project-context
 display_name: Blazor Project Context
-short_description: Repo-specific guidance for this Blazor workspace
-default_prompt: Use the repo-local Blazor project skill and follow the committed project context.
+short_description: Repo-specific guidance for the MyClass Blazor app
+default_prompt: Use the repo-local MyClass Blazor project skill and follow the committed project context.

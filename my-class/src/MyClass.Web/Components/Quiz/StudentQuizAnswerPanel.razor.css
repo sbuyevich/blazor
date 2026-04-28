@@ -10,6 +10,16 @@
     line-height: 1;
 }
 
+.quiz-answer-question-image {
+    display: block;
+    width: 100%;
+    max-height: 42vh;
+    object-fit: contain;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 6px;
+    background: #ffffff;
+}
+
 @media (max-width: 600px) {
     .quiz-answer-button {
         min-height: 18vh;
