@@ -17,11 +17,25 @@
 else
 {
     <MudStack Spacing="3" Class="quiz-answer-shell">
-        <div>
-            <MudText Typo="Typo.h4">Answer</MudText>
-            <MudText Typo="Typo.h6">Select correct answer number</MudText>
-            <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
-        </div>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+            <div>
+                <MudText Typo="Typo.h5">Quiz Answer</MudText>
+                @if (!string.IsNullOrWhiteSpace(QuestionPositionText))
+                {
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">@QuestionPositionText</MudText>
+                }
+                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
+            </div>
+
+            @if (ShowTimer)
+            {
+                <MudChip T="string"
+                         Color="@(IsTimerRunning ? Color.Primary : Color.Default)"
+                         Variant="Variant.Filled">
+                    Timer: @FormatRemaining(TimerRemaining)
+                </MudChip>
+            }
+        </MudStack>
 
         @if (!string.IsNullOrWhiteSpace(_imageMessage))
         {
@@ -36,6 +50,7 @@ else
 
         @if (AnswerChoices.Count > 0)
         {
+            <MudText Typo="Typo.h5" Color="Color.Secondary">Click on button with correct answer number</MudText>
             <MudGrid Spacing="20">
                 @foreach (var answer in AnswerChoices)
                 {

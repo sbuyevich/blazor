@@ -14,6 +14,7 @@ public partial class StudentQuizAnswerPanel
     private HubConnection? _hubConnection;
     private LoginState? _loginState;
     private CancellationTokenSource? _pollingCancellation;
+    private CancellationTokenSource? _timerCancellation;
     private int? _loadedClassId;
     private int? _pendingClassId;
     private bool _isLoading = true;
@@ -23,12 +24,36 @@ public partial class StudentQuizAnswerPanel
     private string? _loadedImageQuestionKey;
     private string? _imageDataUri;
     private string? _imageMessage;
+    private DateTime? _timerEndsAtUtc;
+    private TimeSpan _timerRemaining = TimeSpan.Zero;
+    private bool _isTimerRunning;
 
     private IReadOnlyList<string> AnswerChoices => _stateResult?.State?.AnswerChoices ?? [];
 
     private bool DisableAnswerButtons => _isSubmitting || _stateResult?.State?.HasInProgressAnswer != true;
 
     private string QuestionImageAltText => _stateResult?.State?.QuestionTitle ?? "Current quiz question";
+
+    private string? QuestionPositionText
+    {
+        get
+        {
+            var state = _stateResult?.State;
+
+            if (state?.QuestionIndex is null || state.QuestionCount is null)
+            {
+                return null;
+            }
+
+            return $"Question {state.QuestionIndex.Value + 1} of {state.QuestionCount.Value}";
+        }
+    }
+
+    private bool ShowTimer => !string.IsNullOrWhiteSpace(_stateResult?.State?.QuestionKey);
+
+    private bool IsTimerRunning => _isTimerRunning;
+
+    private TimeSpan TimerRemaining => _timerRemaining;
 
     private string StatusMessage
     {
@@ -55,6 +80,7 @@ public partial class StudentQuizAnswerPanel
         _stateResult = null;
         _lastSubmitMessage = null;
         ResetImageState();
+        ResetTimerState();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -84,6 +110,7 @@ public partial class StudentQuizAnswerPanel
 
         _stateResult = await QuizAnswerService.GetAnswerPageStateAsync(_loginState, CurrentClass);
         await LoadCurrentImageAsync();
+        UpdateTimerState();
         _isLoading = false;
     }
 
@@ -122,6 +149,101 @@ public partial class StudentQuizAnswerPanel
         _loadedImageQuestionKey = null;
         _imageDataUri = null;
         _imageMessage = null;
+    }
+
+    private void UpdateTimerState()
+    {
+        var state = _stateResult?.State;
+
+        if (state is null || string.IsNullOrWhiteSpace(state.QuestionKey))
+        {
+            ResetTimerState();
+            return;
+        }
+
+        _timerRemaining = state.CurrentQuestionRemaining < TimeSpan.Zero
+            ? TimeSpan.Zero
+            : state.CurrentQuestionRemaining;
+        _isTimerRunning = state.CurrentQuestionIsInProgress && _timerRemaining > TimeSpan.Zero;
+        _timerEndsAtUtc = _isTimerRunning ? DateTime.UtcNow.Add(_timerRemaining) : null;
+
+        if (_isTimerRunning)
+        {
+            StartTimer();
+            return;
+        }
+
+        StopTimer();
+    }
+
+    private void ResetTimerState()
+    {
+        StopTimer();
+        _timerEndsAtUtc = null;
+        _timerRemaining = TimeSpan.Zero;
+        _isTimerRunning = false;
+    }
+
+    private void StartTimer()
+    {
+        if (_timerCancellation is not null)
+        {
+            return;
+        }
+
+        _timerCancellation = new CancellationTokenSource();
+        _ = TimerAsync(_timerCancellation.Token);
+    }
+
+    private void StopTimer()
+    {
+        _timerCancellation?.Cancel();
+        _timerCancellation?.Dispose();
+        _timerCancellation = null;
+    }
+
+    private async Task TimerAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                await InvokeAsync(() =>
+                {
+                    UpdateLocalTimerRemaining();
+                    StateHasChanged();
+                });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void UpdateLocalTimerRemaining()
+    {
+        if (_timerEndsAtUtc is null)
+        {
+            _timerRemaining = TimeSpan.Zero;
+            _isTimerRunning = false;
+            StopTimer();
+            return;
+        }
+
+        var remaining = _timerEndsAtUtc.Value - DateTime.UtcNow;
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            _timerRemaining = TimeSpan.Zero;
+            _isTimerRunning = false;
+            _timerEndsAtUtc = null;
+            StopTimer();
+            return;
+        }
+
+        _timerRemaining = remaining;
     }
 
     private void StartPolling()
@@ -225,10 +347,16 @@ public partial class StudentQuizAnswerPanel
         }
     }
 
+    private static string FormatRemaining(TimeSpan remaining)
+    {
+        return $"{(int)remaining.TotalMinutes:00}:{remaining.Seconds:00}";
+    }
+
     public async ValueTask DisposeAsync()
     {
         _pollingCancellation?.Cancel();
         _pollingCancellation?.Dispose();
+        StopTimer();
 
         if (_hubConnection is not null)
         {

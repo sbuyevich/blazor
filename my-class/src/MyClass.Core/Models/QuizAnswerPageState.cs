@@ -7,6 +7,10 @@ public sealed record QuizAnswerPageState(
     string Message,
     string? QuestionKey,
     string? QuestionTitle,
+    int? QuestionIndex,
+    int? QuestionCount,
+    bool CurrentQuestionIsInProgress,
+    TimeSpan CurrentQuestionRemaining,
     IReadOnlyList<string> AnswerChoices);
 
 

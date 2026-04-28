@@ -254,14 +254,20 @@ public sealed class QuizAnswerService(
         var timeoutSeconds = questionContent?.TimeoutSeconds ?? quiz.TimeLimitSeconds;
         var hasOpenAnswers = rows.Any(row => row.EndedAtUtc is null);
         var isExpired = hasOpenAnswers && now >= startedAtUtc.AddSeconds(timeoutSeconds);
+        var remaining = isExpired || !hasOpenAnswers
+            ? TimeSpan.Zero
+            : startedAtUtc.AddSeconds(timeoutSeconds) - now;
 
         return new CurrentQuestion(
             latestQuestion.QuestionIndex,
             latestQuestion.QuestionKey,
             questionContent?.Title ?? latestQuestion.QuestionText,
             questionContent?.AnswerCount ?? 4,
+            quiz.Questions.Count,
             timeoutSeconds,
             startedAtUtc,
+            hasOpenAnswers && !isExpired,
+            remaining,
             isExpired);
     }
 
@@ -280,6 +286,10 @@ public sealed class QuizAnswerService(
             message,
             currentQuestion?.QuestionKey,
             currentQuestion?.Title,
+            currentQuestion?.QuestionIndex,
+            currentQuestion?.QuestionCount,
+            currentQuestion?.IsInProgress == true,
+            currentQuestion?.Remaining ?? TimeSpan.Zero,
             answerChoices ?? []);
     }
 
@@ -336,8 +346,11 @@ public sealed class QuizAnswerService(
         string QuestionKey,
         string Title,
         int AnswerCount,
+        int QuestionCount,
         int TimeoutSeconds,
         DateTime StartedAtUtc,
+        bool IsInProgress,
+        TimeSpan Remaining,
         bool IsExpired);
 }
 
