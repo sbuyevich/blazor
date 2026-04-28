@@ -20,10 +20,15 @@ public partial class StudentQuizAnswerPanel
     private bool _isSubmitting;
     private bool _lastSubmitSucceeded;
     private string? _lastSubmitMessage;
+    private string? _loadedImageQuestionKey;
+    private string? _imageDataUri;
+    private string? _imageMessage;
 
     private IReadOnlyList<string> AnswerChoices => _stateResult?.State?.AnswerChoices ?? [];
 
     private bool DisableAnswerButtons => _isSubmitting || _stateResult?.State?.HasInProgressAnswer != true;
+
+    private string QuestionImageAltText => _stateResult?.State?.QuestionTitle ?? "Current quiz question";
 
     private string StatusMessage
     {
@@ -49,6 +54,7 @@ public partial class StudentQuizAnswerPanel
         _isLoading = true;
         _stateResult = null;
         _lastSubmitMessage = null;
+        ResetImageState();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -77,7 +83,45 @@ public partial class StudentQuizAnswerPanel
         LoginStateService.Set(_loginState);
 
         _stateResult = await QuizAnswerService.GetAnswerPageStateAsync(_loginState, CurrentClass);
+        await LoadCurrentImageAsync();
         _isLoading = false;
+    }
+
+    private async Task LoadCurrentImageAsync()
+    {
+        var questionKey = _stateResult?.State?.QuestionKey;
+
+        if (string.IsNullOrWhiteSpace(questionKey))
+        {
+            ResetImageState();
+            return;
+        }
+
+        if (string.Equals(questionKey, _loadedImageQuestionKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _loadedImageQuestionKey = questionKey;
+        _imageDataUri = null;
+        _imageMessage = null;
+
+        var imageResult = await QuizContentService.LoadQuestionImageAsync(questionKey);
+
+        if (!imageResult.Succeeded)
+        {
+            _imageMessage = imageResult.Message;
+            return;
+        }
+
+        _imageDataUri = imageResult.DataUri;
+    }
+
+    private void ResetImageState()
+    {
+        _loadedImageQuestionKey = null;
+        _imageDataUri = null;
+        _imageMessage = null;
     }
 
     private void StartPolling()

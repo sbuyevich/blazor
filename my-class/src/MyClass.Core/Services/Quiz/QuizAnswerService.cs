@@ -60,9 +60,9 @@ public sealed class QuizAnswerService(
 
             return answer is not null && answer.Answer.Length > 0
                 ? QuizAnswerPageStateResult.Success(
-                    CreateState(false, true, false, "Answer submitted. Waiting for the next question."))
+                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", current))
                 : QuizAnswerPageStateResult.Success(
-                    CreateState(false, false, true, "This question has finished."));
+                    CreateState(false, false, true, "This question has finished.", current));
         }
 
         if (answer is null)
@@ -74,17 +74,17 @@ public sealed class QuizAnswerService(
         if (answer.Answer.Length > 0)
         {
             return QuizAnswerPageStateResult.Success(
-                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", answerChoices));
+                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", current, answerChoices));
         }
 
         if (answer.EndedAtUtc is not null)
         {
             return QuizAnswerPageStateResult.Success(
-                CreateState(false, false, true, "This question has finished."));
+                CreateState(false, false, true, "This question has finished.", current));
         }
 
         return QuizAnswerPageStateResult.Success(
-            CreateState(true, false, false, "Choose an answer.", answerChoices));
+            CreateState(true, false, false, "Choose an answer.", current, answerChoices));
     }
 
     public async Task<QuizActionResult> SubmitAnswerAsync(
@@ -270,6 +270,7 @@ public sealed class QuizAnswerService(
         bool alreadyAnswered,
         bool failedNoAnswer,
         string message,
+        CurrentQuestion? currentQuestion = null,
         IReadOnlyList<string>? answerChoices = null)
     {
         return new QuizAnswerPageState(
@@ -277,6 +278,8 @@ public sealed class QuizAnswerService(
             alreadyAnswered,
             failedNoAnswer,
             message,
+            currentQuestion?.QuestionKey,
+            currentQuestion?.Title,
             answerChoices ?? []);
     }
 

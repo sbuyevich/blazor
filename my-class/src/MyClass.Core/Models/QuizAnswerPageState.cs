@@ -5,6 +5,8 @@ public sealed record QuizAnswerPageState(
     bool AlreadyAnswered,
     bool FailedNoAnswer,
     string Message,
+    string? QuestionKey,
+    string? QuestionTitle,
     IReadOnlyList<string> AnswerChoices);
 
 

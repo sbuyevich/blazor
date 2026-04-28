@@ -45,7 +45,7 @@ Stage 6 shows the current quiz question image on the student Quiz Answer page. T
 
 ## Task Breakdown
 
-- [ ] [Task 01 - Student Current Question State](tasks/01-student-current-question-state.md)
-- [ ] [Task 02 - Student Question Image UI](tasks/02-student-question-image-ui.md)
+- [x] [Task 01 - Student Current Question State](tasks/01-student-current-question-state.md)
+- [x] [Task 02 - Student Question Image UI](tasks/02-student-question-image-ui.md)
 - [ ] [Task 03 - SignalR Refresh Behavior](tasks/03-signalr-refresh-behavior.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)
