@@ -28,7 +28,7 @@ public sealed class QuizAnswerService(
 
         if (!contentResult.Succeeded || contentResult.Quiz is null)
         {
-            return QuizAnswerPageStateResult.Success(new QuizAnswerPageState(false, false, false, contentResult.Message));
+            return QuizAnswerPageStateResult.Success(CreateState(false, false, false, contentResult.Message));
         }
 
         var current = await GetCurrentQuestionAsync(
@@ -40,8 +40,10 @@ public sealed class QuizAnswerService(
 
         if (current is null)
         {
-            return QuizAnswerPageStateResult.Success(new QuizAnswerPageState(false, false, false, "Waiting for the teacher to start a question."));
+            return QuizAnswerPageStateResult.Success(CreateState(false, false, false, "Waiting for the teacher to start a question."));
         }
+
+        var answerChoices = CreateAnswerChoices(current.AnswerCount);
 
         var answer = await dbContext.QuizAnswers
             .AsNoTracking()
@@ -59,31 +61,31 @@ public sealed class QuizAnswerService(
 
             return answer is not null && answer.Answer.Length > 0
                 ? QuizAnswerPageStateResult.Success(
-                    new QuizAnswerPageState(false, true, false, "Answer submitted. Waiting for the next question."))
+                    CreateState(false, true, false, "Answer submitted. Waiting for the next question."))
                 : QuizAnswerPageStateResult.Success(
-                    new QuizAnswerPageState(false, false, true, "This question has finished."));
+                    CreateState(false, false, true, "This question has finished."));
         }
 
         if (answer is null)
         {
             return QuizAnswerPageStateResult.Success(
-                new QuizAnswerPageState(false, false, false, "Waiting for the teacher to start a question."));
+                CreateState(false, false, false, "Waiting for the teacher to start a question."));
         }
 
         if (answer.Answer.Length > 0)
         {
             return QuizAnswerPageStateResult.Success(
-                new QuizAnswerPageState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question."));
+                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", answerChoices));
         }
 
         if (answer.EndedAtUtc is not null)
         {
             return QuizAnswerPageStateResult.Success(
-                new QuizAnswerPageState(false, false, true, "This question has finished."));
+                CreateState(false, false, true, "This question has finished."));
         }
 
         return QuizAnswerPageStateResult.Success(
-            new QuizAnswerPageState(true, false, false, "Choose an answer."));
+            CreateState(true, false, false, "Choose an answer.", answerChoices));
     }
 
     public async Task<QuizActionResult> SubmitAnswerAsync(
@@ -93,11 +95,6 @@ public sealed class QuizAnswerService(
         CancellationToken cancellationToken = default)
     {
         var selectedAnswerText = selectedAnswer.Trim();
-
-        if (selectedAnswerText is not ("1" or "2" or "3" or "4"))
-        {
-            return QuizActionResult.Failure("Answer must be 1, 2, 3, or 4.");
-        }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
@@ -125,6 +122,11 @@ public sealed class QuizAnswerService(
         if (current is null)
         {
             return QuizActionResult.Failure("No question is available yet. Wait for the teacher to start.");
+        }
+
+        if (!IsAnswerInRange(selectedAnswerText, current.AnswerCount))
+        {
+            return QuizActionResult.Failure($"Answer must be between 1 and {current.AnswerCount}.");
         }
 
         if (current.IsExpired)
@@ -258,9 +260,40 @@ public sealed class QuizAnswerService(
             latestQuestion.QuestionIndex,
             latestQuestion.QuestionKey,
             questionContent?.Title ?? latestQuestion.QuestionText,
+            questionContent?.AnswerCount ?? 4,
             timeoutSeconds,
             startedAtUtc,
             isExpired);
+    }
+
+    private static QuizAnswerPageState CreateState(
+        bool hasInProgressAnswer,
+        bool alreadyAnswered,
+        bool failedNoAnswer,
+        string message,
+        IReadOnlyList<string>? answerChoices = null)
+    {
+        return new QuizAnswerPageState(
+            hasInProgressAnswer,
+            alreadyAnswered,
+            failedNoAnswer,
+            message,
+            answerChoices ?? []);
+    }
+
+    private static IReadOnlyList<string> CreateAnswerChoices(int answerCount)
+    {
+        return Enumerable.Range(1, answerCount)
+            .Select(answer => answer.ToString())
+            .ToList();
+    }
+
+    private static bool IsAnswerInRange(string answer, int answerCount)
+    {
+        return int.TryParse(answer, out var answerNumber) &&
+            answerNumber >= 1 &&
+            answerNumber <= answerCount &&
+            string.Equals(answer, answerNumber.ToString(), StringComparison.Ordinal);
     }
 
     private static async Task FinishExpiredQuestionAsync(
@@ -300,6 +333,7 @@ public sealed class QuizAnswerService(
         int QuestionIndex,
         string QuestionKey,
         string Title,
+        int AnswerCount,
         int TimeoutSeconds,
         DateTime StartedAtUtc,
         bool IsExpired);

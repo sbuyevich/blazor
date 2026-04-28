@@ -51,8 +51,8 @@ Stage 5 makes the number of answer choices configurable from quiz content and up
 
 ## Task Breakdown
 
-- [ ] [Task 01 - Answer Count Quiz Content](tasks/01-answer-count-quiz-content.md)
-- [ ] [Task 02 - Answer State and Validation](tasks/02-answer-state-and-validation.md)
+- [x] [Task 01 - Answer Count Quiz Content](tasks/01-answer-count-quiz-content.md)
+- [x] [Task 02 - Answer State and Validation](tasks/02-answer-state-and-validation.md)
 - [ ] [Task 03 - Dynamic Student Answer Buttons](tasks/03-dynamic-student-answer-buttons.md)
 - [ ] [Task 04 - SignalR Quiz Notifications](tasks/04-signalr-quiz-notifications.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)

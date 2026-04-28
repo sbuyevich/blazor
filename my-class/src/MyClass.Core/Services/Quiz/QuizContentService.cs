@@ -9,6 +9,10 @@ public sealed class QuizContentService(
     IOptions<QuizOptions> quizOptions,
     IHostEnvironment hostEnvironment) : IQuizContentService
 {
+    private const int DefaultAnswerCount = 4;
+    private const int MinAnswerCount = 1;
+    private const int MaxAnswerCount = 4;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -63,6 +67,13 @@ public sealed class QuizContentService(
             return QuizContentResult.Failure("Root quiz.json must define a positive TimeLimitSeconds value.");
         }
 
+        var defaultAnswerCount = quizMetadata.Value.AnswerCount ?? DefaultAnswerCount;
+
+        if (!IsSupportedAnswerCount(defaultAnswerCount))
+        {
+            return QuizContentResult.Failure($"Root quiz.json answerCount must be between {MinAnswerCount} and {MaxAnswerCount}.");
+        }
+
         var questionFolders = Directory
             .EnumerateDirectories(rootFolder)
             .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
@@ -81,6 +92,7 @@ public sealed class QuizContentService(
                 questionFolders[index],
                 index,
                 quizMetadata.Value.TimeLimitSeconds,
+                defaultAnswerCount,
                 cancellationToken);
 
             if (!questionResult.Succeeded || questionResult.Value is null)
@@ -167,6 +179,7 @@ public sealed class QuizContentService(
         string questionFolder,
         int index,
         int defaultTimeLimitSeconds,
+        int defaultAnswerCount,
         CancellationToken cancellationToken)
     {
         var questionKey = Path.GetFileName(questionFolder);
@@ -204,11 +217,18 @@ public sealed class QuizContentService(
             return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define a positive TimeLimitSeconds value.");
         }
 
+        var answerCount = questionMetadata.Value.AnswerCount ?? defaultAnswerCount;
+
+        if (!IsSupportedAnswerCount(answerCount))
+        {
+            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define answerCount between {MinAnswerCount} and {MaxAnswerCount}.");
+        }
+
         var correctAnswer = questionMetadata.Value.CorrectAnswer?.Trim();
 
-        if (correctAnswer is not ("1" or "2" or "3" or "4"))
+        if (!IsAnswerInRange(correctAnswer, answerCount))
         {
-            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define correctAnswer as \"1\", \"2\", \"3\", or \"4\".");
+            return ValueResult<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define correctAnswer between \"1\" and \"{answerCount}\".");
         }
 
         var imagePath = GetQuestionImagePath(questionFolder);
@@ -224,8 +244,22 @@ public sealed class QuizContentService(
                 index,
                 title,
                 timeoutSeconds,
-                correctAnswer,
+                answerCount,
+                correctAnswer!,
                 Uri.EscapeDataString(questionKey)));
+    }
+
+    private static bool IsSupportedAnswerCount(int answerCount)
+    {
+        return answerCount is >= MinAnswerCount and <= MaxAnswerCount;
+    }
+
+    private static bool IsAnswerInRange(string? answer, int answerCount)
+    {
+        return int.TryParse(answer, out var answerNumber) &&
+            answerNumber >= 1 &&
+            answerNumber <= answerCount &&
+            string.Equals(answer, answerNumber.ToString(), StringComparison.Ordinal);
     }
 
     private static string? GetQuestionImagePath(string questionFolder)
@@ -266,9 +300,9 @@ public sealed class QuizContentService(
         }
     }
 
-    private sealed record QuizMetadata(string? Title, int TimeLimitSeconds);
+    private sealed record QuizMetadata(string? Title, int TimeLimitSeconds, int? AnswerCount);
 
-    private sealed record QuestionMetadata(string? Question, string? CorrectAnswer, int? TimeLimitSeconds);
+    private sealed record QuestionMetadata(string? Question, string? CorrectAnswer, int? TimeLimitSeconds, int? AnswerCount);
 
     private sealed record ValueResult<T>(bool Succeeded, string Message, T? Value)
     {
