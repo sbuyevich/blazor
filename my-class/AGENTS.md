@@ -9,7 +9,7 @@ Primary code lives under `my-class/src`:
 - `MyClass.Web`: Blazor UI, layout, pages, app startup, configuration.
 - `MyClass.Core`: EF Core data model, services, options, auth, quiz, students, class context.
 - `database/my-class.db`: local SQLite database used by the app.
-- `.assets/quiz`: quiz content folder configured by `Quiz:RootFolder`.
+- `assets/quizzes/{quiz name}`: quiz content folder configured by `Quiz:RootFolder`.
 - `.design`: staged business/design notes and task breakdowns.
 
 ## Commands
@@ -52,7 +52,7 @@ If build fails because `MyClass.Web.exe` is locked, stop the running app process
 
 Stage 4 quiz behavior is the current model:
 
-- Quiz content is loaded from `Quiz:RootFolder`, currently `../.assets/quiz`.
+- Quiz content is loaded from `Quiz:RootFolder`, currently `../assets/quizzes/{quiz name}`.
 - Root `quiz.json` uses `title` and `TimeLimitSeconds`.
 - Each question subfolder contains `q.jpg` and `q.json`.
 - Question `q.json` includes `correctAnswer` as a string and may include `TimeLimitSeconds`.
