@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using MyClass.Core.Data; 
+using MyClass.Core.Data;
+using MyClass.Core.Models;
 using MyClass.Core.Options;
-using MyClass.Core.Services;
-using ClassContextModel =  MyClass.Core.Services.ClassContext;
 
-namespace MyClass.Core.Services;   
+namespace MyClass.Core.Services;
 
 public sealed class StudentService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
@@ -13,7 +12,7 @@ public sealed class StudentService(
 {
     public async Task<StudentListResult> GetStudentsForClassAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         string? searchText = null,
         bool activeOnly = false,
         CancellationToken cancellationToken = default)
@@ -65,7 +64,7 @@ public sealed class StudentService(
 
     public async Task<StudentActionResult> RemoveStudentFromClassAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         int studentId,
         CancellationToken cancellationToken = default)
     {
@@ -98,7 +97,7 @@ public sealed class StudentService(
 
     public async Task<StudentActionResult> ResetStudentsActiveStateAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -119,7 +118,7 @@ public sealed class StudentService(
         return StudentActionResult.Success($"Reset {updatedCount} active student{(updatedCount == 1 ? string.Empty : "s")}.");
     }
 
-    private string? ValidateTeacherAccess(LoginState? loginState, ClassContextModel currentClass)
+    private string? ValidateTeacherAccess(LoginState? loginState, ClassContext currentClass)
     {
         if (loginState is null)
         {

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using MyClass.Core.Models;
 using MyClass.Core.Services;
 using  MyClass.Core.Services;
 

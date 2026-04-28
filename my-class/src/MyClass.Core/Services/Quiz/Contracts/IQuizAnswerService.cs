@@ -1,4 +1,6 @@
 
+using MyClass.Core.Models;
+
 namespace MyClass.Core.Services;
 
 public interface IQuizAnswerService

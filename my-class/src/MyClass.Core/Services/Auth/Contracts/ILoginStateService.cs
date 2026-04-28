@@ -1,3 +1,5 @@
+using MyClass.Core.Models;
+
 namespace MyClass.Core.Services;
 
 public interface ILoginStateService
