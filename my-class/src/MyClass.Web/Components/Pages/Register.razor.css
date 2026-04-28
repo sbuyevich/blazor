@@ -1,17 +1,19 @@
 .login-shell {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
     display: flex;
+    align-items: center;
     justify-content: center;
-    padding-top: 2rem;
+    padding: 1rem;
+    background:
+        linear-gradient(90deg, rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.38)),
+        url("/images/back.png") center / cover no-repeat;
+    pointer-events: auto;
 }
 
 .login-panel {
-    width: min(100%, 22rem);
-}
-
-@media (min-width: 641px) {
-    .login-panel {
-        width: 50%;
-        min-width: 24rem;
-        max-width: none;
-    }
+    width: min(92vw, 28rem);
+    max-height: 88vh;
+    overflow-y: auto;
 }

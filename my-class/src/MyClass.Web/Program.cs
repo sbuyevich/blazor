@@ -1,14 +1,14 @@
-using MyClass.Web.Components;
-using MyClass.Core.Data;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
+using MyClass.Core.Data;
 using MyClass.Core.Options;
 using MyClass.Core.Services.Auth;
 using MyClass.Core.Services.BrowserStorage;
 using MyClass.Core.Services.ClassContext;
 using MyClass.Core.Services.Quiz;
 using MyClass.Core.Services.Students;
-using MudBlazor.Services;
+using MyClass.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
