@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using MyClass.Core.Data;
+using MyClass.Core.Models;
 
-namespace MyClass.Core.Services.ClassContext;
+namespace  MyClass.Core.Services;
 
 public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> dbContextFactory) : IClassContextService
 {

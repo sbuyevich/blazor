@@ -2,9 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MyClass.Core.Data;
 using MyClass.Core.Data.Entities;
+using MyClass.Core.Models;
 using MyClass.Core.Options;
 
-namespace MyClass.Core.Services.Auth;
+namespace MyClass.Core.Services;
 
 public sealed class AuthService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,

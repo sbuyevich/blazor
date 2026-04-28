@@ -1,10 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using MyClass.Core.Data;
 using MyClass.Core.Data.Entities;
-using MyClass.Core.Services.Auth;
-using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
+using MyClass.Core.Models;
 
-namespace MyClass.Core.Services.Quiz;
+namespace MyClass.Core.Services;
 
 public sealed class QuizAnswerService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
@@ -12,7 +11,7 @@ public sealed class QuizAnswerService(
 {
     public async Task<QuizAnswerPageStateResult> GetAnswerPageStateAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -90,7 +89,7 @@ public sealed class QuizAnswerService(
 
     public async Task<QuizActionResult> SubmitAnswerAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         string selectedAnswer,
         CancellationToken cancellationToken = default)
     {
@@ -171,7 +170,7 @@ public sealed class QuizAnswerService(
     private static async Task<StudentAccessResult> ValidateStudentAccessAsync(
         ApplicationDbContext dbContext,
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken)
     {
         if (loginState is null)

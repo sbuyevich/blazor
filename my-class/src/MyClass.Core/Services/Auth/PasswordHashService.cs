@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace MyClass.Core.Services.Auth;
+namespace MyClass.Core.Services;
 
 public sealed class PasswordHashService : IPasswordHashService
 {

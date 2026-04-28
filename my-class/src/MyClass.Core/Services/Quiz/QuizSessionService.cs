@@ -2,10 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MyClass.Core.Data;
 using MyClass.Core.Data.Entities;
+using MyClass.Core.Models;
 using MyClass.Core.Options;
-using MyClass.Core.Services.Auth;
-using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
-namespace MyClass.Core.Services.Quiz;
+namespace MyClass.Core.Services;
 
 public sealed class QuizSessionService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
@@ -15,7 +14,7 @@ public sealed class QuizSessionService(
 {
     public async Task<QuizTeacherStateResult> GetTeacherStateAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -55,7 +54,7 @@ public sealed class QuizSessionService(
 
     public async Task<QuizActionResult> StartQuestionAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default)
     {
         return await StartOrRestartQuizAsync(loginState, currentClass, "Quiz started.", cancellationToken);
@@ -63,7 +62,7 @@ public sealed class QuizSessionService(
 
     public async Task<QuizActionResult> RestartQuizAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default)
     {
         return await StartOrRestartQuizAsync(loginState, currentClass, "Quiz restarted.", cancellationToken);
@@ -71,7 +70,7 @@ public sealed class QuizSessionService(
 
     private async Task<QuizActionResult> StartOrRestartQuizAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         string successMessage,
         CancellationToken cancellationToken)
     {
@@ -114,7 +113,7 @@ public sealed class QuizSessionService(
 
     public async Task<QuizActionResult> FinishCurrentQuestionAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -152,7 +151,7 @@ public sealed class QuizSessionService(
 
     public async Task<QuizActionResult> MoveNextQuestionAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -430,7 +429,7 @@ public sealed class QuizSessionService(
             .ToList();
     }
 
-    private string? ValidateTeacherAccess(LoginState? loginState, ClassContextModel currentClass)
+    private string? ValidateTeacherAccess(LoginState? loginState, ClassContext currentClass)
     {
         if (loginState is null)
         {

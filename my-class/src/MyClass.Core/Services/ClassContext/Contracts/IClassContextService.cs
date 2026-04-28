@@ -1,0 +1,14 @@
+using MyClass.Core.Models;
+
+namespace  MyClass.Core.Services;
+
+public interface IClassContextService
+{
+    Task<ClassContextResult> ResolveAsync(string? classCode, CancellationToken cancellationToken = default);
+
+    string? GetClassCodeFromUri(string uri);
+
+    string GetPathWithClassCode(string path, string? classCode);
+}
+
+

@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
-using MyClass.Core.Services.Auth;
-using MyClass.Core.Services.ClassContext;
-using MyClass.Core.Services.Quiz;
+using MyClass.Core.Models;
 using MyClass.Web.Hubs;
 
 namespace MyClass.Web.Components.Quiz;

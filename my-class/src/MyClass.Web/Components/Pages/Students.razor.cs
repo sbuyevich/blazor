@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components;
-using MyClass.Core.Services.ClassContext;
-using MyClass.Core.Services.Students;
+using MyClass.Core.Models;
 
 namespace MyClass.Web.Components.Pages;
 

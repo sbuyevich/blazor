@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
-using MyClass.Core.Services.ClassContext;
-using MyClass.Core.Services.Quiz;
+using MyClass.Core.Models;
+using MyClass.Core.Services;
 
 namespace MyClass.Web.Hubs;
 

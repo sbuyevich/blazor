@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.Routing;
 using MudBlazor;
-using MyClass.Core.Services.ClassContext;
+using MyClass.Core.Models;
 
 namespace MyClass.Web.Components.Layout;
 
