@@ -39,7 +39,7 @@ public sealed class QuizAnswerService(
 
         if (current is null)
         {
-            return QuizAnswerPageStateResult.Success(CreateState(false, false, false, "Waiting for the teacher to start a question."));
+            return QuizAnswerPageStateResult.Success(CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Quiz.Title));
         }
 
         var answerChoices = CreateAnswerChoices(current.AnswerCount);
@@ -60,31 +60,31 @@ public sealed class QuizAnswerService(
 
             return answer is not null && answer.Answer.Length > 0
                 ? QuizAnswerPageStateResult.Success(
-                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", current))
+                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Quiz.Title, current))
                 : QuizAnswerPageStateResult.Success(
-                    CreateState(false, false, true, "This question has finished.", current));
+                    CreateState(false, false, true, "This question has finished.", contentResult.Quiz.Title, current));
         }
 
         if (answer is null)
         {
             return QuizAnswerPageStateResult.Success(
-                CreateState(false, false, false, "Waiting for the teacher to start a question."));
+                CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Quiz.Title));
         }
 
         if (answer.Answer.Length > 0)
         {
             return QuizAnswerPageStateResult.Success(
-                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", current, answerChoices));
+                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", contentResult.Quiz.Title, current, answerChoices));
         }
 
         if (answer.EndedAtUtc is not null)
         {
             return QuizAnswerPageStateResult.Success(
-                CreateState(false, false, true, "This question has finished.", current));
+                CreateState(false, false, true, "This question has finished.", contentResult.Quiz.Title, current));
         }
 
         return QuizAnswerPageStateResult.Success(
-            CreateState(true, false, false, "Choose an answer.", current, answerChoices));
+            CreateState(true, false, false, "Choose an answer.", contentResult.Quiz.Title, current, answerChoices));
     }
 
     public async Task<QuizActionResult> SubmitAnswerAsync(
@@ -276,6 +276,7 @@ public sealed class QuizAnswerService(
         bool alreadyAnswered,
         bool failedNoAnswer,
         string message,
+        string quizTitle = "Quiz Answer",
         CurrentQuestion? currentQuestion = null,
         IReadOnlyList<string>? answerChoices = null)
     {
@@ -284,6 +285,7 @@ public sealed class QuizAnswerService(
             alreadyAnswered,
             failedNoAnswer,
             message,
+            quizTitle,
             currentQuestion?.QuestionKey,
             currentQuestion?.Title,
             currentQuestion?.QuestionIndex,

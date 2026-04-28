@@ -34,6 +34,8 @@ public partial class StudentQuizAnswerPanel
 
     private string QuestionImageAltText => _stateResult?.State?.QuestionTitle ?? "Current quiz question";
 
+    private string QuizTitle => _stateResult?.State?.QuizTitle ?? "Quiz Answer";
+
     private string? QuestionPositionText
     {
         get
