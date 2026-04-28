@@ -23,19 +23,18 @@ This project is developed in small, reviewable stages. The human owns product in
   - Ask the agent to split the plan into task files under `tasks/`.
   - Review task files before implementation starts.
 
+> Keep BRDs short and business-focused; keep plans and task files implementation-focused.
+
 ## Implementation Workflow
 
 - Commit or otherwise save a clean checkpoint before each agent implementation pass.
-- Ask Agent to implement one task or one small group of related tasks at a time.
+- Ask the agent to implement one task or one small group of related tasks at a time.
 - Build after each implemented task group.
 - Test the affected workflow manually when UI behavior changes.
 - Mark completed tasks in the stage `plan.md`.
 
-> Manual refactor after tasks/stage implementation
+> Manually refactor after task/stage implementation.
 
 ## Documentation Hygiene
 
-- Update `AGENTS.md`, `README.md`, and relevant `.design` files after meaningful refactors or workflow changes.
-- Keep current architecture notes accurate so future agent work stays consistent.
-- Document accepted conventions, not every rejected idea.
-- Keep BRDs short and business-focused; keep plans and task files implementation-focused.
+- Update `AGENTS.md`, `README.md`, and relevant `.design` files after meaningful refactors or workflow changes so future agent work stays consistent.
