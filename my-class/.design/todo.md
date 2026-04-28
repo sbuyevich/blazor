@@ -1,8 +1,6 @@
 # TODO List
 
-## UI Changes
-
-### Quiz Page
+## Quiz Page
 
 - add `Show Answer` button
 - add answer time and correct columns in student answers grid
@@ -23,15 +21,14 @@ Create new Quiz Result page only for teacher with
     - Answer Time = EndedAtUtc - StartedAtUtc in seconds
     - IsCorrect 
 
-### School/Class page 
+## School/Class page 
 Create new page only for teacher with
 - school dropdown value from Schools table. it has `Add` button on right side to insert new school value in popup.
 - class dropdown filtered by selected school from Classes table. it has `Add` button on right side to insert new class values in popup.
 - add student grid filtered by selected class with search bar by user display name.
 
-## Backend
 
-### Answers count configuration
+## Answers count configuration
 Make answer is configurable for each question with default value in quiz.json and overridden in each question.
 StudentQuizAnswerPanel should show buttons based on it.
 Use SignalR for that.
