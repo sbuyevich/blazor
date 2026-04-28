@@ -1,31 +1,41 @@
 # Agentic Programming Development Methodology
 
-Design and codding followed the sequence described below. 
+This project is developed in small, reviewable stages. The human owns product intent and final decisions. The agent helps turn that intent into plans, tasks, code, checks, and documentation.
 
-## High arch design
-- Collect func, non-func requirements and constrains
-- Choice tech stack
-- Choice database 
-- Choice delivery and infrastructure
+## High-Level Design
 
-> Agent is used only with `Plan` mode
+- Collect functional requirements, non-functional requirements, and constraints.
+- Choose the technology stack.
+- Choose the database approach.
+- Choose delivery, launch, and infrastructure assumptions.
+- Record important decisions in `.design` so later stages do not rediscover them.
 
-## Planning
-- Split design and implementation in stages
-- For each stage 
-    - create manually rough brd.md and ask Agent: "brd is clear"
-    - ask Agent to create plan.md based on brd.md and review it
-    - ask Agent to create tasks in tasks folder and review it
-    - ask Agent to implement task one by one
-    - test, review and refactor code after each tasks
-    - test, review and comment code after stage implementation
+> Use the agent in Plan mode for high-level design and stage planning.
 
->Commit changes before each Agent implementation
+## Stage Planning
 
-> Update agent.md, read.me etc after refactoring to help Agent for further work with consistent code
+- Split design and implementation into stages.
+- For each stage:
+  - Create a rough `brd.md` manually.
+  - Ask the agent whether the BRD is clear.
+  - Ask the agent to create `plan.md` from `brd.md`.
+  - Review and edit the plan until it is decision-complete.
+  - Ask the agent to split the plan into task files under `tasks/`.
+  - Review task files before implementation starts.
 
+## Implementation Workflow
 
+- Commit or otherwise save a clean checkpoint before each agent implementation pass.
+- Ask Agent to implement one task or one small group of related tasks at a time.
+- Build after each implemented task group.
+- Test the affected workflow manually when UI behavior changes.
+- Mark completed tasks in the stage `plan.md`.
 
+> Manual refactor after tasks/stage implementation
 
+## Documentation Hygiene
 
-
+- Update `AGENTS.md`, `README.md`, and relevant `.design` files after meaningful refactors or workflow changes.
+- Keep current architecture notes accurate so future agent work stays consistent.
+- Document accepted conventions, not every rejected idea.
+- Keep BRDs short and business-focused; keep plans and task files implementation-focused.
