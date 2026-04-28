@@ -6,8 +6,3 @@
 <RoleGate RequireTeacher="false" DeniedMessage="Only students can submit quiz answers.">
     <StudentQuizAnswerPanel CurrentClass="CurrentClass" />
 </RoleGate>
-
-@code {
-    [CascadingParameter]
-    public ClassContext CurrentClass { get; set; } = null!;
-}

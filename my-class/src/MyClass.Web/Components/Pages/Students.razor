@@ -19,15 +19,3 @@
 
     <StudentGrid CurrentClass="CurrentClass" StudentsLoaded="OnStudentsLoaded" />
 </MudStack>
-
-@code {
-    [CascadingParameter]
-    public ClassContext CurrentClass { get; set; } = null!;
-
-    private StudentListResult? _studentsResult;
-
-    private void OnStudentsLoaded(StudentListResult result)
-    {
-        _studentsResult = result;
-    }
-}
