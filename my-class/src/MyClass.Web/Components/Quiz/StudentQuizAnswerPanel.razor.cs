@@ -1,18 +1,19 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.SignalR.Client;
 using MyClass.Core.Services.Auth;
 using MyClass.Core.Services.ClassContext;
 using MyClass.Core.Services.Quiz;
+using MyClass.Web.Hubs;
 
 namespace MyClass.Web.Components.Quiz;
 
 public partial class StudentQuizAnswerPanel
 {
-    private static readonly int[] AnswerChoices = [1, 2, 3, 4];
-
     [Parameter, EditorRequired]
     public ClassContext CurrentClass { get; set; } = null!;
 
     private QuizAnswerPageStateResult? _stateResult;
+    private HubConnection? _hubConnection;
     private LoginState? _loginState;
     private CancellationTokenSource? _pollingCancellation;
     private int? _loadedClassId;
@@ -21,6 +22,10 @@ public partial class StudentQuizAnswerPanel
     private bool _isSubmitting;
     private bool _lastSubmitSucceeded;
     private string? _lastSubmitMessage;
+
+    private IReadOnlyList<string> AnswerChoices => _stateResult?.State?.AnswerChoices ?? [];
+
+    private bool DisableAnswerButtons => _isSubmitting || _stateResult?.State?.HasInProgressAnswer != true;
 
     private string StatusMessage
     {
@@ -57,6 +62,7 @@ public partial class StudentQuizAnswerPanel
 
         _pendingClassId = null;
         await LoadStateAsync(showLoading: true);
+        await StartSignalRAsync();
         StartPolling();
         StateHasChanged();
     }
@@ -82,6 +88,55 @@ public partial class StudentQuizAnswerPanel
         _pollingCancellation?.Dispose();
         _pollingCancellation = new CancellationTokenSource();
         _ = PollAsync(_pollingCancellation.Token);
+    }
+
+    private async Task StartSignalRAsync()
+    {
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+            _hubConnection = null;
+        }
+
+        if (string.IsNullOrWhiteSpace(CurrentClass.Code))
+        {
+            return;
+        }
+
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri(QuizHub.Route))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hubConnection.On(QuizHub.QuizStateChangedMethod, () =>
+        {
+            _ = InvokeAsync(async () =>
+            {
+                await LoadStateAsync(showLoading: false);
+                StateHasChanged();
+            });
+        });
+
+        _hubConnection.Reconnected += async _ =>
+        {
+            await JoinCurrentClassGroupAsync();
+            await InvokeAsync(async () =>
+            {
+                await LoadStateAsync(showLoading: false);
+                StateHasChanged();
+            });
+        };
+
+        await _hubConnection.StartAsync();
+        await JoinCurrentClassGroupAsync();
+    }
+
+    private async Task JoinCurrentClassGroupAsync()
+    {
+        if (_hubConnection?.State == HubConnectionState.Connected)
+        {
+            await _hubConnection.SendAsync("JoinClass", CurrentClass.Code);
+        }
     }
 
     private async Task PollAsync(CancellationToken cancellationToken)
@@ -128,9 +183,14 @@ public partial class StudentQuizAnswerPanel
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         _pollingCancellation?.Cancel();
         _pollingCancellation?.Dispose();
+
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
     }
 }

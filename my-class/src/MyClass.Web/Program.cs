@@ -9,12 +9,14 @@ using MyClass.Core.Services.ClassContext;
 using MyClass.Core.Services.Quiz;
 using MyClass.Core.Services.Students;
 using MyClass.Web.Components;
+using MyClass.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddSignalR();
 builder.Services.AddMudServices();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, ".keys")))
@@ -29,6 +31,7 @@ builder.Services.AddScoped<ILoginStateService, LoginStateService>();
 builder.Services.AddScoped<IClassContextService, ClassContextService>();
 builder.Services.AddScoped<IClassContextState, ClassContextState>();
 builder.Services.AddScoped<IQuizContentService, QuizContentService>();
+builder.Services.AddScoped<IQuizNotificationService, SignalRQuizNotificationService>();
 builder.Services.AddScoped<IQuizSessionService, QuizSessionService>();
 builder.Services.AddScoped<IQuizAnswerService, QuizAnswerService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -52,6 +55,7 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+app.MapHub<QuizHub>(QuizHub.Route);
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

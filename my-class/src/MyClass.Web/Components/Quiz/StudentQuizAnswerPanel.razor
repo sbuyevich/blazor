@@ -1,9 +1,10 @@
 @rendermode InteractiveServer
-@implements IDisposable
+@implements IAsyncDisposable
 @inject ILoginStateService LoginStateService
 @inject ISessionStorageService SessionStorage
 @inject IQuizAnswerService QuizAnswerService
 @inject IOptions<QuizOptions> QuizOptions
+@inject NavigationManager Navigation
 
 @if (_isLoading)
 {
@@ -21,19 +22,29 @@ else
             <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
         </div>
 
-        <MudGrid Spacing="20">
-            @foreach (var answer in AnswerChoices)
-            {
-                <MudItem>
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Secondary"
-                               FullWidth="true"
-                               Class="quiz-answer-button"
-                               OnClick="() => SubmitAnswerAsync(answer.ToString())">
-                        @answer
-                    </MudButton>
-                </MudItem>
-            }
-        </MudGrid>
+        @if (AnswerChoices.Count > 0)
+        {
+            <MudGrid Spacing="20">
+                @foreach (var answer in AnswerChoices)
+                {
+                    <MudItem>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Secondary"
+                                   FullWidth="true"
+                                   Class="quiz-answer-button"
+                                   Disabled="DisableAnswerButtons"
+                                   OnClick="() => SubmitAnswerAsync(answer)">
+                            @answer
+                        </MudButton>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+        else if (_stateResult?.State?.HasInProgressAnswer == true)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+                No answer choices are available for this question.
+            </MudAlert>
+        }
     </MudStack>
 }

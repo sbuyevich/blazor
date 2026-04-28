@@ -10,6 +10,7 @@ namespace MyClass.Core.Services.Quiz;
 public sealed class QuizSessionService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IQuizContentService quizContentService,
+    IQuizNotificationService quizNotificationService,
     IOptions<TeacherOptions> teacherOptions) : IQuizSessionService
 {
     public async Task<QuizTeacherStateResult> GetTeacherStateAsync(
@@ -38,6 +39,7 @@ public sealed class QuizSessionService(
         if (currentQuestion is not null && currentQuestion.HasOpenAnswers && currentQuestion.IsExpired)
         {
             await FinishQuestionRowsAsync(dbContext, currentQuestion, now, cancellationToken);
+            await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
             currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Quiz, now, cancellationToken);
         }
 
@@ -105,6 +107,7 @@ public sealed class QuizSessionService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
 
         return QuizActionResult.Success(successMessage);
     }
@@ -142,6 +145,7 @@ public sealed class QuizSessionService(
         }
 
         await FinishQuestionRowsAsync(dbContext, currentQuestion, DateTime.UtcNow, cancellationToken);
+        await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
 
         return QuizActionResult.Success("Question finished.");
     }
@@ -177,6 +181,7 @@ public sealed class QuizSessionService(
         if (currentQuestion.HasOpenAnswers && currentQuestion.IsExpired)
         {
             await FinishQuestionRowsAsync(dbContext, currentQuestion, now, cancellationToken);
+            await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
             currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Quiz, now, cancellationToken);
         }
 
@@ -206,6 +211,7 @@ public sealed class QuizSessionService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
 
         return QuizActionResult.Success("Next question started.");
     }
