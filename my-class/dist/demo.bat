@@ -1,6 +1,6 @@
 @echo off
 pushd "%~dp0scripts"
 
-call run.bat demo
+call run.bat demo %*
 
 popd
