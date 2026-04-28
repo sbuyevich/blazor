@@ -1,6 +1,4 @@
-using MyClass.Core.Services.Auth;
-
-namespace MyClass.Core.Services.BrowserStorage;
+namespace  MyClass.Core.Services;
 
 public interface ISessionStorageService
 {

@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
-using MyClass.Core.Services.Auth;
+using MyClass.Core.Services;
 
-namespace MyClass.Core.Services.BrowserStorage;
+namespace  MyClass.Core.Services;
 
 public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorageService
 {

@@ -1,18 +1,16 @@
-using MyClass.Core.Services.Auth;
-using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
 
-namespace MyClass.Core.Services.Quiz;
+namespace MyClass.Core.Services;
 
 public interface IQuizAnswerService
 {
     Task<QuizAnswerPageStateResult> GetAnswerPageStateAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default);
 
     Task<QuizActionResult> SubmitAnswerAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         string selectedAnswer,
         CancellationToken cancellationToken = default);
 }

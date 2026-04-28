@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using MyClass.Core.Services.Auth;
-using MyClass.Core.Services.ClassContext;
-using MyClass.Core.Services.Quiz;
+using MyClass.Core.Services;
+using  MyClass.Core.Services;
+using MyClass.Core.Services;
 
 namespace MyClass.Web.Components.Quiz;
 

@@ -3,9 +3,9 @@ using Microsoft.Extensions.Options;
 using MyClass.Core.Data;
 using MyClass.Core.Data.Entities;
 using MyClass.Core.Options;
-using MyClass.Core.Services.Auth;
-using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
-namespace MyClass.Core.Services.Quiz;
+using MyClass.Core.Services;
+using ClassContextModel =  MyClass.Core.Services.ClassContext;
+namespace MyClass.Core.Services;
 
 public sealed class QuizSessionService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,

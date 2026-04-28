@@ -1,4 +1,4 @@
-namespace MyClass.Core.Services.Students;
+namespace MyClass.Core.Services;
 
 public sealed record StudentListResult(
     bool Succeeded,

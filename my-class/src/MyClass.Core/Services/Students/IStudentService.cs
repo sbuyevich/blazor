@@ -1,26 +1,24 @@
-using MyClass.Core.Services.Auth;
-using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
 
-namespace MyClass.Core.Services.Students;
+namespace MyClass.Core.Services;
 
 public interface IStudentService
 {
     Task<StudentListResult> GetStudentsForClassAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         string? searchText = null,
         bool activeOnly = false,
         CancellationToken cancellationToken = default);
 
     Task<StudentActionResult> RemoveStudentFromClassAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         int studentId,
         CancellationToken cancellationToken = default);
 
     Task<StudentActionResult> ResetStudentsActiveStateAsync(
         LoginState? loginState,
-        ClassContextModel currentClass,
+        ClassContext currentClass,
         CancellationToken cancellationToken = default);
 }
 

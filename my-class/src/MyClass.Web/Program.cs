@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using MyClass.Core.Data;
 using MyClass.Core.Options;
-using MyClass.Core.Services.Auth;
-using MyClass.Core.Services.BrowserStorage;
-using MyClass.Core.Services.ClassContext;
-using MyClass.Core.Services.Quiz;
-using MyClass.Core.Services.Students;
+using MyClass.Core.Services;
+using  MyClass.Core.Services;
+using  MyClass.Core.Services;
+using MyClass.Core.Services;
+using MyClass.Core.Services;
 using MyClass.Web.Components;
 using MyClass.Web.Hubs;
 

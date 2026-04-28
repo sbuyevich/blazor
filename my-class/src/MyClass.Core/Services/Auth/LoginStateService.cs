@@ -1,4 +1,4 @@
-namespace MyClass.Core.Services.Auth;
+namespace MyClass.Core.Services;
 
 public sealed class LoginStateService : ILoginStateService
 {

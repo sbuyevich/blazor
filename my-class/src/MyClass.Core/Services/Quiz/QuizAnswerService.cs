@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using MyClass.Core.Data;
 using MyClass.Core.Data.Entities;
-using MyClass.Core.Services.Auth;
-using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
+using MyClass.Core.Services;
+using ClassContextModel =  MyClass.Core.Services.ClassContext;
 
-namespace MyClass.Core.Services.Quiz;
+namespace MyClass.Core.Services;
 
 public sealed class QuizAnswerService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,

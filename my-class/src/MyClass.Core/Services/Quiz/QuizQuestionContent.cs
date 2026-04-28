@@ -1,4 +1,4 @@
-namespace MyClass.Core.Services.Quiz;
+namespace MyClass.Core.Services;
 
 public sealed record QuizQuestionContent(
     string Key,

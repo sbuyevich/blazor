@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MyClass.Core.Data; 
 using MyClass.Core.Options;
-using MyClass.Core.Services.Auth;
-using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
+using MyClass.Core.Services;
+using ClassContextModel =  MyClass.Core.Services.ClassContext;
 
-namespace MyClass.Core.Services.Students;   
+namespace MyClass.Core.Services;   
 
 public sealed class StudentService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MyClass.Core.Options;
 
-namespace MyClass.Core.Services.Quiz;
+namespace MyClass.Core.Services;
 
 public sealed class QuizContentService(
     IOptions<QuizOptions> quizOptions,

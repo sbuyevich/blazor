@@ -1,6 +1,6 @@
-using ClassContextModel = MyClass.Core.Services.ClassContext.ClassContext;
+using ClassContextModel =  MyClass.Core.Services.ClassContext;
 
-namespace MyClass.Core.Services.Quiz;
+namespace MyClass.Core.Services;
 
 public interface IQuizNotificationService
 {

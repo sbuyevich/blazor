@@ -1,4 +1,4 @@
-namespace MyClass.Core.Services.ClassContext;
+namespace  MyClass.Core.Services;
 
 public sealed class ClassContextState : IClassContextState
 {

@@ -1,4 +1,4 @@
-namespace MyClass.Core.Services.Quiz;
+namespace MyClass.Core.Services;
 
 public sealed record QuizAnswerPageState(
     bool HasInProgressAnswer,
