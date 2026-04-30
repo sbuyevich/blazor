@@ -120,26 +120,12 @@ public partial class MainLayout
 
     private bool IsPublicAuthRoute()
     {
-        var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri);
-        var pathEnd = relativePath.Length;
-        var queryIndex = relativePath.IndexOf('?');
-        var fragmentIndex = relativePath.IndexOf('#');
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri)
+            .Split('?', '#')[0]
+            .Trim('/')
+            .ToLowerInvariant();
 
-        if (queryIndex >= 0)
-        {
-            pathEnd = queryIndex;
-        }
-
-        if (fragmentIndex >= 0 && fragmentIndex < pathEnd)
-        {
-            pathEnd = fragmentIndex;
-        }
-
-        var path = relativePath[..pathEnd].Trim('/');
-
-        return string.IsNullOrEmpty(path)
-            || string.Equals(path, "login", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(path, "register", StringComparison.OrdinalIgnoreCase);
+        return path is "" or "login" or "register";
     }
 
     public void Dispose()

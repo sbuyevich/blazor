@@ -4,10 +4,18 @@
 @inject ILoginStateService LoginStateService
 @inject NavigationManager Navigation
 
+@* 
+    AuthGate Component
+    Displays an overlay gate that requires users to be authenticated before accessing the application.
+    Shows either a login form or registration form based on user selection.
+    Manages session state and navigation after successful authentication.
+*@
+
 @if (ShouldShowGate)
 {
     <div class="auth-gate-overlay">
         <MudPaper Class="auth-gate-panel pa-5" Elevation="8">
+            @* Loading state: Show spinner while checking existing login state *@
             @if (!_loadedLoginState)
             {
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
@@ -15,12 +23,14 @@
                     <MudText Typo="Typo.body2">Checking sign-in...</MudText>
                 </MudStack>
             }
+            @* Registration state: Show registration form if user clicked "Register" *@
             else if (_showRegistration)
             {
                 <StudentRegistrationForm CurrentClass="CurrentClass!"
                                          Succeeded="HandleAuthSucceededAsync"
                                          LoginRequested="ShowLogin" />
             }
+            @* Default state: Show login form *@
             else
             {
                 <LoginForm CurrentClass="CurrentClass!"

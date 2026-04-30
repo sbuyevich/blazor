@@ -1,5 +1,4 @@
-namespace MyClass.Core.Models
-    ;
+namespace MyClass.Core.Models;
 
 public sealed record LoginState(
     string UserName,

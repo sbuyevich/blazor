@@ -28,7 +28,7 @@ public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> 
         var currentClass = await dbContext.Classes
             .AsNoTracking()
             .Include(@class => @class.School)
-            .Where(@class => @class.Code == normalizedCode)
+            .Where(@class => @class.Code.Equals(normalizedCode, StringComparison.OrdinalIgnoreCase))
             .Select(@class => new ClassContext(
                 @class.SchoolId,
                 @class.School.Name,
