@@ -22,7 +22,7 @@
         <AppGreeting />
         <MudSpacer />
 
-        @if (CurrentClass is not null)
+        @if (CurrentClass is not null && !IsClassIndependentRoute())
         {
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                 <MudChip T="string" Size="Size.Large" Color="Color.Info">@CurrentClass.ClassName</MudChip>
@@ -45,7 +45,11 @@
 
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
-            @if (ClassContextState.Result is null)
+            @if (IsClassIndependentRoute())
+            {
+                @Body
+            }
+            else if (ClassContextState.Result is null)
             {
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                     <MudProgressCircular Indeterminate="true" Size="Size.Small" />
@@ -66,7 +70,7 @@
     </MudMainContent>
 </MudLayout>
 
-@if (!IsPublicAuthRoute())
+@if (!IsPublicAuthRoute() && !IsClassIndependentRoute())
 {
     <AuthGate CurrentClass="CurrentClass" />
 }

@@ -60,8 +60,8 @@ Create a teacher-only `/school-class` page for managing schools, classes, and al
 
 ## Task Breakdown
 
-- [ ] [Task 01 - School/Class Service](tasks/01-school-class-service.md)
-- [ ] [Task 02 - Class-Independent Page Access](tasks/02-class-independent-page-access.md)
-- [ ] [Task 03 - School/Class CRUD UI](tasks/03-school-class-crud-ui.md)
-- [ ] [Task 04 - Selected-Class Student Grid](tasks/04-selected-class-student-grid.md)
+- [x] [Task 01 - School/Class Service](tasks/01-school-class-service.md)
+- [x] [Task 02 - Class-Independent Page Access](tasks/02-class-independent-page-access.md)
+- [x] [Task 03 - School/Class CRUD UI](tasks/03-school-class-crud-ui.md)
+- [x] [Task 04 - Selected-Class Student Grid](tasks/04-selected-class-student-grid.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)

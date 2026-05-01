@@ -1,0 +1,261 @@
+@page "/school-class"
+@rendermode InteractiveServer
+
+<PageTitle>School/Class</PageTitle>
+
+<RoleGate RequireTeacher="true" DeniedMessage="Only teachers can manage schools and classes.">
+    <MudStack Spacing="4">
+        <MudText Typo="Typo.h4">School/Class</MudText>
+
+        @if (_isLoading)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+                <MudText Typo="Typo.body2">Loading schools...</MudText>
+            </MudStack>
+        }
+        else if (_schoolClassResult is null)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                Unable to load schools and classes.
+            </MudAlert>
+        }
+        else if (!_schoolClassResult.Succeeded)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+                @_schoolClassResult.Message
+            </MudAlert>
+        }
+        else
+        {
+            <MudStack Spacing="3">
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudStack Spacing="3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h6">Schools</MudText>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="AddSchoolAsync">
+                                Add
+                            </MudButton>
+                        </MudStack>
+
+                        @if (_schools.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                No schools yet.
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <MudSelect T="int?"
+                                       Value="_selectedSchoolId"
+                                       ValueChanged="HandleSchoolSelectedAsync"
+                                       Label="School"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense">
+                                @foreach (var school in _schools)
+                                {
+                                    <MudSelectItem T="int?" Value="@((int?)school.Id)">
+                                        @school.Name
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudTable Items="_schools" Dense="true" Hover="true" Elevation="0">
+                                <HeaderContent>
+                                    <MudTh>Name</MudTh>
+                                    <MudTh Style="text-align:center;">Classes</MudTh>
+                                    <MudTh Style="text-align:right;">Actions</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                                    <MudTd DataLabel="Classes" Style="text-align:center;">@context.ClassCount</MudTd>
+                                    <MudTd DataLabel="Actions" Style="text-align:right;">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                       Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       aria-label="Edit school"
+                                                       OnClick="() => EditSchoolAsync(context)" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                       Size="Size.Small"
+                                                       Color="Color.Error"
+                                                       Disabled="@_isSaving"
+                                                       aria-label="Delete school"
+                                                       OnClick="() => DeleteSchoolAsync(context)" />
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudStack Spacing="3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h6">Classes</MudText>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       Disabled="@(!_selectedSchoolId.HasValue)"
+                                       OnClick="AddClassAsync">
+                                Add
+                            </MudButton>
+                        </MudStack>
+
+                        @if (!_selectedSchoolId.HasValue)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                Select a school.
+                            </MudAlert>
+                        }
+                        else if (SelectedClasses.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                No classes for this school yet.
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <MudSelect T="int?"
+                                       Value="_selectedClassId"
+                                       ValueChanged="HandleClassSelectedAsync"
+                                       Label="Class"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense">
+                                @foreach (var classItem in SelectedClasses)
+                                {
+                                    <MudSelectItem T="int?" Value="@((int?)classItem.Id)">
+                                        @classItem.Name (@classItem.Code)
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudTable Items="SelectedClasses" Dense="true" Hover="true" Elevation="0">
+                                <HeaderContent>
+                                    <MudTh>Name</MudTh>
+                                    <MudTh>Code</MudTh>
+                                    <MudTh Style="text-align:center;">Students</MudTh>
+                                    <MudTh Style="text-align:right;">Actions</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                                    <MudTd DataLabel="Code">@context.Code</MudTd>
+                                    <MudTd DataLabel="Students" Style="text-align:center;">@context.StudentCount</MudTd>
+                                    <MudTd DataLabel="Actions" Style="text-align:right;">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                       Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       aria-label="Edit class"
+                                                       OnClick="() => EditClassAsync(context)" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                       Size="Size.Small"
+                                                       Color="Color.Error"
+                                                       Disabled="@_isSaving"
+                                                       aria-label="Delete class"
+                                                       OnClick="() => DeleteClassAsync(context)" />
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudStack Spacing="3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h6">Students</MudText>
+                            @if (_studentResult?.Succeeded == true)
+                            {
+                                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
+                                    @_studentResult.Students.Count student@(_studentResult.Students.Count == 1 ? string.Empty : "s")
+                                </MudChip>
+                            }
+                        </MudStack>
+
+                        @if (!_selectedClassId.HasValue)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                Select a class.
+                            </MudAlert>
+                        }
+                        else if (_isLoadingStudents)
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+                                <MudText Typo="Typo.body2">Loading students...</MudText>
+                            </MudStack>
+                        }
+                        else if (_studentResult is null)
+                        {
+                            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                                Unable to load students.
+                            </MudAlert>
+                        }
+                        else if (!_studentResult.Succeeded)
+                        {
+                            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+                                @_studentResult.Message
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <MudTextField T="string"
+                                          Value="_studentSearchText"
+                                          ValueChanged="HandleStudentSearchChangedAsync"
+                                          Label="Search students"
+                                          Placeholder="Display name"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Immediate="true"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          Clearable="true" />
+
+                            @if (_studentResult.Students.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                    @StudentEmptyStateText
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                <MudTable Items="_studentResult.Students" Dense="true" Hover="true" Elevation="0">
+                                    <HeaderContent>
+                                        <MudTh>Display Name</MudTh>
+                                        <MudTh>User Name</MudTh>
+                                        <MudTh Style="text-align:center;">Active</MudTh>
+                                        <MudTh>Registered</MudTh>
+                                        <MudTh Style="text-align:right;">Remove</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate>
+                                        <MudTd DataLabel="Display Name">@context.DisplayName</MudTd>
+                                        <MudTd DataLabel="User Name">@context.UserName</MudTd>
+                                        <MudTd DataLabel="Active" Style="text-align:center;">
+                                            <MudChip T="string"
+                                                     Size="Size.Small"
+                                                     Color="@(context.IsActive ? Color.Success : Color.Default)"
+                                                     Variant="@(context.IsActive ? Variant.Filled : Variant.Outlined)">
+                                                @(context.IsActive ? "Active" : "Inactive")
+                                            </MudChip>
+                                        </MudTd>
+                                        <MudTd DataLabel="Registered">@context.CreatedAtUtc.ToLocalTime().ToString("g")</MudTd>
+                                        <MudTd DataLabel="Remove" Style="text-align:right;">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           Disabled="@_isSaving"
+                                                           aria-label="Remove student"
+                                                           OnClick="() => RemoveStudentAsync(context)" />
+                                        </MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            }
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudStack>
+        }
+    </MudStack>
+</RoleGate>

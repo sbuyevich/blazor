@@ -38,6 +38,11 @@ public partial class MainLayout
         ClassContextState.Changed += OnClassContextChanged;
         Navigation.LocationChanged += OnLocationChanged;
 
+        if (IsClassIndependentRoute())
+        {
+            return;
+        }
+
         var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
 
         if (!string.IsNullOrWhiteSpace(classCode))
@@ -54,6 +59,12 @@ public partial class MainLayout
         }
 
         _sessionStorageChecked = true;
+
+        if (IsClassIndependentRoute())
+        {
+            return;
+        }
+
         var classCode = ClassContextService.GetClassCodeFromUri(Navigation.Uri);
 
         if (!string.IsNullOrWhiteSpace(classCode))
@@ -83,6 +94,12 @@ public partial class MainLayout
     {
         await InvokeAsync(async () =>
         {
+            if (IsClassIndependentRoute(args.Location))
+            {
+                StateHasChanged();
+                return;
+            }
+
             var classCode = ClassContextService.GetClassCodeFromUri(args.Location);
 
             if (!string.IsNullOrWhiteSpace(classCode))
@@ -120,12 +137,24 @@ public partial class MainLayout
 
     private bool IsPublicAuthRoute()
     {
-        var path = Navigation.ToBaseRelativePath(Navigation.Uri)
+        var path = GetRoutePath(Navigation.Uri);
+
+        return path is "" or "login" or "register";
+    }
+
+    private bool IsClassIndependentRoute(string? uri = null)
+    {
+        var path = GetRoutePath(uri ?? Navigation.Uri);
+
+        return path is "school-class";
+    }
+
+    private string GetRoutePath(string uri)
+    {
+        return Navigation.ToBaseRelativePath(uri)
             .Split('?', '#')[0]
             .Trim('/')
             .ToLowerInvariant();
-
-        return path is "" or "login" or "register";
     }
 
     public void Dispose()
