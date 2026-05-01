@@ -125,14 +125,35 @@ else if (_stateResult.Value is not null)
                 </MudItem>
 
                 <MudItem xs="12" md="4">
-                    <MudTable Items="state.Students" Dense="true" Hover="true" Elevation="1">
+                    <MudTable T="QuizStudentAnswerStatus"
+                              Items="state.Students"
+                              Dense="true"
+                              Hover="true"
+                              Elevation="1"
+                              AllowUnsorted="false">
                         <HeaderContent>
-                            <MudTh>Student</MudTh>
-                            <MudTh>Status</MudTh>
+                            <MudTh>
+                                <MudTableSortLabel SortBy="new Func<QuizStudentAnswerStatus, object>(student => student.DisplayName)">
+                                    Student
+                                </MudTableSortLabel>
+                            </MudTh>
+                            <MudTh>
+                                <MudTableSortLabel SortBy="new Func<QuizStudentAnswerStatus, object>(student => GetStatusSortValue(student))">
+                                    Status
+                                </MudTableSortLabel>
+                            </MudTh>
                             @if (state.CurrentQuestion?.IsAnswerRevealed == true)
                             {
-                                <MudTh>Answer Time</MudTh>
-                                <MudTh>Correct</MudTh>
+                                <MudTh>
+                                    <MudTableSortLabel SortBy="new Func<QuizStudentAnswerStatus, object>(student => student.AnswerElapsed ?? TimeSpan.MaxValue)">
+                                        Answer Time
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh>
+                                    <MudTableSortLabel SortBy="new Func<QuizStudentAnswerStatus, object>(student => GetCorrectSortValue(student))">
+                                        Correct
+                                    </MudTableSortLabel>
+                                </MudTh>
                             }
                         </HeaderContent>
                         <RowTemplate>

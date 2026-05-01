@@ -284,6 +284,16 @@ public partial class TeacherQuizPanel
         return "Not answered";
     }
 
+    private static int GetStatusSortValue(QuizStudentAnswerStatus status)
+    {
+        if (status.HasAnswered)
+        {
+            return 0;
+        }
+
+        return status.FailedNoAnswer ? 2 : 1;
+    }
+
     private static string FormatAnswerElapsed(QuizStudentAnswerStatus status)
     {
         return status.AnswerElapsed is null
@@ -298,6 +308,16 @@ public partial class TeacherQuizPanel
             true => "Correct",
             false => "Incorrect",
             _ => "-"
+        };
+    }
+
+    private static int GetCorrectSortValue(QuizStudentAnswerStatus status)
+    {
+        return status.IsCorrect switch
+        {
+            true => 0,
+            false => 1,
+            _ => 2
         };
     }
 
