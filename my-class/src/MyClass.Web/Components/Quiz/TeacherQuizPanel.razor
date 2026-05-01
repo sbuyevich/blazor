@@ -77,6 +77,13 @@ else if (_stateResult.Value is not null)
                         Finish
                     </MudButton>
                     <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Visibility"
+                               Disabled="@(_isWorking || state.CurrentQuestion is null || state.CurrentQuestion.IsAnswerRevealed)"
+                               OnClick="ShowAnswerAsync">
+                        Show Answer
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled"
                                Color="Color.Primary"
                                EndIcon="@Icons.Material.Filled.SkipNext"
                                Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress == true)"
@@ -123,6 +130,11 @@ else if (_stateResult.Value is not null)
                         <HeaderContent>
                             <MudTh>Student</MudTh>
                             <MudTh>Status</MudTh>
+                            @if (state.CurrentQuestion?.IsAnswerRevealed == true)
+                            {
+                                <MudTh>Answer Time</MudTh>
+                                <MudTh>Correct</MudTh>
+                            }
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Student">@context.DisplayName</MudTd>
@@ -134,6 +146,18 @@ else if (_stateResult.Value is not null)
                                     @GetStatusText(context)
                                 </MudChip>
                             </MudTd>
+                            @if (state.CurrentQuestion?.IsAnswerRevealed == true)
+                            {
+                                <MudTd DataLabel="Answer Time">@FormatAnswerElapsed(context)</MudTd>
+                                <MudTd DataLabel="Correct">
+                                    <MudChip T="string"
+                                             Size="Size.Small"
+                                             Color="@GetCorrectColor(context)"
+                                             Variant="Variant.Filled">
+                                        @GetCorrectText(context)
+                                    </MudChip>
+                                </MudTd>
+                            }
                         </RowTemplate>
                     </MudTable>
                 </MudItem>

@@ -149,6 +149,44 @@ public sealed class QuizSessionService(
         return Result<bool>.Success(true, "Question finished.");
     }
 
+    public async Task<Result<bool>> ShowAnswerAsync(
+        LoginState? loginState,
+        ClassContext currentClass,
+        CancellationToken cancellationToken = default)
+    {
+        var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
+
+        if (authorizationMessage is not null)
+        {
+            return Result<bool>.Failure(authorizationMessage);
+        }
+
+        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+
+        if (!contentResult.Succeeded || contentResult.Value is null)
+        {
+            return Result<bool>.Failure(contentResult.Message);
+        }
+
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, DateTime.UtcNow, cancellationToken);
+
+        if (currentQuestion is null)
+        {
+            return Result<bool>.Failure("No question is available to reveal.");
+        }
+
+        if (currentQuestion.IsAnswerRevealed)
+        {
+            return Result<bool>.Success(true, "Answer is already shown.");
+        }
+
+        await RevealQuestionRowsAsync(dbContext, currentQuestion, DateTime.UtcNow, cancellationToken);
+        await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
+
+        return Result<bool>.Success(true, "Answer shown.");
+    }
+
     public async Task<Result<bool>> MoveNextQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
@@ -264,6 +302,29 @@ public sealed class QuizSessionService(
         foreach (var answer in answers)
         {
             answer.EndedAtUtc ??= endedAtUtc;
+            answer.IsCorrect = answer.Answer.Length > 0 &&
+                string.Equals(answer.Answer, answer.CorrectAnswer, StringComparison.Ordinal);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task RevealQuestionRowsAsync(
+        ApplicationDbContext dbContext,
+        LiveQuestionState question,
+        DateTime revealedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        var answers = await dbContext.QuizAnswers
+            .Where(answer =>
+                answer.QuestionIndex == question.QuestionIndex &&
+                answer.QuestionKey == question.QuestionKey)
+            .ToListAsync(cancellationToken);
+
+        foreach (var answer in answers)
+        {
+            answer.AnswerRevealedAtUtc ??= revealedAtUtc;
+            answer.EndedAtUtc ??= revealedAtUtc;
             answer.IsCorrect = answer.Answer.Length > 0 &&
                 string.Equals(answer.Answer, answer.CorrectAnswer, StringComparison.Ordinal);
         }

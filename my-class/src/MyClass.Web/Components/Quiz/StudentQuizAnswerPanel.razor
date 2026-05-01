@@ -48,6 +48,14 @@ else
                  alt="@QuestionImageAltText" />
         }
 
+        @if (!string.IsNullOrWhiteSpace(RevealMessage))
+        {
+            <MudAlert Severity="@(_stateResult?.Value?.IsCorrect == true ? Severity.Success : Severity.Info)"
+                      Variant="Variant.Filled">
+                @RevealMessage
+            </MudAlert>
+        }
+
         @if (AnswerChoices.Count > 0)
         {
             <MudText typo="Typo.subtitle2" Color="Color.Secondary">Click on button with correct answer number</MudText>

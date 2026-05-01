@@ -22,6 +22,7 @@ public partial class StudentQuizAnswerPanel
     private bool _lastSubmitSucceeded;
     private string? _lastSubmitMessage;
     private string? _loadedImageQuestionKey;
+    private bool? _loadedAnswerRevealState;
     private string? _imageDataUri;
     private string? _imageMessage;
     private DateTime? _timerEndsAtUtc;
@@ -30,9 +31,15 @@ public partial class StudentQuizAnswerPanel
 
     private IReadOnlyList<string> AnswerChoices => _stateResult?.Value?.AnswerChoices ?? [];
 
-    private bool DisableAnswerButtons => _isSubmitting || _stateResult?.Value?.HasInProgressAnswer != true;
+    private bool DisableAnswerButtons =>
+        _isSubmitting ||
+        _stateResult?.Value?.HasInProgressAnswer != true ||
+        _stateResult?.Value?.IsAnswerRevealed == true;
 
-    private string QuestionImageAltText => _stateResult?.Value?.QuestionTitle ?? "Current quiz question";
+    private string QuestionImageAltText =>
+        _stateResult?.Value?.IsAnswerRevealed == true
+            ? "Current quiz answer"
+            : _stateResult?.Value?.QuestionTitle ?? "Current quiz question";
 
     private string QuizTitle => _stateResult?.Value?.QuizTitle ?? "Quiz Answer";
 
@@ -51,7 +58,11 @@ public partial class StudentQuizAnswerPanel
         }
     }
 
-    private bool ShowTimer => !string.IsNullOrWhiteSpace(_stateResult?.Value?.QuestionKey);
+    private bool ShowTimer =>
+        !string.IsNullOrWhiteSpace(_stateResult?.Value?.QuestionKey) &&
+        _stateResult?.Value?.IsAnswerRevealed != true;
+
+    private string? RevealMessage => _stateResult?.Value?.RevealMessage;
 
     private bool IsTimerRunning => _isTimerRunning;
 
@@ -128,14 +139,20 @@ public partial class StudentQuizAnswerPanel
 
         if (string.Equals(questionKey, _loadedImageQuestionKey, StringComparison.Ordinal))
         {
-            return;
+            if (_stateResult?.Value?.IsAnswerRevealed == _loadedAnswerRevealState)
+            {
+                return;
+            }
         }
 
         _loadedImageQuestionKey = questionKey;
+        _loadedAnswerRevealState = _stateResult?.Value?.IsAnswerRevealed == true;
         _imageDataUri = null;
         _imageMessage = null;
 
-        var imageResult = await QuizContentService.LoadQuestionImageAsync(questionKey);
+        var imageResult = _loadedAnswerRevealState == true
+            ? await QuizContentService.LoadAnswerImageAsync(questionKey)
+            : await QuizContentService.LoadQuestionImageAsync(questionKey);
 
         if (!imageResult.Succeeded)
         {
@@ -149,6 +166,7 @@ public partial class StudentQuizAnswerPanel
     private void ResetImageState()
     {
         _loadedImageQuestionKey = null;
+        _loadedAnswerRevealState = null;
         _imageDataUri = null;
         _imageMessage = null;
     }
@@ -166,7 +184,7 @@ public partial class StudentQuizAnswerPanel
         _timerRemaining = state.CurrentQuestionRemaining < TimeSpan.Zero
             ? TimeSpan.Zero
             : state.CurrentQuestionRemaining;
-        _isTimerRunning = state.CurrentQuestionIsInProgress && _timerRemaining > TimeSpan.Zero;
+        _isTimerRunning = !state.IsAnswerRevealed && state.CurrentQuestionIsInProgress && _timerRemaining > TimeSpan.Zero;
         _timerEndsAtUtc = _isTimerRunning ? DateTime.UtcNow.Add(_timerRemaining) : null;
 
         if (_isTimerRunning)

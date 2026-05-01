@@ -25,6 +25,11 @@ public interface IQuizSessionService
         ClassContext currentClass,
         CancellationToken cancellationToken = default);
 
+    Task<Result<bool>> ShowAnswerAsync(
+        LoginState? loginState,
+        ClassContext currentClass,
+        CancellationToken cancellationToken = default);
+
     Task<Result<bool>> MoveNextQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
