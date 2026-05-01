@@ -28,7 +28,7 @@ public static class DatabaseInitializer
             [
                 new Class
                 {
-                    Code = "demo",
+                    Code = "DEMO",
                     Name = "Demo Class"
                 }
             ]

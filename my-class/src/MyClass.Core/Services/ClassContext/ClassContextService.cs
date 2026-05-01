@@ -13,7 +13,7 @@ public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> 
 
     public async Task<ClassContextResult> ResolveAsync(string? classCode, CancellationToken cancellationToken = default)
     {
-        var normalizedCode = classCode?.Trim();
+        var normalizedCode = classCode?.Trim().ToUpperInvariant();
 
         if (string.IsNullOrWhiteSpace(normalizedCode))
         {
@@ -27,14 +27,14 @@ public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> 
 
         var currentClass = await dbContext.Classes
             .AsNoTracking()
-            .Include(@class => @class.School)
-            .Where(@class => @class.Code.Equals(normalizedCode, StringComparison.OrdinalIgnoreCase))
-            .Select(@class => new ClassContext(
-                @class.SchoolId,
-                @class.School.Name,
-                @class.Id,
-                @class.Name,
-                @class.Code))
+            .Include(c => c.School)
+            .Where(c => c.Code == normalizedCode)
+            .Select(c => new ClassContext(
+                c.SchoolId,
+                c.School.Name,
+                c.Id,
+                c.Name,
+                c.Code))
             .SingleOrDefaultAsync(cancellationToken);
 
         if (currentClass is null)

@@ -49,7 +49,7 @@ public sealed class AuthService(
         var student = await dbContext.Students
             .Where(student => student.Class.Code == normalizedClassCode)
             .SingleOrDefaultAsync(
-                student => student.UserName.Equals(normalizedUserName, StringComparison.OrdinalIgnoreCase),
+                student => student.UserName. Equals(normalizedUserName, StringComparison.OrdinalIgnoreCase),
                 cancellationToken);
 
         if (student is null || !passwordHashService.Verify(password, student.PasswordHash))
