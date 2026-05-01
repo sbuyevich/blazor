@@ -23,6 +23,11 @@ public interface IQuizSessionService
         string? quizFolderPath = null,
         CancellationToken cancellationToken = default);
 
+    Task<Result<bool>> ClearQuizAsync(
+        LoginState? loginState,
+        ClassContext currentClass,
+        CancellationToken cancellationToken = default);
+
     Task<Result<bool>> FinishCurrentQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
