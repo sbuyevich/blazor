@@ -105,6 +105,7 @@ public partial class TeacherQuizPanel
             await SessionStorage.SetSelectedQuizPathAsync(_selectedQuizPath);
         }
 
+        SetActiveQuizSelection();
         _quizSelectionLoaded = true;
     }
 
@@ -315,17 +316,32 @@ public partial class TeacherQuizPanel
             await SessionStorage.SetSelectedQuizPathAsync(_selectedQuizPath);
         }
 
+        SetActiveQuizSelection();
+
         if (hadSession &&
             !string.IsNullOrWhiteSpace(_selectedQuizPath) &&
             !string.Equals(previousQuizPath, _selectedQuizPath, StringComparison.OrdinalIgnoreCase))
         {
             StopPolling();
             await RunActionAsync(() => QuizSessionService.RestartQuizAsync(_loginState, CurrentClass, _selectedQuizPath));
+            await QuizNotificationService.NotifyQuizStateChangedAsync(CurrentClass);
             return;
         }
 
         await LoadStateAsync(showLoading: false);
         StartPollingIfNeeded();
+        await QuizNotificationService.NotifyQuizStateChangedAsync(CurrentClass);
+    }
+
+    private void SetActiveQuizSelection()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedQuizPath))
+        {
+            ActiveQuizSelectionService.ClearSelectedQuizPath(CurrentClass.ClassId);
+            return;
+        }
+
+        ActiveQuizSelectionService.SetSelectedQuizPath(CurrentClass.ClassId, _selectedQuizPath);
     }
 
     private static string FormatRemaining(TimeSpan remaining)

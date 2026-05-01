@@ -22,6 +22,7 @@ public partial class StudentQuizAnswerPanel
     private bool _lastSubmitSucceeded;
     private string? _lastSubmitMessage;
     private string? _loadedImageQuestionKey;
+    private string? _loadedImageActiveQuizPath;
     private bool? _loadedAnswerRevealState;
     private string? _imageDataUri;
     private string? _imageMessage;
@@ -120,6 +121,7 @@ public partial class StudentQuizAnswerPanel
     private async Task LoadCurrentImageAsync()
     {
         var questionKey = _stateResult?.Value?.QuestionKey;
+        var activeQuizPath = _stateResult?.Value?.ActiveQuizPath;
 
         if (string.IsNullOrWhiteSpace(questionKey))
         {
@@ -127,7 +129,8 @@ public partial class StudentQuizAnswerPanel
             return;
         }
 
-        if (string.Equals(questionKey, _loadedImageQuestionKey, StringComparison.Ordinal))
+        if (string.Equals(questionKey, _loadedImageQuestionKey, StringComparison.Ordinal) &&
+            string.Equals(activeQuizPath, _loadedImageActiveQuizPath, StringComparison.OrdinalIgnoreCase))
         {
             if (_stateResult?.Value?.IsAnswerRevealed == _loadedAnswerRevealState)
             {
@@ -136,13 +139,14 @@ public partial class StudentQuizAnswerPanel
         }
 
         _loadedImageQuestionKey = questionKey;
+        _loadedImageActiveQuizPath = activeQuizPath;
         _loadedAnswerRevealState = _stateResult?.Value?.IsAnswerRevealed == true;
         _imageDataUri = null;
         _imageMessage = null;
 
         var imageResult = _loadedAnswerRevealState == true
-            ? await QuizContentService.LoadAnswerImageAsync(questionKey)
-            : await QuizContentService.LoadQuestionImageAsync(questionKey);
+            ? await QuizContentService.LoadAnswerImageAsync(questionKey, activeQuizPath)
+            : await QuizContentService.LoadQuestionImageAsync(questionKey, activeQuizPath);
 
         if (!imageResult.Succeeded)
         {
@@ -156,6 +160,7 @@ public partial class StudentQuizAnswerPanel
     private void ResetImageState()
     {
         _loadedImageQuestionKey = null;
+        _loadedImageActiveQuizPath = null;
         _loadedAnswerRevealState = null;
         _imageDataUri = null;
         _imageMessage = null;

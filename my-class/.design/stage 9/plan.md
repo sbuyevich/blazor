@@ -11,7 +11,7 @@ Stage 9 lets the teacher choose which quiz is active. The app discovers quizzes 
 - Add selected quiz state and session-storage support.
 - Update quiz content loading to use the selected quiz folder instead of a single fixed quiz folder.
 - Add a teacher-facing quiz dropdown at the top of the Teacher Quiz page.
-- Ensure students see the quiz selected by the teacher for the active quiz session.
+- Ensure students see the quiz currently selected by the teacher.
 - Add warnings for missing, invalid, or unavailable quiz selections.
 
 ## Quiz Metadata
@@ -40,7 +40,7 @@ Example:
 - Add service support for listing available quizzes.
 - Add service support for loading quiz content/images from a selected quiz folder.
 - Add browser session-storage support for the selected teacher quiz path.
-- Add enough active quiz-session state so students load the teacher-selected quiz.
+- Add shared runtime active quiz selection so students load the teacher-selected quiz without database persistence.
 
 ## Test Plan
 
@@ -49,7 +49,7 @@ Example:
 - Teacher selection survives refresh in the same browser session.
 - If a saved selected quiz no longer exists, the first valid quiz is selected.
 - Start/restart uses the selected quiz.
-- Student pages load the same quiz selected by the teacher for the active session.
+- Student pages load the quiz currently selected by the teacher.
 - Question image and answer image loading continue to work from the selected quiz folder.
 - Missing/invalid selected quiz shows a warning and prevents quiz start.
 - Existing start, finish, show answer, next, restart, timer, SignalR, and polling behavior does not regress.
@@ -59,7 +59,7 @@ Example:
 
 - Students do not choose quizzes.
 - Teacher quiz selection is stored in browser session storage for page refresh continuity.
-- The active quiz used by students must come from shared quiz-session state created when the teacher starts/restarts a quiz.
+- The active quiz selection used by students is runtime class state controlled by the teacher dropdown.
 - Existing question and answer image naming rules continue inside each selected quiz folder.
 - `Quiz:RootFolder` points to the parent folder that contains all quiz folders.
 
@@ -69,5 +69,5 @@ Example:
 - [x] [Task 02 - Selected Quiz Session Storage](tasks/02-selected-quiz-session-storage.md)
 - [x] [Task 03 - Selected Quiz Content Loading](tasks/03-selected-quiz-content-loading.md)
 - [x] [Task 04 - Teacher Quiz Dropdown](tasks/04-teacher-quiz-dropdown.md)
-- [ ] [Task 05 - Student Uses Active Teacher Quiz](tasks/05-student-uses-active-teacher-quiz.md)
+- [x] [Task 05 - Student Uses Active Teacher Quiz](tasks/05-student-uses-active-teacher-quiz.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)

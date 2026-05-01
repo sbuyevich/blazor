@@ -6,6 +6,7 @@ public sealed record QuizAnswerPageState(
     bool FailedNoAnswer,
     string Message,
     string QuizTitle,
+    string? ActiveQuizPath,
     string? QuestionKey,
     string? QuestionTitle,
     int? QuestionIndex,
