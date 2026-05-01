@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components.Routing;
 using MudBlazor;
 using MyClass.Core.Models;
 
-namespace MyClass.Web.Components.Layout;
+namespace MyClass.Web.Layout;
 
 public partial class MainLayout
 {

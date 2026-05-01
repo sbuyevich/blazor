@@ -1,4 +1,4 @@
-namespace MyClass.Web.Components.Layout;
+namespace MyClass.Web.Layout;
 
 public partial class AppGreeting
 {

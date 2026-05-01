@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MyClass.Core.Models;
 
-namespace MyClass.Web.Components.Layout;
+namespace MyClass.Web.Layout;
 
 public partial class NavMenu
 {
