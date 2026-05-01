@@ -24,7 +24,7 @@ public partial class StudentRegistrationForm
     private string? _message;
     private Severity _messageSeverity = Severity.Error;
 
-    private async Task HandleRegistrationAsync()
+    private async Task SubmitRegistrationAsync()
     {
         if (_registrationForm is null)
         {

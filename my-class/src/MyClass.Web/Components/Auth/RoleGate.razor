@@ -3,6 +3,13 @@
 @inject ISessionStorageService SessionStorage
 @inject ILoginStateService LoginStateService
 
+@*
+    RoleGate Component
+    Controls access to content based on the current user's role (Teacher or Student).
+    Displays appropriate messages for loading, unauthenticated, and unauthorized states.
+*@
+
+@* Loading state: Show spinner while checking login state *@
 @if (!_loadedLoginState)
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
@@ -10,20 +17,24 @@
         <MudText Typo="Typo.body2">Checking access...</MudText>
     </MudStack>
 }
+@* Unauthenticated state: No user is currently logged in *@
 else if (LoginStateService.Current is null)
 {
     <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
         Sign in to continue.
     </MudAlert>
 }
+@* Access granted for teachers when RequireTeacher is true *@
 else if (RequireTeacher && LoginStateService.Current.IsTeacher)
 {
     @ChildContent
 }
+@* Access granted for students when RequireTeacher is false *@
 else if (!RequireTeacher && !LoginStateService.Current.IsTeacher)
 {
     @ChildContent
 }
+@* Access denied: User role does not match requirements *@
 else
 {
     <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
