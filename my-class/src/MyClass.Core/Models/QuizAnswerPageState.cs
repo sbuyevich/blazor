@@ -10,6 +10,11 @@ public sealed record QuizAnswerPageState(
     string? QuestionTitle,
     int? QuestionIndex,
     int? QuestionCount,
+    bool IsAnswerRevealed,
+    bool? IsCorrect,
+    DateTime? AnsweredAtUtc,
+    TimeSpan? AnswerElapsed,
+    string? RevealMessage,
     bool CurrentQuestionIsInProgress,
     TimeSpan CurrentQuestionRemaining,
     IReadOnlyList<string> AnswerChoices);

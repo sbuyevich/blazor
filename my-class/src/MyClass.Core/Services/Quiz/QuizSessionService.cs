@@ -302,7 +302,8 @@ public sealed class QuizSessionService(
             .Select(answer => new
             {
                 answer.StartedAtUtc,
-                answer.EndedAtUtc
+                answer.EndedAtUtc,
+                answer.AnswerRevealedAtUtc
             })
             .ToListAsync(cancellationToken);
 
@@ -321,6 +322,10 @@ public sealed class QuizSessionService(
         var isExpired = now >= startedAtUtc.AddSeconds(timeoutSeconds);
         var isInProgress = hasOpenAnswers && !isExpired;
         var finishedAtUtc = hasOpenAnswers ? null : rows.Max(row => row.EndedAtUtc);
+        var answerRevealedAtUtc = rows
+            .Where(row => row.AnswerRevealedAtUtc is not null)
+            .Select(row => row.AnswerRevealedAtUtc)
+            .Max();
         var remaining = isInProgress
             ? startedAtUtc.AddSeconds(timeoutSeconds) - now
             : TimeSpan.Zero;
@@ -332,6 +337,7 @@ public sealed class QuizSessionService(
             timeoutSeconds,
             startedAtUtc,
             finishedAtUtc,
+            answerRevealedAtUtc,
             hasOpenAnswers,
             isExpired,
             isInProgress,
@@ -369,7 +375,9 @@ public sealed class QuizSessionService(
                     currentQuestion.TimeoutSeconds,
                     currentQuestion.StartedAtUtc,
                     currentQuestion.FinishedAtUtc,
+                    currentQuestion.AnswerRevealedAtUtc,
                     currentQuestion.IsInProgress,
+                    currentQuestion.IsAnswerRevealed,
                     currentQuestion.Remaining),
             studentStatuses);
     }
@@ -397,7 +405,7 @@ public sealed class QuizSessionService(
         if (currentQuestion is null)
         {
             return activeStudents
-                .Select(student => new QuizStudentAnswerStatus(student.Id, student.UserName, student.DisplayName, false, false))
+                .Select(student => new QuizStudentAnswerStatus(student.Id, student.UserName, student.DisplayName, false, false, null, null, null))
                 .ToList();
         }
 
@@ -410,7 +418,9 @@ public sealed class QuizSessionService(
             {
                 answer.StudentId,
                 answer.Answer,
-                answer.EndedAtUtc
+                answer.StartedAtUtc,
+                answer.EndedAtUtc,
+                answer.IsCorrect
             })
             .ToDictionaryAsync(answer => answer.StudentId, cancellationToken);
 
@@ -424,7 +434,12 @@ public sealed class QuizSessionService(
                     student.UserName,
                     student.DisplayName,
                     answer is not null && answer.Answer.Length > 0,
-                    answer is not null && answer.EndedAtUtc is not null && answer.Answer.Length == 0);
+                    answer is not null && answer.EndedAtUtc is not null && answer.Answer.Length == 0,
+                    answer?.Answer.Length > 0 ? answer.EndedAtUtc : null,
+                    answer?.Answer.Length > 0 && answer.EndedAtUtc is not null
+                        ? answer.EndedAtUtc.Value - answer.StartedAtUtc
+                        : null,
+                    answer?.Answer.Length > 0 ? answer.IsCorrect : null);
             })
             .ToList();
     }
@@ -460,10 +475,14 @@ public sealed class QuizSessionService(
         int TimeoutSeconds,
         DateTime StartedAtUtc,
         DateTime? FinishedAtUtc,
+        DateTime? AnswerRevealedAtUtc,
         bool HasOpenAnswers,
         bool IsExpired,
         bool IsInProgress,
-        TimeSpan Remaining);
+        TimeSpan Remaining)
+    {
+        public bool IsAnswerRevealed => AnswerRevealedAtUtc is not null;
+    }
 }
 
 

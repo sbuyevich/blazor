@@ -9,6 +9,10 @@ public interface IQuizContentService
     Task<Result<string>> LoadQuestionImageAsync(
         string questionKey,
         CancellationToken cancellationToken = default);
+
+    Task<Result<string>> LoadAnswerImageAsync(
+        string questionKey,
+        CancellationToken cancellationToken = default);
 }
 
 

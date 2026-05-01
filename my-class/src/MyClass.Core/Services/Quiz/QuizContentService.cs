@@ -114,11 +114,41 @@ public sealed class QuizContentService(
         string questionKey,
         CancellationToken cancellationToken = default)
     {
+        return await LoadQuestionFolderImageAsync(
+            questionKey,
+            "q",
+            "Question image",
+            "q.jpg",
+            allowJpegExtension: true,
+            cancellationToken);
+    }
+
+    public async Task<Result<string>> LoadAnswerImageAsync(
+        string questionKey,
+        CancellationToken cancellationToken = default)
+    {
+        return await LoadQuestionFolderImageAsync(
+            questionKey,
+            "a",
+            "Answer image",
+            "a.jpg",
+            allowJpegExtension: false,
+            cancellationToken);
+    }
+
+    private async Task<Result<string>> LoadQuestionFolderImageAsync(
+        string questionKey,
+        string fileNameWithoutExtension,
+        string imageLabel,
+        string requiredFileName,
+        bool allowJpegExtension,
+        CancellationToken cancellationToken)
+    {
         if (string.IsNullOrWhiteSpace(questionKey) ||
             questionKey.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
             questionKey.Contains("..", StringComparison.Ordinal))
         {
-            return Result<string>.Failure("Question image key is invalid.");
+            return Result<string>.Failure($"{imageLabel} key is invalid.");
         }
 
         var rootFolder = ResolveRootFolder();
@@ -128,19 +158,19 @@ public sealed class QuizContentService(
 
         if (!fullQuestionFolder.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase))
         {
-            return Result<string>.Failure("Question image key is invalid.");
+            return Result<string>.Failure($"{imageLabel} key is invalid.");
         }
 
         if (!Directory.Exists(fullQuestionFolder))
         {
-            return Result<string>.Failure("Question image folder was not found.");
+            return Result<string>.Failure($"{imageLabel} folder was not found.");
         }
 
-        var imagePath = GetQuestionImagePath(fullQuestionFolder);
+        var imagePath = GetImagePath(fullQuestionFolder, fileNameWithoutExtension, allowJpegExtension);
 
         if (imagePath is null)
         {
-            return Result<string>.Failure($"Question folder '{questionKey}' must contain q.jpg.");
+            return Result<string>.Failure($"Question folder '{questionKey}' must contain {requiredFileName}.");
         }
 
         try
@@ -154,11 +184,11 @@ public sealed class QuizContentService(
         }
         catch (IOException exception)
         {
-            return Result<string>.Failure($"Question image could not be read: {exception.Message}");
+            return Result<string>.Failure($"{imageLabel} could not be read: {exception.Message}");
         }
         catch (UnauthorizedAccessException exception)
         {
-            return Result<string>.Failure($"Question image could not be read: {exception.Message}");
+            return Result<string>.Failure($"{imageLabel} could not be read: {exception.Message}");
         }
     }
 
@@ -232,7 +262,7 @@ public sealed class QuizContentService(
             return Result<QuizQuestionContent>.Failure($"Question folder '{questionKey}' must define correctAnswer between \"1\" and \"{answerCount}\".");
         }
 
-        var imagePath = GetQuestionImagePath(questionFolder);
+        var imagePath = GetImagePath(questionFolder, "q", allowJpegExtension: true);
 
         if (imagePath is null)
         {
@@ -263,14 +293,17 @@ public sealed class QuizContentService(
             string.Equals(answer, answerNumber.ToString(), StringComparison.Ordinal);
     }
 
-    private static string? GetQuestionImagePath(string questionFolder)
+    private static string? GetImagePath(
+        string questionFolder,
+        string fileNameWithoutExtension,
+        bool allowJpegExtension)
     {
         var matches = Directory
             .EnumerateFiles(questionFolder)
             .Where(file =>
-                string.Equals(Path.GetFileNameWithoutExtension(file), "q", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(Path.GetFileNameWithoutExtension(file), fileNameWithoutExtension, StringComparison.OrdinalIgnoreCase) &&
                 (string.Equals(Path.GetExtension(file), ".jpg", StringComparison.OrdinalIgnoreCase) ||
-                 string.Equals(Path.GetExtension(file), ".jpeg", StringComparison.OrdinalIgnoreCase)))
+                 (allowJpegExtension && string.Equals(Path.GetExtension(file), ".jpeg", StringComparison.OrdinalIgnoreCase))))
             .ToList();
 
         return matches.Count == 1 ? matches[0] : null;

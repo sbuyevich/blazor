@@ -1,13 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MyClass.Core.Data;
 using MyClass.Core.Data.Entities;
 using MyClass.Core.Models;
+using MyClass.Core.Options;
 
 namespace MyClass.Core.Services;
 
 public sealed class QuizAnswerService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
-    IQuizContentService quizContentService) : IQuizAnswerService
+    IQuizContentService quizContentService,
+    IOptions<QuizOptions> quizOptions) : IQuizAnswerService
 {
     public async Task<Result<QuizAnswerPageState>> GetAnswerPageStateAsync(
         LoginState? loginState,
@@ -63,6 +66,27 @@ public sealed class QuizAnswerService(
                     CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Value.Title, current))
                 : Result<QuizAnswerPageState>.Success(
                     CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current));
+        }
+
+        if (current.IsAnswerRevealed)
+        {
+            var hasAnswered = answer is not null && answer.Answer.Length > 0;
+            var isCorrect = hasAnswered ? answer!.IsCorrect : null as bool?;
+
+            return Result<QuizAnswerPageState>.Success(
+                CreateState(
+                    false,
+                    hasAnswered,
+                    !hasAnswered,
+                    GetRevealMessage(isCorrect),
+                    contentResult.Value.Title,
+                    current,
+                    answerChoices,
+                    isCorrect,
+                    hasAnswered ? answer!.EndedAtUtc : null,
+                    hasAnswered && answer!.EndedAtUtc is not null
+                        ? answer.EndedAtUtc.Value - answer.StartedAtUtc
+                        : null));
         }
 
         if (answer is null)
@@ -237,7 +261,8 @@ public sealed class QuizAnswerService(
             .Select(answer => new
             {
                 answer.StartedAtUtc,
-                answer.EndedAtUtc
+                answer.EndedAtUtc,
+                answer.AnswerRevealedAtUtc
             })
             .ToListAsync(cancellationToken);
 
@@ -254,6 +279,10 @@ public sealed class QuizAnswerService(
         var timeoutSeconds = questionContent?.TimeoutSeconds ?? quiz.TimeLimitSeconds;
         var hasOpenAnswers = rows.Any(row => row.EndedAtUtc is null);
         var isExpired = hasOpenAnswers && now >= startedAtUtc.AddSeconds(timeoutSeconds);
+        var answerRevealedAtUtc = rows
+            .Where(row => row.AnswerRevealedAtUtc is not null)
+            .Select(row => row.AnswerRevealedAtUtc)
+            .Max();
         var remaining = isExpired || !hasOpenAnswers
             ? TimeSpan.Zero
             : startedAtUtc.AddSeconds(timeoutSeconds) - now;
@@ -266,6 +295,7 @@ public sealed class QuizAnswerService(
             quiz.Questions.Count,
             timeoutSeconds,
             startedAtUtc,
+            answerRevealedAtUtc,
             hasOpenAnswers && !isExpired,
             remaining,
             isExpired);
@@ -278,7 +308,10 @@ public sealed class QuizAnswerService(
         string message,
         string quizTitle = "Quiz Answer",
         CurrentQuestion? currentQuestion = null,
-        IReadOnlyList<string>? answerChoices = null)
+        IReadOnlyList<string>? answerChoices = null,
+        bool? isCorrect = null,
+        DateTime? answeredAtUtc = null,
+        TimeSpan? answerElapsed = null)
     {
         return new QuizAnswerPageState(
             hasInProgressAnswer,
@@ -290,6 +323,11 @@ public sealed class QuizAnswerService(
             currentQuestion?.Title,
             currentQuestion?.QuestionIndex,
             currentQuestion?.QuestionCount,
+            currentQuestion?.IsAnswerRevealed == true,
+            isCorrect,
+            answeredAtUtc,
+            answerElapsed,
+            currentQuestion?.IsAnswerRevealed == true ? message : null,
             currentQuestion?.IsInProgress == true,
             currentQuestion?.Remaining ?? TimeSpan.Zero,
             answerChoices ?? []);
@@ -308,6 +346,25 @@ public sealed class QuizAnswerService(
             answerNumber >= 1 &&
             answerNumber <= answerCount &&
             string.Equals(answer, answerNumber.ToString(), StringComparison.Ordinal);
+    }
+
+    private string GetRevealMessage(bool? isCorrect)
+    {
+        var messages = quizOptions.Value.RevealMessages;
+
+        return isCorrect switch
+        {
+            true => GetConfiguredMessage(messages.Correct, "Correct. Good job!"),
+            false => GetConfiguredMessage(messages.Incorrect, "Incorrect. Not this time."),
+            _ => GetConfiguredMessage(messages.NoAnswer, "No answer submitted. Stay focused!")
+        };
+    }
+
+    private static string GetConfiguredMessage(string? configuredMessage, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(configuredMessage)
+            ? fallback
+            : configuredMessage.Trim();
     }
 
     private static async Task FinishExpiredQuestionAsync(
@@ -344,9 +401,13 @@ public sealed class QuizAnswerService(
         int QuestionCount,
         int TimeoutSeconds,
         DateTime StartedAtUtc,
+        DateTime? AnswerRevealedAtUtc,
         bool IsInProgress,
         TimeSpan Remaining,
-        bool IsExpired);
+        bool IsExpired)
+    {
+        public bool IsAnswerRevealed => AnswerRevealedAtUtc is not null;
+    }
 }
 
 

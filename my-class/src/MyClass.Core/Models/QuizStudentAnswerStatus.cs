@@ -5,6 +5,9 @@ public sealed record QuizStudentAnswerStatus(
     string UserName,
     string DisplayName,
     bool HasAnswered,
-    bool FailedNoAnswer);
+    bool FailedNoAnswer,
+    DateTime? AnsweredAtUtc,
+    TimeSpan? AnswerElapsed,
+    bool? IsCorrect);
 
 
