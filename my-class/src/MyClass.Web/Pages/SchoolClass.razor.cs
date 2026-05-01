@@ -4,7 +4,7 @@ using MyClass.Core.Models;
 using MyClass.Core.Services;
 using MyClass.Web.Components.SchoolClass;
 
-namespace MyClass.Web.Components.Pages;
+namespace  MyClass.Web.Pages;
 
 public partial class SchoolClass
 {

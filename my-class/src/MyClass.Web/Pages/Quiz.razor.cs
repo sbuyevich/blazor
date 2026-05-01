@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MyClass.Core.Models;
 
-namespace MyClass.Web.Components.Pages;
+namespace  MyClass.Web.Pages;
 
 public partial class Quiz
 {

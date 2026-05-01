@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using MyClass.Core.Models;
 
-namespace MyClass.Web.Components.Pages;
+namespace  MyClass.Web.Pages;
 
-public partial class Login
+public partial class Register
 {
     [CascadingParameter]
     public ClassContext CurrentClass { get; set; } = null!;
@@ -33,8 +33,8 @@ public partial class Login
         return Task.CompletedTask;
     }
 
-    private void GoToRegister()
+    private void GoToLogin()
     {
-        Navigation.NavigateTo("/register");
+        Navigation.NavigateTo("/login");
     }
 }
