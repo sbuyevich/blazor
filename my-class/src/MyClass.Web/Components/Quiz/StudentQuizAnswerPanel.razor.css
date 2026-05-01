@@ -52,6 +52,18 @@
     border: 3px solid #111111;
 }
 
+.quiz-status-message-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.quiz-status-message {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
 .quiz-answer-buttons {
     display: flex;
     flex-wrap: wrap;

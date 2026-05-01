@@ -52,7 +52,14 @@ else
             }
             else
             {
-                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
+                <div class="quiz-status-message-row">
+                    <MudText Typo="Typo.subtitle1"
+                             Color="Color.Secondary"
+                             Align="Align.Center"
+                             Class="quiz-status-message">
+                        @StatusMessage
+                    </MudText>
+                </div>
             }
         </MudStack>
 
