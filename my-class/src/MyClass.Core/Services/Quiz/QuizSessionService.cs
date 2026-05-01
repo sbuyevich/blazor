@@ -15,6 +15,7 @@ public sealed class QuizSessionService(
     public async Task<Result<QuizTeacherState>> GetTeacherStateAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -24,7 +25,7 @@ public sealed class QuizSessionService(
             return Result<QuizTeacherState>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -33,13 +34,13 @@ public sealed class QuizSessionService(
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var now = DateTime.UtcNow;
-        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, now, cancellationToken);
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, currentClass.ClassId, now, cancellationToken);
 
         if (currentQuestion is not null && currentQuestion.HasOpenAnswers && currentQuestion.IsExpired)
         {
-            await FinishQuestionRowsAsync(dbContext, currentQuestion, now, cancellationToken);
+            await FinishQuestionRowsAsync(dbContext, currentClass.ClassId, currentQuestion, now, cancellationToken);
             await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
-            currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, now, cancellationToken);
+            currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, currentClass.ClassId, now, cancellationToken);
         }
 
         var state = await BuildTeacherStateAsync(
@@ -55,22 +56,25 @@ public sealed class QuizSessionService(
     public async Task<Result<bool>> StartQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
-        return await StartOrRestartQuizAsync(loginState, currentClass, "Quiz started.", cancellationToken);
+        return await StartOrRestartQuizAsync(loginState, currentClass, quizFolderPath, "Quiz started.", cancellationToken);
     }
 
     public async Task<Result<bool>> RestartQuizAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
-        return await StartOrRestartQuizAsync(loginState, currentClass, "Quiz restarted.", cancellationToken);
+        return await StartOrRestartQuizAsync(loginState, currentClass, quizFolderPath, "Quiz restarted.", cancellationToken);
     }
 
     private async Task<Result<bool>> StartOrRestartQuizAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath,
         string successMessage,
         CancellationToken cancellationToken)
     {
@@ -81,7 +85,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -90,7 +94,7 @@ public sealed class QuizSessionService(
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-        await dbContext.QuizAnswers.ExecuteDeleteAsync(cancellationToken);
+        await DeleteQuizRowsForClassAsync(dbContext, currentClass.ClassId, cancellationToken);
 
         var createdCount = await CreateQuestionRowsAsync(
             dbContext,
@@ -111,7 +115,7 @@ public sealed class QuizSessionService(
         return Result<bool>.Success(true, successMessage);
     }
 
-    public async Task<Result<bool>> FinishCurrentQuestionAsync(
+    public async Task<Result<bool>> ClearQuizAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default)
@@ -123,7 +127,28 @@ public sealed class QuizSessionService(
             return Result<bool>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        await DeleteQuizRowsForClassAsync(dbContext, currentClass.ClassId, cancellationToken);
+        await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
+
+        return Result<bool>.Success(true, "Quiz cleared.");
+    }
+
+    public async Task<Result<bool>> FinishCurrentQuestionAsync(
+        LoginState? loginState,
+        ClassContext currentClass,
+        string? quizFolderPath = null,
+        CancellationToken cancellationToken = default)
+    {
+        var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
+
+        if (authorizationMessage is not null)
+        {
+            return Result<bool>.Failure(authorizationMessage);
+        }
+
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -131,7 +156,7 @@ public sealed class QuizSessionService(
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, DateTime.UtcNow, cancellationToken);
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, currentClass.ClassId, DateTime.UtcNow, cancellationToken);
 
         if (currentQuestion is null)
         {
@@ -143,7 +168,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Success(true, "Question is already finished.");
         }
 
-        await FinishQuestionRowsAsync(dbContext, currentQuestion, DateTime.UtcNow, cancellationToken);
+        await FinishQuestionRowsAsync(dbContext, currentClass.ClassId, currentQuestion, DateTime.UtcNow, cancellationToken);
         await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
 
         return Result<bool>.Success(true, "Question finished.");
@@ -152,6 +177,7 @@ public sealed class QuizSessionService(
     public async Task<Result<bool>> ShowAnswerAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -161,7 +187,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -169,7 +195,7 @@ public sealed class QuizSessionService(
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, DateTime.UtcNow, cancellationToken);
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, currentClass.ClassId, DateTime.UtcNow, cancellationToken);
 
         if (currentQuestion is null)
         {
@@ -181,7 +207,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Success(true, "Answer is already shown.");
         }
 
-        await RevealQuestionRowsAsync(dbContext, currentQuestion, DateTime.UtcNow, cancellationToken);
+        await RevealQuestionRowsAsync(dbContext, currentClass.ClassId, currentQuestion, DateTime.UtcNow, cancellationToken);
         await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
 
         return Result<bool>.Success(true, "Answer shown.");
@@ -190,6 +216,7 @@ public sealed class QuizSessionService(
     public async Task<Result<bool>> MoveNextQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -199,7 +226,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -208,7 +235,7 @@ public sealed class QuizSessionService(
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var now = DateTime.UtcNow;
-        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, now, cancellationToken);
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, currentClass.ClassId, now, cancellationToken);
 
         if (currentQuestion is null)
         {
@@ -217,9 +244,9 @@ public sealed class QuizSessionService(
 
         if (currentQuestion.HasOpenAnswers && currentQuestion.IsExpired)
         {
-            await FinishQuestionRowsAsync(dbContext, currentQuestion, now, cancellationToken);
+            await FinishQuestionRowsAsync(dbContext, currentClass.ClassId, currentQuestion, now, cancellationToken);
             await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
-            currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, now, cancellationToken);
+            currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, currentClass.ClassId, now, cancellationToken);
         }
 
         if (currentQuestion?.IsInProgress == true)
@@ -287,14 +314,31 @@ public sealed class QuizSessionService(
         return activeStudents.Count;
     }
 
+    private static async Task DeleteQuizRowsForClassAsync(
+        ApplicationDbContext dbContext,
+        int classId,
+        CancellationToken cancellationToken)
+    {
+        var studentIds = dbContext.Students
+            .Where(student => student.ClassId == classId)
+            .Select(student => student.Id);
+
+        await dbContext.QuizAnswers
+            .Where(answer => studentIds.Contains(answer.StudentId))
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
     private static async Task FinishQuestionRowsAsync(
         ApplicationDbContext dbContext,
+        int classId,
         LiveQuestionState question,
         DateTime endedAtUtc,
         CancellationToken cancellationToken)
     {
         var answers = await dbContext.QuizAnswers
             .Where(answer =>
+                answer.Student != null &&
+                answer.Student.ClassId == classId &&
                 answer.QuestionIndex == question.QuestionIndex &&
                 answer.QuestionKey == question.QuestionKey)
             .ToListAsync(cancellationToken);
@@ -311,12 +355,15 @@ public sealed class QuizSessionService(
 
     private static async Task RevealQuestionRowsAsync(
         ApplicationDbContext dbContext,
+        int classId,
         LiveQuestionState question,
         DateTime revealedAtUtc,
         CancellationToken cancellationToken)
     {
         var answers = await dbContext.QuizAnswers
             .Where(answer =>
+                answer.Student != null &&
+                answer.Student.ClassId == classId &&
                 answer.QuestionIndex == question.QuestionIndex &&
                 answer.QuestionKey == question.QuestionKey)
             .ToListAsync(cancellationToken);
@@ -335,11 +382,15 @@ public sealed class QuizSessionService(
     private static async Task<LiveQuestionState?> GetCurrentLiveQuestionAsync(
         ApplicationDbContext dbContext,
         QuizContent quiz,
+        int classId,
         DateTime now,
         CancellationToken cancellationToken)
     {
         var latestQuestion = await dbContext.QuizAnswers
             .AsNoTracking()
+            .Where(answer =>
+                answer.Student != null &&
+                answer.Student.ClassId == classId)
             .OrderByDescending(answer => answer.QuestionIndex)
             .ThenByDescending(answer => answer.StartedAtUtc)
             .Select(answer => new
@@ -358,6 +409,8 @@ public sealed class QuizSessionService(
         var rows = await dbContext.QuizAnswers
             .AsNoTracking()
             .Where(answer =>
+                answer.Student != null &&
+                answer.Student.ClassId == classId &&
                 answer.QuestionIndex == latestQuestion.QuestionIndex &&
                 answer.QuestionKey == latestQuestion.QuestionKey)
             .Select(answer => new

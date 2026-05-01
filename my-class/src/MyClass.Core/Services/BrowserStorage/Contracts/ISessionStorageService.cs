@@ -21,6 +21,12 @@ public interface ISessionStorageService
     ValueTask SetClassCodeAsync(string classCode);
 
     ValueTask RemoveClassCodeAsync();
+
+    ValueTask<string?> GetSelectedQuizPathAsync();
+
+    ValueTask SetSelectedQuizPathAsync(string quizPath);
+
+    ValueTask RemoveSelectedQuizPathAsync();
 }
 
 

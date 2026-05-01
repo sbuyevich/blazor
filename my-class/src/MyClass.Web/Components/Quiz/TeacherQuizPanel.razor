@@ -3,6 +3,8 @@
 @inject ILoginStateService LoginStateService
 @inject ISessionStorageService SessionStorage
 @inject IQuizContentService QuizContentService
+@inject IActiveQuizSelectionService ActiveQuizSelectionService
+@inject IQuizNotificationService QuizNotificationService
 @inject IQuizSessionService QuizSessionService
 @inject IOptions<QuizOptions> QuizOptions
 @inject ISnackbar Snackbar
@@ -20,13 +22,52 @@ else if (_stateResult is null)
 }
 else if (!_stateResult.Succeeded)
 {
-    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">@_stateResult.Message</MudAlert>
+    <MudStack Spacing="2">
+        @if (_availableQuizzesResult is not null && !_availableQuizzesResult.Succeeded)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">@_availableQuizzesResult.Message</MudAlert>
+        }
+        else if (_availableQuizzes.Count == 0)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">No valid quizzes are available.</MudAlert>
+        }
+
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">@_stateResult.Message</MudAlert>
+    </MudStack>
 }
 else if (_stateResult.Value is not null)
 {
     var state = _stateResult.Value;
 
     <MudStack Spacing="3">
+        @if (_availableQuizzesResult is not null && !_availableQuizzesResult.Succeeded)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">@_availableQuizzesResult.Message</MudAlert>
+        }
+        else if (_availableQuizzes.Count == 0)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">No valid quizzes are available.</MudAlert>
+        }
+        else
+        {
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="8">
+                    <MudSelect T="string"
+                               Value="@(_selectedQuizPath ?? string.Empty)"
+                               ValueChanged="HandleQuizSelectedAsync"
+                               Label="Quiz"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Disabled="_isWorking">
+                        @foreach (var quiz in _availableQuizzes)
+                        {
+                            <MudSelectItem T="string" Value="@quiz.Path">@quiz.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        }
+
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
             <div>
                 <MudText Typo="Typo.h4">@state.QuizTitle</MudText>
@@ -39,7 +80,7 @@ else if (_stateResult.Value is not null)
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
                                    StartIcon="@Icons.Material.Filled.PlayArrow"
-                                   Disabled="_isWorking"
+                                   Disabled="@(_isWorking || !HasSelectedQuiz)"
                                    OnClick="StartQuestionAsync">
                             Start
                         </MudButton>
@@ -49,7 +90,7 @@ else if (_stateResult.Value is not null)
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Secondary"
                                    StartIcon="@Icons.Material.Filled.Refresh"
-                                   Disabled="_isWorking"
+                                   Disabled="@(_isWorking || !HasSelectedQuiz)"
                                    OnClick="RestartQuizAsync">
                             Restart
                         </MudButton>

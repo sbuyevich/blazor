@@ -10,6 +10,7 @@ namespace MyClass.Core.Services;
 public sealed class QuizAnswerService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IQuizContentService quizContentService,
+    IActiveQuizSelectionService activeQuizSelectionService,
     IOptions<QuizOptions> quizOptions) : IQuizAnswerService
 {
     public async Task<Result<QuizAnswerPageState>> GetAnswerPageStateAsync(
@@ -26,11 +27,13 @@ public sealed class QuizAnswerService(
             return Result<QuizAnswerPageState>.Failure(studentResult.Message);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var activeQuizPath = activeQuizSelectionService.GetSelectedQuizPath(currentClass.ClassId);
+
+        var contentResult = await quizContentService.LoadQuizAsync(activeQuizPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
-            return Result<QuizAnswerPageState>.Success(CreateState(false, false, false, contentResult.Message));
+            return Result<QuizAnswerPageState>.Success(CreateState(false, false, false, contentResult.Message, activeQuizPath: activeQuizPath));
         }
 
         var current = await GetCurrentQuestionAsync(
@@ -48,7 +51,8 @@ public sealed class QuizAnswerService(
                 false,
                 "Waiting for the teacher to start a question.",
                 contentResult.Value.Title,
-                progressItems: CreateNeutralProgress(contentResult.Value)));
+                progressItems: CreateNeutralProgress(contentResult.Value),
+                activeQuizPath: activeQuizPath));
         }
 
         var answerChoices = CreateAnswerChoices(current.AnswerCount);
@@ -62,7 +66,7 @@ public sealed class QuizAnswerService(
         var answer = await dbContext.QuizAnswers
             .AsNoTracking()
             .Where(
-                answer =>
+                    answer =>
                     answer.QuestionIndex == current.QuestionIndex &&
                     answer.QuestionKey == current.QuestionKey &&
                     answer.StudentId == studentResult.Value.Id)
@@ -75,9 +79,9 @@ public sealed class QuizAnswerService(
 
             return answer is not null && answer.Answer.Length > 0
                 ? Result<QuizAnswerPageState>.Success(
-                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Value.Title, current, progressItems: progressItems))
+                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Value.Title, current, progressItems: progressItems, activeQuizPath: activeQuizPath))
                 : Result<QuizAnswerPageState>.Success(
-                    CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current, progressItems: progressItems));
+                    CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current, progressItems: progressItems, activeQuizPath: activeQuizPath));
         }
 
         if (current.IsAnswerRevealed)
@@ -99,29 +103,30 @@ public sealed class QuizAnswerService(
                     hasAnswered ? answer!.EndedAtUtc : null,
                     hasAnswered && answer!.EndedAtUtc is not null
                         ? answer.EndedAtUtc.Value - answer.StartedAtUtc
-                        : null));
+                        : null,
+                    activeQuizPath));
         }
 
         if (answer is null)
         {
             return Result<QuizAnswerPageState>.Success(
-                CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Value.Title, progressItems: progressItems));
+                CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Value.Title, progressItems: progressItems, activeQuizPath: activeQuizPath));
         }
 
         if (answer.Answer.Length > 0)
         {
             return Result<QuizAnswerPageState>.Success(
-                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", contentResult.Value.Title, current, answerChoices, progressItems));
+                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", contentResult.Value.Title, current, answerChoices, progressItems, activeQuizPath: activeQuizPath));
         }
 
         if (answer.EndedAtUtc is not null)
         {
             return Result<QuizAnswerPageState>.Success(
-                CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current, progressItems: progressItems));
+                CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current, progressItems: progressItems, activeQuizPath: activeQuizPath));
         }
 
         return Result<QuizAnswerPageState>.Success(
-            CreateState(true, false, false, "Choose an answer.", contentResult.Value.Title, current, answerChoices, progressItems));
+            CreateState(true, false, false, "Choose an answer.", contentResult.Value.Title, current, answerChoices, progressItems, activeQuizPath: activeQuizPath));
     }
 
     public async Task<Result<bool>> SubmitAnswerAsync(
@@ -141,7 +146,9 @@ public sealed class QuizAnswerService(
             return Result<bool>.Failure(studentResult.Message);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var activeQuizPath = activeQuizSelectionService.GetSelectedQuizPath(currentClass.ClassId);
+
+        var contentResult = await quizContentService.LoadQuizAsync(activeQuizPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -248,9 +255,11 @@ public sealed class QuizAnswerService(
     {
         var latestQuestion = await dbContext.QuizAnswers
             .AsNoTracking()
-            .Where(answer => answer.Student != null && answer.Student.ClassId == classId)
-            .OrderByDescending(answer => answer.QuestionIndex)
-            .ThenByDescending(answer => answer.StartedAtUtc)
+            .Where(answer =>
+                answer.Student != null &&
+                answer.Student.ClassId == classId)
+            .OrderByDescending(answer => answer.StartedAtUtc)
+            .ThenByDescending(answer => answer.QuestionIndex)
             .Select(answer => new
             {
                 answer.QuestionIndex,
@@ -325,7 +334,8 @@ public sealed class QuizAnswerService(
         IReadOnlyList<QuizQuestionProgressItem>? progressItems = null,
         bool? isCorrect = null,
         DateTime? answeredAtUtc = null,
-        TimeSpan? answerElapsed = null)
+        TimeSpan? answerElapsed = null,
+        string? activeQuizPath = null)
     {
         return new QuizAnswerPageState(
             hasInProgressAnswer,
@@ -333,6 +343,7 @@ public sealed class QuizAnswerService(
             failedNoAnswer,
             message,
             quizTitle,
+            activeQuizPath,
             currentQuestion?.QuestionKey,
             currentQuestion?.Title,
             currentQuestion?.QuestionIndex,

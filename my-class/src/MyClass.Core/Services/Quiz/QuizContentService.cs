@@ -19,34 +19,76 @@ public sealed class QuizContentService(
         PropertyNameCaseInsensitive = true
     };
 
-    private QuizContent? _cachedQuiz;
-    private DateTime _cacheTime = DateTime.MinValue;
+    private readonly Dictionary<string, QuizContent> _cachedQuizzes = new(StringComparer.OrdinalIgnoreCase);
 
-
-    public async Task<Result<QuizContent>> LoadQuizAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<IReadOnlyList<QuizSummary>>> LoadAvailableQuizzesAsync(
+        CancellationToken cancellationToken = default)
     {
-        if (_cachedQuiz != null)
-        {
-            return Result<QuizContent>.Success(_cachedQuiz);
-        }
-
         var rootFolder = ResolveRootFolder();
 
         if (string.IsNullOrWhiteSpace(rootFolder))
         {
-            return Result<QuizContent>.Failure("Quiz root folder is not configured.");
+            return Result<IReadOnlyList<QuizSummary>>.Failure("Quiz root folder is not configured.");
         }
 
         if (!Directory.Exists(rootFolder))
         {
-            return Result<QuizContent>.Failure($"Quiz root folder was not found: {rootFolder}");
+            return Result<IReadOnlyList<QuizSummary>>.Failure($"Quiz root folder was not found: {rootFolder}");
         }
 
-        var rootJsonPath = Path.Combine(rootFolder, "quiz.json");
+        var candidates = Directory
+            .EnumerateDirectories(rootFolder)
+            .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (File.Exists(Path.Combine(rootFolder, "quiz.json")))
+        {
+            candidates.Insert(0, rootFolder);
+        }
+
+        var quizzes = new List<QuizSummary>();
+
+        foreach (var candidate in candidates)
+        {
+            var summary = await LoadQuizSummaryAsync(candidate, cancellationToken);
+
+            if (summary.Succeeded && summary.Value is not null)
+            {
+                quizzes.Add(summary.Value);
+            }
+        }
+
+        return Result<IReadOnlyList<QuizSummary>>.Success(quizzes);
+    }
+
+    public async Task<Result<QuizContent>> LoadQuizAsync(CancellationToken cancellationToken = default)
+    {
+        return await LoadQuizAsync(null, cancellationToken);
+    }
+
+    public async Task<Result<QuizContent>> LoadQuizAsync(
+        string? quizFolderPath,
+        CancellationToken cancellationToken = default)
+    {
+        var quizFolderResult = await ResolveQuizFolderAsync(quizFolderPath, cancellationToken);
+
+        if (!quizFolderResult.Succeeded || string.IsNullOrWhiteSpace(quizFolderResult.Value))
+        {
+            return Result<QuizContent>.Failure(quizFolderResult.Message);
+        }
+
+        var quizFolder = quizFolderResult.Value;
+
+        if (_cachedQuizzes.TryGetValue(quizFolder, out var cachedQuiz))
+        {
+            return Result<QuizContent>.Success(cachedQuiz);
+        }
+
+        var rootJsonPath = Path.Combine(quizFolder, "quiz.json");
 
         if (!File.Exists(rootJsonPath))
         {
-            return Result<QuizContent>.Failure("Quiz root folder must contain quiz.json.");
+            return Result<QuizContent>.Failure("Selected quiz folder must contain quiz.json.");
         }
 
         var quizMetadata = await ReadJsonAsync<QuizMetadata>(rootJsonPath, cancellationToken);
@@ -60,29 +102,29 @@ public sealed class QuizContentService(
 
         if (string.IsNullOrWhiteSpace(quizTitle))
         {
-            return Result<QuizContent>.Failure("Root quiz.json must define a non-empty title.");
+            return Result<QuizContent>.Failure("Selected quiz.json must define a non-empty title.");
         }
 
         if (quizMetadata.Value.TimeLimitSeconds <= 0)
         {
-            return Result<QuizContent>.Failure("Root quiz.json must define a positive TimeLimitSeconds value.");
+            return Result<QuizContent>.Failure("Selected quiz.json must define a positive TimeLimitSeconds value.");
         }
 
         var defaultAnswerCount = quizMetadata.Value.AnswerCount ?? DefaultAnswerCount;
 
         if (!IsSupportedAnswerCount(defaultAnswerCount))
         {
-            return Result<QuizContent>.Failure($"Root quiz.json answerCount must be between {MinAnswerCount} and {MaxAnswerCount}.");
+            return Result<QuizContent>.Failure($"Selected quiz.json answerCount must be between {MinAnswerCount} and {MaxAnswerCount}.");
         }
 
         var questionFolders = Directory
-            .EnumerateDirectories(rootFolder)
+            .EnumerateDirectories(quizFolder)
             .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         if (questionFolders.Count == 0)
         {
-            return Result<QuizContent>.Failure("Quiz root folder must contain at least one question subfolder.");
+            return Result<QuizContent>.Failure("Selected quiz folder must contain at least one question subfolder.");
         }
 
         var questions = new List<QuizQuestionContent>();
@@ -104,17 +146,19 @@ public sealed class QuizContentService(
             questions.Add(questionResult.Value);
         }
 
-        _cachedQuiz = new QuizContent(quizTitle, quizMetadata.Value.TimeLimitSeconds, questions);
-        _cacheTime = DateTime.UtcNow;
+        var quiz = new QuizContent(quizTitle, quizMetadata.Value.TimeLimitSeconds, questions);
+        _cachedQuizzes[quizFolder] = quiz;
 
-        return Result<QuizContent>.Success(_cachedQuiz);
+        return Result<QuizContent>.Success(quiz);
     }
 
     public async Task<Result<string>> LoadQuestionImageAsync(
         string questionKey,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         return await LoadQuestionFolderImageAsync(
+            quizFolderPath,
             questionKey,
             "q",
             "Question image",
@@ -125,9 +169,11 @@ public sealed class QuizContentService(
 
     public async Task<Result<string>> LoadAnswerImageAsync(
         string questionKey,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         return await LoadQuestionFolderImageAsync(
+            quizFolderPath,
             questionKey,
             "a",
             "Answer image",
@@ -137,6 +183,7 @@ public sealed class QuizContentService(
     }
 
     private async Task<Result<string>> LoadQuestionFolderImageAsync(
+        string? quizFolderPath,
         string questionKey,
         string fileNameWithoutExtension,
         string imageLabel,
@@ -151,9 +198,16 @@ public sealed class QuizContentService(
             return Result<string>.Failure($"{imageLabel} key is invalid.");
         }
 
-        var rootFolder = ResolveRootFolder();
-        var questionFolder = Path.Combine(rootFolder, questionKey);
-        var fullRoot = Path.GetFullPath(rootFolder);
+        var quizFolderResult = await ResolveQuizFolderAsync(quizFolderPath, cancellationToken);
+
+        if (!quizFolderResult.Succeeded || string.IsNullOrWhiteSpace(quizFolderResult.Value))
+        {
+            return Result<string>.Failure(quizFolderResult.Message);
+        }
+
+        var quizFolder = quizFolderResult.Value;
+        var questionFolder = Path.Combine(quizFolder, questionKey);
+        var fullRoot = Path.GetFullPath(quizFolder);
         var fullQuestionFolder = Path.GetFullPath(questionFolder);
 
         if (!fullQuestionFolder.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase))
@@ -204,6 +258,94 @@ public sealed class QuizContentService(
         return Path.IsPathRooted(configuredRoot)
             ? configuredRoot
             : Path.GetFullPath(Path.Combine(hostEnvironment.ContentRootPath, configuredRoot));
+    }
+
+    private async Task<Result<string>> ResolveQuizFolderAsync(
+        string? quizFolderPath,
+        CancellationToken cancellationToken)
+    {
+        var rootFolder = ResolveRootFolder();
+
+        if (string.IsNullOrWhiteSpace(rootFolder))
+        {
+            return Result<string>.Failure("Quiz root folder is not configured.");
+        }
+
+        if (!Directory.Exists(rootFolder))
+        {
+            return Result<string>.Failure($"Quiz root folder was not found: {rootFolder}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(quizFolderPath))
+        {
+            var fullRoot = Path.GetFullPath(rootFolder);
+            var fullQuizFolder = Path.GetFullPath(quizFolderPath);
+
+            if (!IsPathWithinRoot(fullQuizFolder, fullRoot) ||
+                !Directory.Exists(fullQuizFolder) ||
+                !File.Exists(Path.Combine(fullQuizFolder, "quiz.json")))
+            {
+                return Result<string>.Failure("Selected quiz folder was not found.");
+            }
+
+            return Result<string>.Success(fullQuizFolder);
+        }
+
+        var quizzes = await LoadAvailableQuizzesAsync(cancellationToken);
+
+        if (!quizzes.Succeeded || quizzes.Value is null)
+        {
+            return Result<string>.Failure(quizzes.Message);
+        }
+
+        var firstQuiz = quizzes.Value.FirstOrDefault();
+
+        return firstQuiz is null
+            ? Result<string>.Failure("No valid quizzes were found.")
+            : Result<string>.Success(firstQuiz.Path);
+    }
+
+    private async Task<Result<QuizSummary>> LoadQuizSummaryAsync(
+        string quizFolder,
+        CancellationToken cancellationToken)
+    {
+        var metadataPath = Path.Combine(quizFolder, "quiz.json");
+
+        if (!File.Exists(metadataPath))
+        {
+            return Result<QuizSummary>.Failure("Quiz folder must contain quiz.json.");
+        }
+
+        var metadata = await ReadJsonAsync<QuizMetadata>(metadataPath, cancellationToken);
+
+        if (!metadata.Succeeded || metadata.Value is null)
+        {
+            return Result<QuizSummary>.Failure(metadata.Message);
+        }
+
+        var name = metadata.Value.Name?.Trim();
+        var title = metadata.Value.Title?.Trim();
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result<QuizSummary>.Failure("Quiz metadata must define a non-empty name.");
+        }
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Result<QuizSummary>.Failure("Quiz metadata must define a non-empty title.");
+        }
+
+        if (metadata.Value.TimeLimitSeconds <= 0)
+        {
+            return Result<QuizSummary>.Failure("Quiz metadata must define a positive TimeLimitSeconds value.");
+        }
+
+        return Result<QuizSummary>.Success(new QuizSummary(
+            Path.GetFullPath(quizFolder),
+            name,
+            title,
+            metadata.Value.TimeLimitSeconds));
     }
 
     private static async Task<Result<QuizQuestionContent>> LoadQuestionAsync(
@@ -334,7 +476,17 @@ public sealed class QuizContentService(
         }
     }
 
-    private sealed record QuizMetadata(string? Title, int TimeLimitSeconds, int? AnswerCount);
+    private static bool IsPathWithinRoot(string path, string root)
+    {
+        var normalizedRoot = root.EndsWith(Path.DirectorySeparatorChar)
+            ? root
+            : root + Path.DirectorySeparatorChar;
+
+        return string.Equals(path, root, StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed record QuizMetadata(string? Name, string? Title, int TimeLimitSeconds, int? AnswerCount);
 
     private sealed record QuestionMetadata(string? Question, string? CorrectAnswer, int? TimeLimitSeconds, int? AnswerCount);
 }

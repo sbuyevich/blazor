@@ -10,16 +10,21 @@ public partial class TeacherQuizPanel
     public ClassContext CurrentClass { get; set; } = null!;
 
     private Result<QuizTeacherState>? _stateResult;
+    private Result<IReadOnlyList<QuizSummary>>? _availableQuizzesResult;
+    private IReadOnlyList<QuizSummary> _availableQuizzes = [];
     private LoginState? _loginState;
     private CancellationTokenSource? _pollingCancellation;
     private int? _loadedClassId;
     private int? _pendingClassId;
+    private string? _selectedQuizPath;
     private string? _loadedImageQuestionKey;
     private bool? _loadedAnswerRevealState;
     private string? _imageDataUri;
     private string? _imageMessage;
     private bool _isLoading = true;
     private bool _isWorking;
+    private bool _quizSelectionLoaded;
+    private bool HasSelectedQuiz => !string.IsNullOrWhiteSpace(_selectedQuizPath);
 
     protected override void OnParametersSet()
     {
@@ -31,6 +36,10 @@ public partial class TeacherQuizPanel
         _pendingClassId = CurrentClass.ClassId;
         _isLoading = true;
         _stateResult = null;
+        _availableQuizzesResult = null;
+        _availableQuizzes = [];
+        _selectedQuizPath = null;
+        _quizSelectionLoaded = false;
         _loadedImageQuestionKey = null;
         _loadedAnswerRevealState = null;
         _imageDataUri = null;
@@ -61,9 +70,43 @@ public partial class TeacherQuizPanel
         _loginState = LoginStateService.Current ?? await SessionStorage.GetLoginStateAsync();
         LoginStateService.Set(_loginState);
 
-        _stateResult = await QuizSessionService.GetTeacherStateAsync(_loginState, CurrentClass);
+        await LoadQuizSelectionAsync();
+
+        _stateResult = await QuizSessionService.GetTeacherStateAsync(_loginState, CurrentClass, _selectedQuizPath);
         await LoadCurrentImageAsync();
         _isLoading = false;
+    }
+
+    private async Task LoadQuizSelectionAsync()
+    {
+        if (_quizSelectionLoaded)
+        {
+            return;
+        }
+
+        _availableQuizzesResult = await QuizContentService.LoadAvailableQuizzesAsync();
+        _availableQuizzes = _availableQuizzesResult.Succeeded && _availableQuizzesResult.Value is not null
+            ? _availableQuizzesResult.Value
+            : [];
+
+        var savedQuizPath = await SessionStorage.GetSelectedQuizPathAsync();
+        var selectedQuiz = _availableQuizzes.FirstOrDefault(quiz =>
+                string.Equals(quiz.Path, savedQuizPath, StringComparison.OrdinalIgnoreCase)) ??
+            _availableQuizzes.FirstOrDefault();
+
+        _selectedQuizPath = selectedQuiz?.Path;
+
+        if (string.IsNullOrWhiteSpace(_selectedQuizPath))
+        {
+            await SessionStorage.RemoveSelectedQuizPathAsync();
+        }
+        else if (!string.Equals(_selectedQuizPath, savedQuizPath, StringComparison.OrdinalIgnoreCase))
+        {
+            await SessionStorage.SetSelectedQuizPathAsync(_selectedQuizPath);
+        }
+
+        SetActiveQuizSelection();
+        _quizSelectionLoaded = true;
     }
 
     private async Task LoadCurrentImageAsync()
@@ -91,8 +134,8 @@ public partial class TeacherQuizPanel
         _imageMessage = null;
 
         var imageResult = question.IsAnswerRevealed
-            ? await QuizContentService.LoadAnswerImageAsync(question.QuestionKey)
-            : await QuizContentService.LoadQuestionImageAsync(question.QuestionKey);
+            ? await QuizContentService.LoadAnswerImageAsync(question.QuestionKey, _selectedQuizPath)
+            : await QuizContentService.LoadQuestionImageAsync(question.QuestionKey, _selectedQuizPath);
 
         if (!imageResult.Succeeded)
         {
@@ -162,14 +205,14 @@ public partial class TeacherQuizPanel
     {
         _loadedImageQuestionKey = null;
         _loadedAnswerRevealState = null;
-        await RunActionAsync(() => QuizSessionService.StartQuestionAsync(_loginState, CurrentClass));
+        await RunActionAsync(() => QuizSessionService.StartQuestionAsync(_loginState, CurrentClass, _selectedQuizPath));
     }
 
     private async Task RestartQuizAsync()
     {
         _loadedImageQuestionKey = null;
         _loadedAnswerRevealState = null;
-        await RunActionAsync(() => QuizSessionService.RestartQuizAsync(_loginState, CurrentClass));
+        await RunActionAsync(() => QuizSessionService.RestartQuizAsync(_loginState, CurrentClass, _selectedQuizPath));
     }
 
     private async Task FinishQuestionAsync()
@@ -181,13 +224,13 @@ public partial class TeacherQuizPanel
     {
         _loadedImageQuestionKey = null;
         _loadedAnswerRevealState = null;
-        await RunActionAsync(() => QuizSessionService.MoveNextQuestionAsync(_loginState, CurrentClass));
+        await RunActionAsync(() => QuizSessionService.MoveNextQuestionAsync(_loginState, CurrentClass, _selectedQuizPath));
     }
 
     private async Task ShowAnswerAsync()
     {
         _loadedAnswerRevealState = null;
-        await RunActionAsync(() => QuizSessionService.ShowAnswerAsync(_loginState, CurrentClass));
+        await RunActionAsync(() => QuizSessionService.ShowAnswerAsync(_loginState, CurrentClass, _selectedQuizPath));
     }
 
     private async Task RunActionAsync(Func<Task<Result<bool>>> action)
@@ -204,7 +247,7 @@ public partial class TeacherQuizPanel
         StopPolling();
 
         _isWorking = true;
-        var result = await QuizSessionService.FinishCurrentQuestionAsync(_loginState, CurrentClass);
+        var result = await QuizSessionService.FinishCurrentQuestionAsync(_loginState, CurrentClass, _selectedQuizPath);
 
         if (result.Succeeded)
         {
@@ -252,6 +295,56 @@ public partial class TeacherQuizPanel
         }
 
         return DateTime.UtcNow >= question.StartedAtUtc.AddSeconds(question.TimeoutSeconds);
+    }
+
+    private async Task HandleQuizSelectedAsync(string quizPath)
+    {
+        var previousQuizPath = _selectedQuizPath;
+        _selectedQuizPath = string.IsNullOrWhiteSpace(quizPath) ? null : quizPath;
+        _loadedImageQuestionKey = null;
+        _loadedAnswerRevealState = null;
+        _imageDataUri = null;
+        _imageMessage = null;
+
+        if (string.IsNullOrWhiteSpace(_selectedQuizPath))
+        {
+            await SessionStorage.RemoveSelectedQuizPathAsync();
+        }
+        else
+        {
+            await SessionStorage.SetSelectedQuizPathAsync(_selectedQuizPath);
+        }
+
+        SetActiveQuizSelection();
+
+        try
+        {
+            _isWorking = true;
+
+            if (!string.Equals(previousQuizPath, _selectedQuizPath, StringComparison.OrdinalIgnoreCase))
+            {
+                StopPolling();
+                await QuizSessionService.ClearQuizAsync(_loginState, CurrentClass);
+            }
+
+            await LoadStateAsync(showLoading: false);
+            StartPollingIfNeeded();
+        }
+        finally
+        {
+            _isWorking = false;
+        }
+    }
+
+    private void SetActiveQuizSelection()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedQuizPath))
+        {
+            ActiveQuizSelectionService.ClearSelectedQuizPath(CurrentClass.ClassId);
+            return;
+        }
+
+        ActiveQuizSelectionService.SetSelectedQuizPath(CurrentClass.ClassId, _selectedQuizPath);
     }
 
     private static string FormatRemaining(TimeSpan remaining)
