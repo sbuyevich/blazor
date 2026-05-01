@@ -52,5 +52,7 @@ Thumbs.db
 .agents/
 .keys/
 /my-class/src/.dotnet-cli-home/.dotnet
+/my-class/src/.dotnet
+/my-class/src/artifacts/
 .codex-artifacts/
 /my-class/.codex-artifacts/

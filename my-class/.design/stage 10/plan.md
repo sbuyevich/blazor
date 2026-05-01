@@ -1,73 +1,46 @@
-# Stage 9 Select Quiz by Teacher Plan
+# Update Stage 10 Quiz Result BRD
 
 ## Summary
 
-Stage 9 lets the teacher choose which quiz is active. The app discovers quizzes from `Quiz:RootFolder`, lists valid quiz folders in a Teacher Quiz page dropdown, stores the teacher's selected quiz in browser session storage, and uses the selected quiz for the shared teacher/student quiz flow.
+Revise `my-class/.design/stage 10/brd.md` from a terse todo-style note into a clear BRD for the teacher-only Quiz Result page. The BRD should reflect verified repo reality: `QuizAnswers` stores the current active quiz run only, `/quiz-result` is already in teacher navigation, but no Quiz Result page exists yet.
 
 ## Key Changes
 
-- Discover valid quiz folders from the configured quiz root folder.
-- Read each quiz folder's `quiz.json` metadata.
-- Add selected quiz state and session-storage support.
-- Update quiz content loading to use the selected quiz folder instead of a single fixed quiz folder.
-- Add a teacher-facing quiz dropdown at the top of the Teacher Quiz page.
-- Ensure students see the quiz currently selected by the teacher.
-- Add warnings for missing, invalid, or unavailable quiz selections.
+- Define the feature goal: teacher views quiz results for the current active quiz run.
+- Clarify the two required grids:
+  - Student summary grid grouped by student.
+  - Question summary grid grouped by question.
+- Define result semantics:
+  - Correct count: `IsCorrect = true`.
+  - Incorrect count: `IsCorrect = false`, including empty/no-answer rows.
+  - Percent correct: correct / total rows in that group.
+  - Total answer time: sum elapsed time for submitted answers, and for no-answer/timeouts use the full question time limit.
+- Define CSV export requirements from current `QuizAnswers` data:
+  - `StudentDisplayName`
+  - `QuestionText`
+  - `CorrectAnswer`
+  - `Answer`
+  - `AnswerTime`
+  - `IsCorrect`
+- Add empty/error states:
+  - No active quiz results yet.
+  - Teacher-only access.
+  - Export disabled when no rows exist.
 
-## Quiz Metadata
+## Interfaces / Types
 
-Each direct child folder under `Quiz:RootFolder` can be a quiz folder. A valid quiz folder must contain `quiz.json`.
-
-Required metadata fields:
-
-- `name`: display name used in the teacher dropdown.
-- `title`: quiz title shown on quiz pages.
-- `timeLimitSeconds`: default time limit for questions.
-
-Example:
-
-```json
-{
-  "name": "Astronomy - easy",
-  "title": "How good you know Astronomy?",
-  "timeLimitSeconds": 30
-}
-```
-
-## Public Interfaces / Types
-
-- Add a quiz summary model for discovered quizzes.
-- Add service support for listing available quizzes.
-- Add service support for loading quiz content/images from a selected quiz folder.
-- Add browser session-storage support for the selected teacher quiz path.
-- Add shared runtime active quiz selection so students load the teacher-selected quiz without database persistence.
+- No code changes are part of this BRD update.
+- The BRD should state future implementation will likely need a quiz-result service/model for grouped student summaries, grouped question summaries, and flat CSV rows.
+- No persistent historical report storage should be required for Stage 10.
 
 ## Test Plan
 
-- Teacher sees a quiz dropdown with valid discovered quizzes.
-- Invalid quiz folders are skipped without breaking the page.
-- Teacher selection survives refresh in the same browser session.
-- If a saved selected quiz no longer exists, the first valid quiz is selected.
-- Start/restart uses the selected quiz.
-- Student pages load the quiz currently selected by the teacher.
-- Question image and answer image loading continue to work from the selected quiz folder.
-- Missing/invalid selected quiz shows a warning and prevents quiz start.
-- Existing start, finish, show answer, next, restart, timer, SignalR, and polling behavior does not regress.
-- `dotnet build .\MyClass.slnx` succeeds.
+- Verify the BRD aligns with current `QuizAnswers` fields and active-run behavior.
+- Confirm it does not imply creating `QuizSessions`, historical tables, or long-term reporting.
+- Confirm acceptance criteria cover sorting, percentages, no-answer handling, teacher-only access, empty state, and CSV output.
 
 ## Assumptions
 
-- Students do not choose quizzes.
-- Teacher quiz selection is stored in browser session storage for page refresh continuity.
-- The active quiz selection used by students is runtime class state controlled by the teacher dropdown.
-- Existing question and answer image naming rules continue inside each selected quiz folder.
-- `Quiz:RootFolder` points to the parent folder that contains all quiz folders.
-
-## Task Breakdown
-
-- [x] [Task 01 - Quiz Discovery and Metadata](tasks/01-quiz-discovery-and-metadata.md)
-- [x] [Task 02 - Selected Quiz Session Storage](tasks/02-selected-quiz-session-storage.md)
-- [x] [Task 03 - Selected Quiz Content Loading](tasks/03-selected-quiz-content-loading.md)
-- [x] [Task 04 - Teacher Quiz Dropdown](tasks/04-teacher-quiz-dropdown.md)
-- [x] [Task 05 - Student Uses Active Teacher Quiz](tasks/05-student-uses-active-teacher-quiz.md)
-- [ ] [Task 10 - Verification](tasks/10-verification.md)
+- Stage 10 reports only the current active quiz run.
+- No-answer/timeouts count as incorrect and contribute full question time to aggregate time.
+- The BRD update is limited to `brd.md`; `stage 10/plan.md` can be corrected separately if requested.

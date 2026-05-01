@@ -1,3 +1,7 @@
+.quiz-overview-grid {
+    align-items: flex-start;
+}
+
 .quiz-question-image {
     display: block;
     width: 100%;
