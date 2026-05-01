@@ -192,6 +192,11 @@ public partial class SchoolClass
             return;
         }
 
+        if (!await ConfirmDeleteAsync())
+        {
+            return;
+        }
+
         await ExecuteSchoolClassActionAsync(
             () => SchoolClassService.DeleteSchoolAsync(_loginState, school.Id),
             _ => LoadSchoolClassesAsync(null, null));
@@ -233,13 +238,22 @@ public partial class SchoolClass
 
     private async Task DeleteClassAsync(SchoolClassClassItem classItem)
     {
+        var message = classItem.StudentCount > 0
+            ? $"Delete {classItem.Name}? This will also delete {classItem.StudentCount} registered student account{(classItem.StudentCount == 1 ? string.Empty : "s")}."
+            : $"Delete {classItem.Name}?";
+
         var confirmed = await DialogService.ShowMessageBoxAsync(
             "Delete class",
-            $"Delete {classItem.Name}?",
+            message,
             yesText: "Delete",
             cancelText: "Cancel");
 
         if (confirmed != true)
+        {
+            return;
+        }
+
+        if (!await ConfirmDeleteAsync())
         {
             return;
         }
@@ -267,6 +281,11 @@ public partial class SchoolClass
             return;
         }
 
+        if (!await ConfirmDeleteAsync())
+        {
+            return;
+        }
+
         await ExecuteSchoolClassActionAsync(
             () => SchoolClassService.RemoveStudentFromClassAsync(_loginState, _selectedClassId.Value, student.Id),
             _ => LoadSchoolClassesAsync(_selectedSchoolId, _selectedClassId));
@@ -290,6 +309,17 @@ public partial class SchoolClass
 
         Snackbar.Add(result.Message, Severity.Success);
         await refresh(result.Value);
+    }
+
+    private async Task<bool> ConfirmDeleteAsync()
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Confirmation",
+            "Are you sure?",
+            yesText: "Yes",
+            cancelText: "Cancel");
+
+        return confirmed == true;
     }
 
     private async Task<SchoolDialogInput?> ShowSchoolDialogAsync(

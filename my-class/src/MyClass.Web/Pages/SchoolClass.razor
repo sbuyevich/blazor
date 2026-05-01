@@ -49,20 +49,6 @@
                         }
                         else
                         {
-                            <MudSelect T="int?"
-                                       Value="_selectedSchoolId"
-                                       ValueChanged="HandleSchoolSelectedAsync"
-                                       Label="School"
-                                       Variant="Variant.Outlined"
-                                       Margin="Margin.Dense">
-                                @foreach (var school in _schools)
-                                {
-                                    <MudSelectItem T="int?" Value="@((int?)school.Id)">
-                                        @school.Name
-                                    </MudSelectItem>
-                                }
-                            </MudSelect>
-
                             <MudTable Items="_schools" Dense="true" Hover="true" Elevation="0">
                                 <HeaderContent>
                                     <MudTh>Name</MudTh>
@@ -103,6 +89,23 @@
                                 Add
                             </MudButton>
                         </MudStack>
+
+                        @if (_schools.Count > 0)
+                        {
+                            <MudSelect T="int?"
+                                       Value="_selectedSchoolId"
+                                       ValueChanged="HandleSchoolSelectedAsync"
+                                       Label="School"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense">
+                                @foreach (var school in _schools)
+                                {
+                                    <MudSelectItem T="int?" Value="@((int?)school.Id)">
+                                        @school.Name
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
 
                         @if (!_selectedSchoolId.HasValue)
                         {

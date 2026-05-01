@@ -319,14 +319,6 @@ public sealed class SchoolClassService(
             return Result<int?>.Failure("The selected class was not found.");
         }
 
-        var hasStudents = await dbContext.Students
-            .AnyAsync(student => student.ClassId == classId, cancellationToken);
-
-        if (hasStudents)
-        {
-            return Result<int?>.Failure("Remove this class's students before deleting it.");
-        }
-
         dbContext.Classes.Remove(existingClass);
         await dbContext.SaveChangesAsync(cancellationToken);
 
