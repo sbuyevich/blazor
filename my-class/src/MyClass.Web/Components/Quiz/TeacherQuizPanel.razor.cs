@@ -170,7 +170,6 @@ public partial class TeacherQuizPanel
     {
         _isWorking = true;
         var result = await action();
-        Snackbar.Add(result.Message, result.Succeeded ? Severity.Success : Severity.Warning);
         await LoadStateAsync(showLoading: false);
         StartPollingIfNeeded();
         _isWorking = false;
@@ -182,7 +181,6 @@ public partial class TeacherQuizPanel
 
         _isWorking = true;
         var result = await QuizSessionService.FinishCurrentQuestionAsync(_loginState, CurrentClass);
-        Snackbar.Add(result.Message, result.Succeeded ? Severity.Success : Severity.Warning);
 
         if (result.Succeeded)
         {

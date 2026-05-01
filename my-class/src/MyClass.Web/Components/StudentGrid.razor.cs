@@ -123,7 +123,6 @@ public partial class StudentGrid
             return;
         }
 
-        Snackbar.Add(result.Message, Severity.Success);
         _isLoading = true;
         await LoadStudentsAsync(CurrentClass);
     }
@@ -144,7 +143,6 @@ public partial class StudentGrid
             return;
         }
 
-        Snackbar.Add(result.Message, Severity.Success);
         _isLoading = true;
         await LoadStudentsAsync(CurrentClass);
     }
