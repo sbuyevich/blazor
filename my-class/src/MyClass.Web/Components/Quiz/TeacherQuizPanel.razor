@@ -32,65 +32,69 @@ else if (_stateResult.Value is not null)
                 <MudText Typo="Typo.h4">@state.QuizTitle</MudText>
                 @if (state.CurrentQuestion is not null)
                 {
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
-                            Question @(state.CurrentQuestion.QuestionIndex + 1) of @state.CurrentQuestion.QuestionCount
-                        </MudText>
-                        <MudChip T="string" 
-                                 Color="@(state.CurrentQuestion.IsInProgress ? Color.Primary : Color.Default)"
-                                 Variant="Variant.Filled">
-                            Timer: @FormatRemaining(state.CurrentQuestion.Remaining)
-                        </MudChip>
-                    </MudStack>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                        Question @(state.CurrentQuestion.QuestionIndex + 1) of @state.CurrentQuestion.QuestionCount
+                    </MudText>
                 }
             </div>
 
-            <MudStack Row="true" Spacing="1">
-                @if (!state.HasSession)
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                @if (state.CurrentQuestion is not null)
                 {
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.PlayArrow"
-                               Disabled="_isWorking"
-                               OnClick="StartQuestionAsync">
-                        Start
-                    </MudButton>
-                }
-                else
-                {
-                    <MudButton Variant="Variant.Outlined"
-                               Color="Color.Secondary"
-                               StartIcon="@Icons.Material.Filled.Refresh"
-                               Disabled="_isWorking"
-                               OnClick="RestartQuizAsync">
-                        Restart
-                    </MudButton>
+                    <MudChip T="string"
+                             Color="@(state.CurrentQuestion.IsInProgress ? Color.Primary : Color.Default)"
+                             Variant="Variant.Filled">
+                        Timer: @FormatRemaining(state.CurrentQuestion.Remaining)
+                    </MudChip>
                 }
 
-                @if (state.HasSession && !state.IsComplete)
-                {
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Warning"
-                               StartIcon="@Icons.Material.Filled.Stop"
-                               Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress != true)"
-                               OnClick="FinishQuestionAsync">
-                        Finish
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Secondary"
-                               StartIcon="@Icons.Material.Filled.Visibility"
-                               Disabled="@(_isWorking || state.CurrentQuestion is null || state.CurrentQuestion.IsAnswerRevealed)"
-                               OnClick="ShowAnswerAsync">
-                        Show Answer
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               EndIcon="@Icons.Material.Filled.SkipNext"
-                               Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress == true)"
-                               OnClick="MoveNextQuestionAsync">
-                        Next
-                    </MudButton>
-                }
+                <MudStack Row="true" Spacing="1">
+                    @if (!state.HasSession)
+                    {
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   Disabled="_isWorking"
+                                   OnClick="StartQuestionAsync">
+                            Start
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Refresh"
+                                   Disabled="_isWorking"
+                                   OnClick="RestartQuizAsync">
+                            Restart
+                        </MudButton>
+                    }
+
+                    @if (state.HasSession && !state.IsComplete)
+                    {
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.Stop"
+                                   Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress != true)"
+                                   OnClick="FinishQuestionAsync">
+                            Finish
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Visibility"
+                                   Disabled="@(_isWorking || state.CurrentQuestion is null || state.CurrentQuestion.IsAnswerRevealed)"
+                                   OnClick="ShowAnswerAsync">
+                            Show Answer
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   EndIcon="@Icons.Material.Filled.SkipNext"
+                                   Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress == true || IsLastQuestion(state.CurrentQuestion))"
+                                   OnClick="MoveNextQuestionAsync">
+                            Next
+                        </MudButton>
+                    }
+                </MudStack>
             </MudStack>
         </MudStack>
 

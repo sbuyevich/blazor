@@ -231,7 +231,7 @@ public sealed class QuizSessionService(
 
         if (nextIndex >= contentResult.Value.Questions.Count)
         {
-            return Result<bool>.Success(true, "Quiz complete.");
+            return Result<bool>.Failure("This is the last question.");
         }
 
         var createdCount = await CreateQuestionRowsAsync(
@@ -418,9 +418,7 @@ public sealed class QuizSessionService(
             currentQuestion,
             cancellationToken);
 
-        var isComplete = currentQuestion is not null &&
-            currentQuestion.QuestionIndex >= quiz.Questions.Count - 1 &&
-            !currentQuestion.IsInProgress;
+        var isComplete = false;
 
         return new QuizTeacherState(
             quiz.Title,

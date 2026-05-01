@@ -236,7 +236,7 @@ public partial class TeacherQuizPanel
 
         _stateResult = Result<QuizTeacherState>.Success(state with
         {
-            IsComplete = question.QuestionIndex >= question.QuestionCount - 1,
+            IsComplete = false,
             CurrentQuestion = finishedQuestion,
             Students = students
         });
@@ -257,6 +257,11 @@ public partial class TeacherQuizPanel
     private static string FormatRemaining(TimeSpan remaining)
     {
         return $"{(int)remaining.TotalMinutes:00}:{remaining.Seconds:00}";
+    }
+
+    private static bool IsLastQuestion(QuizTeacherQuestionState? question)
+    {
+        return question is not null && question.QuestionIndex >= question.QuestionCount - 1;
     }
 
     private static Color GetStatusColor(QuizStudentAnswerStatus status)
