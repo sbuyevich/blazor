@@ -65,9 +65,9 @@ Example:
 
 ## Task Breakdown
 
-- [ ] [Task 01 - Quiz Discovery and Metadata](tasks/01-quiz-discovery-and-metadata.md)
-- [ ] [Task 02 - Selected Quiz Session Storage](tasks/02-selected-quiz-session-storage.md)
-- [ ] [Task 03 - Selected Quiz Content Loading](tasks/03-selected-quiz-content-loading.md)
-- [ ] [Task 04 - Teacher Quiz Dropdown](tasks/04-teacher-quiz-dropdown.md)
+- [x] [Task 01 - Quiz Discovery and Metadata](tasks/01-quiz-discovery-and-metadata.md)
+- [x] [Task 02 - Selected Quiz Session Storage](tasks/02-selected-quiz-session-storage.md)
+- [x] [Task 03 - Selected Quiz Content Loading](tasks/03-selected-quiz-content-loading.md)
+- [x] [Task 04 - Teacher Quiz Dropdown](tasks/04-teacher-quiz-dropdown.md)
 - [ ] [Task 05 - Student Uses Active Teacher Quiz](tasks/05-student-uses-active-teacher-quiz.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)

@@ -8,6 +8,7 @@ public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorag
 {
     private const string LoginStateKey = "my-class.loginState";
     private const string ClassCodeKey = "my-class.classCode";
+    private const string SelectedQuizPathKey = "my-class.selectedQuizPath";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async ValueTask<T?> GetAsync<T>(string key)
@@ -58,6 +59,21 @@ public sealed class SessionStorageService(IJSRuntime jsRuntime) : ISessionStorag
     public ValueTask RemoveClassCodeAsync()
     {
         return RemoveAsync(ClassCodeKey);
+    }
+
+    public ValueTask<string?> GetSelectedQuizPathAsync()
+    {
+        return GetAsync<string>(SelectedQuizPathKey);
+    }
+
+    public ValueTask SetSelectedQuizPathAsync(string quizPath)
+    {
+        return SetAsync(SelectedQuizPathKey, quizPath);
+    }
+
+    public ValueTask RemoveSelectedQuizPathAsync()
+    {
+        return RemoveAsync(SelectedQuizPathKey);
     }
 }
 

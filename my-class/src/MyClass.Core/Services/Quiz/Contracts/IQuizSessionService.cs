@@ -8,31 +8,37 @@ public interface IQuizSessionService
     Task<Result<QuizTeacherState>> GetTeacherStateAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<bool>> StartQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<bool>> RestartQuizAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<bool>> FinishCurrentQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<bool>> ShowAnswerAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<bool>> MoveNextQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default);
 }
 

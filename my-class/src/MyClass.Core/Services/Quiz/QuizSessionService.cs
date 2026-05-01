@@ -15,6 +15,7 @@ public sealed class QuizSessionService(
     public async Task<Result<QuizTeacherState>> GetTeacherStateAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -24,7 +25,7 @@ public sealed class QuizSessionService(
             return Result<QuizTeacherState>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -55,22 +56,25 @@ public sealed class QuizSessionService(
     public async Task<Result<bool>> StartQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
-        return await StartOrRestartQuizAsync(loginState, currentClass, "Quiz started.", cancellationToken);
+        return await StartOrRestartQuizAsync(loginState, currentClass, quizFolderPath, "Quiz started.", cancellationToken);
     }
 
     public async Task<Result<bool>> RestartQuizAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
-        return await StartOrRestartQuizAsync(loginState, currentClass, "Quiz restarted.", cancellationToken);
+        return await StartOrRestartQuizAsync(loginState, currentClass, quizFolderPath, "Quiz restarted.", cancellationToken);
     }
 
     private async Task<Result<bool>> StartOrRestartQuizAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath,
         string successMessage,
         CancellationToken cancellationToken)
     {
@@ -81,7 +85,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -114,6 +118,7 @@ public sealed class QuizSessionService(
     public async Task<Result<bool>> FinishCurrentQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -123,7 +128,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -152,6 +157,7 @@ public sealed class QuizSessionService(
     public async Task<Result<bool>> ShowAnswerAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -161,7 +167,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
@@ -190,6 +196,7 @@ public sealed class QuizSessionService(
     public async Task<Result<bool>> MoveNextQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
+        string? quizFolderPath = null,
         CancellationToken cancellationToken = default)
     {
         var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
@@ -199,7 +206,7 @@ public sealed class QuizSessionService(
             return Result<bool>.Failure(authorizationMessage);
         }
 
-        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+        var contentResult = await quizContentService.LoadQuizAsync(quizFolderPath, cancellationToken);
 
         if (!contentResult.Succeeded || contentResult.Value is null)
         {
