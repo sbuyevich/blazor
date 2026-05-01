@@ -55,7 +55,7 @@ public partial class StudentRegistrationForm
             _registration.Password,
             CurrentClass.Code);
 
-        if (!result.Succeeded || result.State is null)
+        if (!result.Succeeded || result.Value is null)
         {
             await SessionStorage.RemoveLoginStateAsync();
             LoginStateService.Set(null);
@@ -65,11 +65,11 @@ public partial class StudentRegistrationForm
             return;
         }
 
-        await SessionStorage.SetLoginStateAsync(result.State);
-        LoginStateService.Set(result.State);
+        await SessionStorage.SetLoginStateAsync(result.Value);
+        LoginStateService.Set(result.Value);
         _isSubmitting = false;
 
-        await Succeeded.InvokeAsync(result.State);
+        await Succeeded.InvokeAsync(result.Value);
     }
 
     private Task RequestLoginAsync()

@@ -1,0 +1,16 @@
+@page "/register"
+@using MyClass.Core.Services
+@rendermode InteractiveServer
+@inject ISessionStorageService SessionStorage
+@inject ILoginStateService LoginStateService
+@inject NavigationManager Navigation
+
+<PageTitle>My Class</PageTitle>
+
+<div class="login-shell">
+    <MudPaper Class="login-panel pa-5" Elevation="8">
+        <StudentRegistrationForm CurrentClass="CurrentClass"
+                                 Succeeded="HandleSucceededAsync"
+                                 LoginRequested="GoToLogin" />
+    </MudPaper>
+</div>

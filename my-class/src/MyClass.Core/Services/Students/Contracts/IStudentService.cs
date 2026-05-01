@@ -5,20 +5,20 @@ namespace MyClass.Core.Services;
 
 public interface IStudentService
 {
-    Task<StudentListResult> GetStudentsForClassAsync(
+    Task<Result<IReadOnlyList<StudentListItem>>> GetStudentsForClassAsync(
         LoginState? loginState,
         ClassContext currentClass,
         string? searchText = null,
         bool activeOnly = false,
         CancellationToken cancellationToken = default);
 
-    Task<StudentActionResult> RemoveStudentFromClassAsync(
+    Task<Result<bool>> RemoveStudentFromClassAsync(
         LoginState? loginState,
         ClassContext currentClass,
         int studentId,
         CancellationToken cancellationToken = default);
 
-    Task<StudentActionResult> ResetStudentsActiveStateAsync(
+    Task<Result<bool>> ResetStudentsActiveStateAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default);

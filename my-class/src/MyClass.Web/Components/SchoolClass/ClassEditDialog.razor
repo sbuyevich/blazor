@@ -1,0 +1,31 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudTextField T="string"
+                          @bind-Value="_name"
+                          Label="Class name"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Required="true"
+                          RequiredError="Class name is required."
+                          AutoFocus="true" />
+
+            <MudTextField T="string"
+                          @bind-Value="_code"
+                          Label="Class code"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Required="true"
+                          RequiredError="Class code is required." />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="@IsSubmitDisabled"
+                   OnClick="Submit">
+            @SaveText
+        </MudButton>
+    </DialogActions>
+</MudDialog>

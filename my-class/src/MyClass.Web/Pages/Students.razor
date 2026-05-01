@@ -1,0 +1,21 @@
+@page "/students"
+@rendermode InteractiveServer
+
+<PageTitle>My Class</PageTitle>
+
+<MudStack Spacing="3">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <div>
+            <MudText Typo="Typo.h4">Students</MudText>
+        </div>
+
+        @if (_studentsResult?.Succeeded == true)
+        {
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
+                @StudentCount student@(StudentCount == 1 ? string.Empty : "s")
+            </MudChip>
+        }
+    </MudStack>
+
+    <StudentGrid CurrentClass="CurrentClass" StudentsLoaded="OnStudentsLoaded" />
+</MudStack>

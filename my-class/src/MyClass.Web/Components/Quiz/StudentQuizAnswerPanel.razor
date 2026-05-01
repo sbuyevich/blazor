@@ -67,7 +67,7 @@ else
                 }
             </MudGrid>
         }
-        else if (_stateResult?.State?.HasInProgressAnswer == true)
+        else if (_stateResult?.Value?.HasInProgressAnswer == true)
         {
             <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
                 No answer choices are available for this question.

@@ -5,9 +5,9 @@ public interface IClassContextState
 {
     ClassContext? CurrentClass { get; }
 
-    ClassContextResult? Result { get; }
+    Result<ClassContext>? Result { get; }
 
     event Action? Changed;
 
-    void Set(ClassContextResult? result);
+    void Set(Result<ClassContext>? result);
 }

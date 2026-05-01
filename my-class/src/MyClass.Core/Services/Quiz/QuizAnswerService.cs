@@ -9,7 +9,7 @@ public sealed class QuizAnswerService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IQuizContentService quizContentService) : IQuizAnswerService
 {
-    public async Task<QuizAnswerPageStateResult> GetAnswerPageStateAsync(
+    public async Task<Result<QuizAnswerPageState>> GetAnswerPageStateAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default)
@@ -18,28 +18,28 @@ public sealed class QuizAnswerService(
 
         var studentResult = await ValidateStudentAccessAsync(dbContext, loginState, currentClass, cancellationToken);
 
-        if (!studentResult.Succeeded || studentResult.Student is null)
+        if (!studentResult.Succeeded || studentResult.Value is null)
         {
-            return QuizAnswerPageStateResult.Failure(studentResult.Message);
+            return Result<QuizAnswerPageState>.Failure(studentResult.Message);
         }
 
         var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
 
-        if (!contentResult.Succeeded || contentResult.Quiz is null)
+        if (!contentResult.Succeeded || contentResult.Value is null)
         {
-            return QuizAnswerPageStateResult.Success(CreateState(false, false, false, contentResult.Message));
+            return Result<QuizAnswerPageState>.Success(CreateState(false, false, false, contentResult.Message));
         }
 
         var current = await GetCurrentQuestionAsync(
             dbContext,
-            contentResult.Quiz,
+            contentResult.Value,
             currentClass.ClassId,
             DateTime.UtcNow,
             cancellationToken);
 
         if (current is null)
         {
-            return QuizAnswerPageStateResult.Success(CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Quiz.Title));
+            return Result<QuizAnswerPageState>.Success(CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Value.Title));
         }
 
         var answerChoices = CreateAnswerChoices(current.AnswerCount);
@@ -50,7 +50,7 @@ public sealed class QuizAnswerService(
                 answer =>
                     answer.QuestionIndex == current.QuestionIndex &&
                     answer.QuestionKey == current.QuestionKey &&
-                    answer.StudentId == studentResult.Student.Id)
+                    answer.StudentId == studentResult.Value.Id)
             .OrderByDescending(answer => answer.StartedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -59,35 +59,35 @@ public sealed class QuizAnswerService(
             await FinishExpiredQuestionAsync(dbContext, current, currentClass.ClassId, cancellationToken);
 
             return answer is not null && answer.Answer.Length > 0
-                ? QuizAnswerPageStateResult.Success(
-                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Quiz.Title, current))
-                : QuizAnswerPageStateResult.Success(
-                    CreateState(false, false, true, "This question has finished.", contentResult.Quiz.Title, current));
+                ? Result<QuizAnswerPageState>.Success(
+                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Value.Title, current))
+                : Result<QuizAnswerPageState>.Success(
+                    CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current));
         }
 
         if (answer is null)
         {
-            return QuizAnswerPageStateResult.Success(
-                CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Quiz.Title));
+            return Result<QuizAnswerPageState>.Success(
+                CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Value.Title));
         }
 
         if (answer.Answer.Length > 0)
         {
-            return QuizAnswerPageStateResult.Success(
-                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", contentResult.Quiz.Title, current, answerChoices));
+            return Result<QuizAnswerPageState>.Success(
+                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", contentResult.Value.Title, current, answerChoices));
         }
 
         if (answer.EndedAtUtc is not null)
         {
-            return QuizAnswerPageStateResult.Success(
-                CreateState(false, false, true, "This question has finished.", contentResult.Quiz.Title, current));
+            return Result<QuizAnswerPageState>.Success(
+                CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current));
         }
 
-        return QuizAnswerPageStateResult.Success(
-            CreateState(true, false, false, "Choose an answer.", contentResult.Quiz.Title, current, answerChoices));
+        return Result<QuizAnswerPageState>.Success(
+            CreateState(true, false, false, "Choose an answer.", contentResult.Value.Title, current, answerChoices));
     }
 
-    public async Task<QuizActionResult> SubmitAnswerAsync(
+    public async Task<Result<bool>> SubmitAnswerAsync(
         LoginState? loginState,
         ClassContext currentClass,
         string selectedAnswer,
@@ -99,63 +99,63 @@ public sealed class QuizAnswerService(
 
         var studentResult = await ValidateStudentAccessAsync(dbContext, loginState, currentClass, cancellationToken);
 
-        if (!studentResult.Succeeded || studentResult.Student is null)
+        if (!studentResult.Succeeded || studentResult.Value is null)
         {
-            return QuizActionResult.Failure(studentResult.Message);
+            return Result<bool>.Failure(studentResult.Message);
         }
 
         var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
 
-        if (!contentResult.Succeeded || contentResult.Quiz is null)
+        if (!contentResult.Succeeded || contentResult.Value is null)
         {
-            return QuizActionResult.Failure(contentResult.Message);
+            return Result<bool>.Failure(contentResult.Message);
         }
 
         var current = await GetCurrentQuestionAsync(
             dbContext,
-            contentResult.Quiz,
+            contentResult.Value,
             currentClass.ClassId,
             DateTime.UtcNow,
             cancellationToken);
 
         if (current is null)
         {
-            return QuizActionResult.Failure("No question is available yet. Wait for the teacher to start.");
+            return Result<bool>.Failure("No question is available yet. Wait for the teacher to start.");
         }
 
         if (!IsAnswerInRange(selectedAnswerText, current.AnswerCount))
         {
-            return QuizActionResult.Failure($"Answer must be between 1 and {current.AnswerCount}.");
+            return Result<bool>.Failure($"Answer must be between 1 and {current.AnswerCount}.");
         }
 
         if (current.IsExpired)
         {
             await FinishExpiredQuestionAsync(dbContext, current, currentClass.ClassId, cancellationToken);
 
-            return QuizActionResult.Failure("This question has finished.");
+            return Result<bool>.Failure("This question has finished.");
         }
 
         var answer = await dbContext.QuizAnswers
             .Where(answer =>
                 answer.QuestionIndex == current.QuestionIndex &&
                 answer.QuestionKey == current.QuestionKey &&
-                answer.StudentId == studentResult.Student.Id)
+                answer.StudentId == studentResult.Value.Id)
             .OrderByDescending(answer => answer.StartedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (answer is null)
         {
-            return QuizActionResult.Failure("No answer record is available yet. Wait for the teacher to start.");
+            return Result<bool>.Failure("No answer record is available yet. Wait for the teacher to start.");
         }
 
         if (answer.Answer.Length > 0)
         {
-            return QuizActionResult.Failure("You already answered this question.");
+            return Result<bool>.Failure("You already answered this question.");
         }
 
         if (answer.EndedAtUtc is not null)
         {
-            return QuizActionResult.Failure("This question has finished.");
+            return Result<bool>.Failure("This question has finished.");
         }
 
         answer.Answer = selectedAnswerText;
@@ -164,10 +164,10 @@ public sealed class QuizAnswerService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return QuizActionResult.Success("Answer submitted.");
+        return Result<bool>.Success(true, "Answer submitted.");
     }
 
-    private static async Task<StudentAccessResult> ValidateStudentAccessAsync(
+    private static async Task<Result<Student>> ValidateStudentAccessAsync(
         ApplicationDbContext dbContext,
         LoginState? loginState,
         ClassContext currentClass,
@@ -175,17 +175,17 @@ public sealed class QuizAnswerService(
     {
         if (loginState is null)
         {
-            return StudentAccessResult.Failure("Sign in as a student to answer quizzes.");
+            return Result<Student>.Failure("Sign in as a student to answer quizzes.");
         }
 
         if (loginState.IsTeacher)
         {
-            return StudentAccessResult.Failure("Teachers cannot submit student quiz answers.");
+            return Result<Student>.Failure("Teachers cannot submit student quiz answers.");
         }
 
         if (!string.Equals(loginState.ClassCode, currentClass.Code, StringComparison.OrdinalIgnoreCase))
         {
-            return StudentAccessResult.Failure("Sign in as a student for this class to answer quizzes.");
+            return Result<Student>.Failure("Sign in as a student for this class to answer quizzes.");
         }
 
         var normalizedUserName = loginState.UserName.Trim().ToLower();
@@ -198,8 +198,8 @@ public sealed class QuizAnswerService(
                 cancellationToken);
 
         return student is null
-            ? StudentAccessResult.Failure("Student login is required to answer quizzes.")
-            : StudentAccessResult.Success(student);
+            ? Result<Student>.Failure("Student login is required to answer quizzes.")
+            : Result<Student>.Success(student);
     }
 
     private static async Task<CurrentQuestion?> GetCurrentQuestionAsync(
@@ -334,13 +334,6 @@ public sealed class QuizAnswerService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private sealed record StudentAccessResult(bool Succeeded, string Message, Student? Student)
-    {
-        public static StudentAccessResult Success(Student student) => new(true, string.Empty, student);
-
-        public static StudentAccessResult Failure(string message) => new(false, message, null);
     }
 
     private sealed record CurrentQuestion(

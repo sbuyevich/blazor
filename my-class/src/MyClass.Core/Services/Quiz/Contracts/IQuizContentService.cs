@@ -4,9 +4,9 @@ namespace MyClass.Core.Services;
 
 public interface IQuizContentService
 {
-    Task<QuizContentResult> LoadQuizAsync(CancellationToken cancellationToken = default);
+    Task<Result<QuizContent>> LoadQuizAsync(CancellationToken cancellationToken = default);
 
-    Task<QuizImageResult> LoadQuestionImageAsync(
+    Task<Result<string>> LoadQuestionImageAsync(
         string questionKey,
         CancellationToken cancellationToken = default);
 }

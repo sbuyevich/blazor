@@ -1,0 +1,82 @@
+@using MyClass.Web.Components.Auth
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject IClassContextService ClassContextService
+@inject IClassContextState ClassContextState
+@inject ISessionStorageService SessionStorage
+@inject NavigationManager Navigation
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        @if (!IsPublicAuthRoute())
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        }
+        <MudText Typo="Typo.h6">My Class</MudText>
+        <MudSpacer />
+        <AppGreeting />
+        <MudSpacer />
+
+        @if (CurrentClass is not null && !IsClassIndependentRoute())
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudChip T="string" Size="Size.Large" Color="Color.Info">@CurrentClass.ClassName</MudChip>
+                in
+                <MudChip T="string" Size="Size.Large" Color="Color.Secondary">@CurrentClass.SchoolName</MudChip>
+            </MudStack>
+        }
+        else if (!string.IsNullOrWhiteSpace(ClassMessage))
+        {
+            <MudText Typo="Typo.body2" Color="Color.Inherit">@ClassMessage</MudText>
+        }
+    </MudAppBar>
+
+    @if (!IsPublicAuthRoute())
+    {
+        <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Elevation="1">
+            <NavMenu CurrentClass="CurrentClass" />
+        </MudDrawer>
+    }
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+            @if (IsClassIndependentRoute())
+            {
+                @Body
+            }
+            else if (ClassContextState.Result is null)
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+                    <MudText Typo="Typo.body2">Loading class...</MudText>
+                </MudStack>
+            }
+            else if (!ClassContextState.Result.Succeeded)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@ClassContextState.Result.Message</MudAlert>
+            }
+            else
+            {
+                <CascadingValue Value="CurrentClass">
+                    @Body
+                </CascadingValue>
+            }
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@if (!IsPublicAuthRoute() && !IsClassIndependentRoute())
+{
+    <AuthGate CurrentClass="CurrentClass" />
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">x</span>
+</div>

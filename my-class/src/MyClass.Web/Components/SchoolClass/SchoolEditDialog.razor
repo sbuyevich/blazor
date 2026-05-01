@@ -1,0 +1,21 @@
+<MudDialog>
+    <DialogContent>
+        <MudTextField T="string"
+                      @bind-Value="_name"
+                      Label="School name"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Required="true"
+                      RequiredError="School name is required."
+                      AutoFocus="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="@string.IsNullOrWhiteSpace(_name)"
+                   OnClick="Submit">
+            @SaveText
+        </MudButton>
+    </DialogActions>
+</MudDialog>

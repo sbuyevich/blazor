@@ -21,11 +21,7 @@ Create new Quiz Result page only for teacher with
     - Answer Time = EndedAtUtc - StartedAtUtc in seconds
     - IsCorrect 
 
-## School/Class page 
-Create new page only for teacher with
-- school dropdown value from Schools table. it has `Add` button on right side to insert new school value in popup.
-- class dropdown filtered by selected school from Classes table. it has `Add` button on right side to insert new class values in popup.
-- add student grid filtered by selected class with search bar by user display name.
+
 
 
 ## Answers count configuration

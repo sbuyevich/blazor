@@ -5,27 +5,27 @@ namespace MyClass.Core.Services;
 
 public interface IQuizSessionService
 {
-    Task<QuizTeacherStateResult> GetTeacherStateAsync(
+    Task<Result<QuizTeacherState>> GetTeacherStateAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default);
 
-    Task<QuizActionResult> StartQuestionAsync(
+    Task<Result<bool>> StartQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default);
 
-    Task<QuizActionResult> RestartQuizAsync(
+    Task<Result<bool>> RestartQuizAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default);
 
-    Task<QuizActionResult> FinishCurrentQuestionAsync(
+    Task<Result<bool>> FinishCurrentQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default);
 
-    Task<QuizActionResult> MoveNextQuestionAsync(
+    Task<Result<bool>> MoveNextQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default);

@@ -9,7 +9,7 @@ public partial class TeacherQuizPanel
     [Parameter, EditorRequired]
     public ClassContext CurrentClass { get; set; } = null!;
 
-    private QuizTeacherStateResult? _stateResult;
+    private Result<QuizTeacherState>? _stateResult;
     private LoginState? _loginState;
     private CancellationTokenSource? _pollingCancellation;
     private int? _loadedClassId;
@@ -66,7 +66,7 @@ public partial class TeacherQuizPanel
 
     private async Task LoadCurrentImageAsync()
     {
-        var question = _stateResult?.State?.CurrentQuestion;
+        var question = _stateResult?.Value?.CurrentQuestion;
 
         if (question is null || question.QuestionKey == _loadedImageQuestionKey)
         {
@@ -85,7 +85,7 @@ public partial class TeacherQuizPanel
             return;
         }
 
-        _imageDataUri = imageResult.DataUri;
+        _imageDataUri = imageResult.Value;
     }
 
     private void StartPolling()
@@ -98,7 +98,7 @@ public partial class TeacherQuizPanel
 
     private void StartPollingIfNeeded()
     {
-        if (_stateResult?.State?.CurrentQuestion?.IsInProgress == true)
+        if (_stateResult?.Value?.CurrentQuestion?.IsInProgress == true)
         {
             StartPolling();
             return;
@@ -166,11 +166,10 @@ public partial class TeacherQuizPanel
         await RunActionAsync(() => QuizSessionService.MoveNextQuestionAsync(_loginState, CurrentClass));
     }
 
-    private async Task RunActionAsync(Func<Task<QuizActionResult>> action)
+    private async Task RunActionAsync(Func<Task<Result<bool>>> action)
     {
         _isWorking = true;
         var result = await action();
-        Snackbar.Add(result.Message, result.Succeeded ? Severity.Success : Severity.Warning);
         await LoadStateAsync(showLoading: false);
         StartPollingIfNeeded();
         _isWorking = false;
@@ -182,7 +181,6 @@ public partial class TeacherQuizPanel
 
         _isWorking = true;
         var result = await QuizSessionService.FinishCurrentQuestionAsync(_loginState, CurrentClass);
-        Snackbar.Add(result.Message, result.Succeeded ? Severity.Success : Severity.Warning);
 
         if (result.Succeeded)
         {
@@ -194,12 +192,12 @@ public partial class TeacherQuizPanel
 
     private void ApplyCurrentQuestionFinishedState()
     {
-        if (_stateResult?.State?.CurrentQuestion is null)
+        if (_stateResult?.Value?.CurrentQuestion is null)
         {
             return;
         }
 
-        var state = _stateResult.State;
+        var state = _stateResult.Value;
         var question = state.CurrentQuestion;
         var finishedQuestion = question with
         {
@@ -212,7 +210,7 @@ public partial class TeacherQuizPanel
             .Select(student => student.HasAnswered ? student : student with { FailedNoAnswer = true })
             .ToList();
 
-        _stateResult = QuizTeacherStateResult.Success(state with
+        _stateResult = Result<QuizTeacherState>.Success(state with
         {
             IsComplete = question.QuestionIndex >= question.QuestionCount - 1,
             CurrentQuestion = finishedQuestion,
@@ -222,7 +220,7 @@ public partial class TeacherQuizPanel
 
     private bool IsCurrentQuestionTimerExpired()
     {
-        var question = _stateResult?.State?.CurrentQuestion;
+        var question = _stateResult?.Value?.CurrentQuestion;
 
         if (question is null || !question.IsInProgress)
         {

@@ -4,7 +4,7 @@ namespace  MyClass.Core.Services;
 
 public interface IClassContextService
 {
-    Task<ClassContextResult> ResolveAsync(string? classCode, CancellationToken cancellationToken = default);
+    Task<Result<ClassContext>> ResolveAsync(string? classCode, CancellationToken cancellationToken = default);
 
     string? GetClassCodeFromUri(string uri);
 
