@@ -61,3 +61,11 @@ Stage 8 adds a teacher-controlled `Show Answer` flow. The teacher can reveal the
 - Default answer reveal messages should be friendly and lightly funny, not sarcastic or discouraging.
 - `a.jpg`, `a.JPG`, and `a.jpeg` should be accepted for answer images.
 - Correctness comes from comparing the submitted answer with `CorrectAnswer`.
+
+## Task Breakdown
+
+- [ ] [Task 01 - Reveal Configuration and State](tasks/01-reveal-configuration-and-state.md)
+- [ ] [Task 02 - Answer Image Loading](tasks/02-answer-image-loading.md)
+- [ ] [Task 03 - Teacher Show Answer Flow](tasks/03-teacher-show-answer-flow.md)
+- [ ] [Task 04 - Student Reveal Experience](tasks/04-student-reveal-experience.md)
+- [ ] [Task 10 - Verification](tasks/10-verification.md)

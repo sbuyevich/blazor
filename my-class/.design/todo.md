@@ -1,15 +1,5 @@
 # TODO List
 
-## Quiz Page
-
-- add `Show Answer` button
-- add answer time and correct columns in student answers grid
-- add another a.JPG image in question 
-
-if Teacher clicks on `Show Answer` button 
-- a.jpg replace q.jpg
-- answer time and correct columns are populated from table in student grid 
-
 ### Quiz Result Page
 Create new Quiz Result page only for teacher with 
 - student answers grid aggregating all correct and incorrect answers for each student in quiz
