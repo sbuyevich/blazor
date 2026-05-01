@@ -298,6 +298,8 @@ public partial class TeacherQuizPanel
 
     private async Task HandleQuizSelectedAsync(string quizPath)
     {
+        var previousQuizPath = _selectedQuizPath;
+        var hadSession = _stateResult?.Value?.HasSession == true;
         _selectedQuizPath = string.IsNullOrWhiteSpace(quizPath) ? null : quizPath;
         _loadedImageQuestionKey = null;
         _loadedAnswerRevealState = null;
@@ -311,6 +313,15 @@ public partial class TeacherQuizPanel
         else
         {
             await SessionStorage.SetSelectedQuizPathAsync(_selectedQuizPath);
+        }
+
+        if (hadSession &&
+            !string.IsNullOrWhiteSpace(_selectedQuizPath) &&
+            !string.Equals(previousQuizPath, _selectedQuizPath, StringComparison.OrdinalIgnoreCase))
+        {
+            StopPolling();
+            await RunActionAsync(() => QuizSessionService.RestartQuizAsync(_loginState, CurrentClass, _selectedQuizPath));
+            return;
         }
 
         await LoadStateAsync(showLoading: false);

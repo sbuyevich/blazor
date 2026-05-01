@@ -48,18 +48,22 @@ else if (_stateResult.Value is not null)
         }
         else
         {
-            <MudSelect T="string"
-                       Value="@(_selectedQuizPath ?? string.Empty)"
-                       ValueChanged="HandleQuizSelectedAsync"
-                       Label="Quiz"
-                       Variant="Variant.Outlined"
-                       Margin="Margin.Dense"
-                       Disabled="_isWorking">
-                @foreach (var quiz in _availableQuizzes)
-                {
-                    <MudSelectItem T="string" Value="@quiz.Path">@quiz.Name</MudSelectItem>
-                }
-            </MudSelect>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="8">
+                    <MudSelect T="string"
+                               Value="@(_selectedQuizPath ?? string.Empty)"
+                               ValueChanged="HandleQuizSelectedAsync"
+                               Label="Quiz"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Disabled="_isWorking">
+                        @foreach (var quiz in _availableQuizzes)
+                        {
+                            <MudSelectItem T="string" Value="@quiz.Path">@quiz.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
         }
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
