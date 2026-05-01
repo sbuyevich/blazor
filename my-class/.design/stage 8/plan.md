@@ -68,4 +68,5 @@ Stage 8 adds a teacher-controlled `Show Answer` flow. The teacher can reveal the
 - [x] [Task 02 - Answer Image Loading](tasks/02-answer-image-loading.md)
 - [x] [Task 03 - Teacher Show Answer Flow](tasks/03-teacher-show-answer-flow.md)
 - [x] [Task 04 - Student Reveal Experience](tasks/04-student-reveal-experience.md)
+- [x] [Task 05 - Quiz Answer Page Changes](tasks/05-quiz-answer-changed.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)

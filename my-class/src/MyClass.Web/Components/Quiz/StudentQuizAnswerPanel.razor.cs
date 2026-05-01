@@ -31,6 +31,8 @@ public partial class StudentQuizAnswerPanel
 
     private IReadOnlyList<string> AnswerChoices => _stateResult?.Value?.AnswerChoices ?? [];
 
+    private IReadOnlyList<QuizQuestionProgressItem> QuestionProgress => _stateResult?.Value?.QuestionProgress ?? [];
+
     private bool DisableAnswerButtons =>
         _isSubmitting ||
         _stateResult?.Value?.HasInProgressAnswer != true ||
@@ -43,26 +45,13 @@ public partial class StudentQuizAnswerPanel
 
     private string QuizTitle => _stateResult?.Value?.QuizTitle ?? "Quiz Answer";
 
-    private string? QuestionPositionText
-    {
-        get
-        {
-            var state = _stateResult?.Value;
-
-            if (state?.QuestionIndex is null || state.QuestionCount is null)
-            {
-                return null;
-            }
-
-            return $"Question {state.QuestionIndex.Value + 1} of {state.QuestionCount.Value}";
-        }
-    }
-
     private bool ShowTimer =>
         !string.IsNullOrWhiteSpace(_stateResult?.Value?.QuestionKey) &&
         _stateResult?.Value?.IsAnswerRevealed != true;
 
     private string? RevealMessage => _stateResult?.Value?.RevealMessage;
+
+    private bool ShowRevealMessage => !string.IsNullOrWhiteSpace(RevealMessage);
 
     private bool IsTimerRunning => _isTimerRunning;
 
@@ -370,6 +359,54 @@ public partial class StudentQuizAnswerPanel
     private static string FormatRemaining(TimeSpan remaining)
     {
         return $"{(int)remaining.TotalMinutes:00}:{remaining.Seconds:00}";
+    }
+
+    private static string GetProgressCircleClass(QuizQuestionProgressItem item)
+    {
+        var classes = new List<string> { "quiz-progress-circle" };
+
+        if (item.IsBold)
+        {
+            classes.Add("quiz-progress-circle-bold");
+        }
+
+        classes.Add(item.Result switch
+        {
+            QuizQuestionProgressResult.Correct => "quiz-progress-circle-correct",
+            QuizQuestionProgressResult.Incorrect => "quiz-progress-circle-incorrect",
+            QuizQuestionProgressResult.Missed => "quiz-progress-circle-missed",
+            _ => "quiz-progress-circle-neutral"
+        });
+
+        if (item.IsCurrent)
+        {
+            classes.Add("quiz-progress-circle-current");
+        }
+
+        return string.Join(" ", classes);
+    }
+
+    private static string GetProgressCircleTitle(QuizQuestionProgressItem item)
+    {
+        return item.Result switch
+        {
+            QuizQuestionProgressResult.Correct => $"Question {item.QuestionIndex + 1}: correct",
+            QuizQuestionProgressResult.Incorrect => $"Question {item.QuestionIndex + 1}: incorrect",
+            QuizQuestionProgressResult.Missed => $"Question {item.QuestionIndex + 1}: missed",
+            _ => $"Question {item.QuestionIndex + 1}"
+        };
+    }
+
+    private string GetRevealMessageClass()
+    {
+        var result = _stateResult?.Value?.IsCorrect;
+
+        return result switch
+        {
+            true => "quiz-reveal-message quiz-reveal-message-correct",
+            false => "quiz-reveal-message quiz-reveal-message-incorrect",
+            _ => "quiz-reveal-message quiz-reveal-message-missed"
+        };
     }
 
     public async ValueTask DisposeAsync()

@@ -20,9 +20,17 @@ else
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
             <div>
                 <MudText Typo="Typo.h5">@QuizTitle</MudText>
-                @if (!string.IsNullOrWhiteSpace(QuestionPositionText))
+                @if (QuestionProgress.Count > 0)
                 {
-                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">@QuestionPositionText</MudText>
+                    <div class="quiz-progress-row" aria-label="Quiz question progress">
+                        @foreach (var item in QuestionProgress)
+                        {
+                            <span class="@GetProgressCircleClass(item)"
+                                  title="@GetProgressCircleTitle(item)">
+                                @(item.QuestionIndex + 1)
+                            </span>
+                        }
+                    </div>
                 }
                 <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
             </div>
@@ -48,32 +56,30 @@ else
                  alt="@QuestionImageAltText" />
         }
 
-        @if (!string.IsNullOrWhiteSpace(RevealMessage))
+        @if (ShowRevealMessage)
         {
-            <MudAlert Severity="@(_stateResult?.Value?.IsCorrect == true ? Severity.Success : Severity.Info)"
-                      Variant="Variant.Filled">
+            <div class="@GetRevealMessageClass()">
                 @RevealMessage
-            </MudAlert>
+            </div>
         }
 
         @if (AnswerChoices.Count > 0)
         {
-            <MudText typo="Typo.subtitle2" Color="Color.Secondary">Click on button with correct answer number</MudText>
-            <MudGrid Spacing="20">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Align="Align.Center">
+                Click on button with correct answer number
+            </MudText>
+            <div class="quiz-answer-buttons">
                 @foreach (var answer in AnswerChoices)
                 {
-                    <MudItem>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Secondary"
-                                   FullWidth="true"
-                                   Class="quiz-answer-button"
-                                   Disabled="DisableAnswerButtons"
-                                   OnClick="() => SubmitAnswerAsync(answer)">
-                            @answer
-                        </MudButton>
-                    </MudItem>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               Class="quiz-answer-button"
+                               Disabled="DisableAnswerButtons"
+                               OnClick="() => SubmitAnswerAsync(answer)">
+                        @answer
+                    </MudButton>
                 }
-            </MudGrid>
+            </div>
         }
         else if (_stateResult?.Value?.HasInProgressAnswer == true)
         {
