@@ -3,11 +3,105 @@
     margin: 0 auto;
 }
 
+.quiz-progress-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+}
+
+.quiz-progress-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 50%;
+    color: var(--mud-palette-text-primary);
+    background: var(--mud-palette-surface);
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.quiz-progress-circle-neutral {
+    background: var(--mud-palette-surface);
+}
+
+.quiz-progress-circle-correct {
+    background: #dff3df;
+    border-color: #9bd29b;
+}
+
+.quiz-progress-circle-incorrect {
+    background: #f8dddd;
+    border-color: #e7a5a5;
+}
+
+.quiz-progress-circle-missed {
+    background: #fff1b8;
+    border-color: #e3c95e;
+}
+
+.quiz-progress-circle-bold {
+    border: 2px solid #111111;
+    font-weight: 800;
+}
+
+.quiz-progress-circle-current {
+    border: 3px solid #111111;
+}
+
+.quiz-status-message-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.quiz-status-message {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.quiz-answer-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+}
+
 .quiz-answer-button {
-    min-height: 22vh;
+    width: min(12rem, 38vw);
+    min-height: 10rem;
     font-size: 5rem;
     font-weight: 700;
     line-height: 1;
+}
+
+.quiz-reveal-message {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    color: var(--mud-palette-text-primary);
+    font-weight: 700;
+    text-align: center;
+}
+
+.quiz-reveal-message-correct {
+    background: #dff3df;
+    border-color: #9bd29b;
+}
+
+.quiz-reveal-message-incorrect {
+    background: #f8dddd;
+    border-color: #e7a5a5;
+}
+
+.quiz-reveal-message-missed {
+    background: #fff1b8;
+    border-color: #e3c95e;
 }
 
 .quiz-answer-question-image {
@@ -22,7 +116,8 @@
 
 @media (max-width: 600px) {
     .quiz-answer-button {
-        min-height: 18vh;
+        width: min(9rem, 42vw);
+        min-height: 8rem;
         font-size: 4rem;
     }
 }

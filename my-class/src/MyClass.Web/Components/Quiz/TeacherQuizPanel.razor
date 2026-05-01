@@ -30,60 +30,56 @@ else if (_stateResult.Value is not null)
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
             <div>
                 <MudText Typo="Typo.h4">@state.QuizTitle</MudText>
-                @if (state.CurrentQuestion is not null)
-                {
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
-                            Question @(state.CurrentQuestion.QuestionIndex + 1) of @state.CurrentQuestion.QuestionCount
-                        </MudText>
-                        <MudChip T="string" 
-                                 Color="@(state.CurrentQuestion.IsInProgress ? Color.Primary : Color.Default)"
-                                 Variant="Variant.Filled">
-                            Timer: @FormatRemaining(state.CurrentQuestion.Remaining)
-                        </MudChip>
-                    </MudStack>
-                }
             </div>
 
-            <MudStack Row="true" Spacing="1">
-                @if (!state.HasSession)
-                {
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.PlayArrow"
-                               Disabled="_isWorking"
-                               OnClick="StartQuestionAsync">
-                        Start
-                    </MudButton>
-                }
-                else
-                {
-                    <MudButton Variant="Variant.Outlined"
-                               Color="Color.Secondary"
-                               StartIcon="@Icons.Material.Filled.Refresh"
-                               Disabled="_isWorking"
-                               OnClick="RestartQuizAsync">
-                        Restart
-                    </MudButton>
-                }
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudStack Row="true" Spacing="1">
+                    @if (!state.HasSession)
+                    {
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   Disabled="_isWorking"
+                                   OnClick="StartQuestionAsync">
+                            Start
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Refresh"
+                                   Disabled="_isWorking"
+                                   OnClick="RestartQuizAsync">
+                            Restart
+                        </MudButton>
+                    }
 
-                @if (state.HasSession && !state.IsComplete)
-                {
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Warning"
-                               StartIcon="@Icons.Material.Filled.Stop"
-                               Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress != true)"
-                               OnClick="FinishQuestionAsync">
-                        Finish
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               EndIcon="@Icons.Material.Filled.SkipNext"
-                               Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress == true)"
-                               OnClick="MoveNextQuestionAsync">
-                        Next
-                    </MudButton>
-                }
+                    @if (state.HasSession && !state.IsComplete)
+                    {
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.Stop"
+                                   Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress != true)"
+                                   OnClick="FinishQuestionAsync">
+                            Finish
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Visibility"
+                                   Disabled="@(_isWorking || state.CurrentQuestion is null || state.CurrentQuestion.IsAnswerRevealed)"
+                                   OnClick="ShowAnswerAsync">
+                            Show Answer
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   EndIcon="@Icons.Material.Filled.SkipNext"
+                                   Disabled="@(_isWorking || state.CurrentQuestion?.IsInProgress == true || IsLastQuestion(state.CurrentQuestion))"
+                                   OnClick="MoveNextQuestionAsync">
+                            Next
+                        </MudButton>
+                    }
+                </MudStack>
             </MudStack>
         </MudStack>
 
@@ -104,6 +100,16 @@ else if (_stateResult.Value is not null)
             <MudGrid Spacing="3">
                 <MudItem xs="12" md="8">
                     <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                                Question @(state.CurrentQuestion.QuestionIndex + 1) of @state.CurrentQuestion.QuestionCount
+                            </MudText>
+                            <MudChip T="string"
+                                     Color="@(state.CurrentQuestion.IsInProgress ? Color.Primary : Color.Default)"
+                                     Variant="Variant.Filled">
+                                Timer: @FormatRemaining(state.CurrentQuestion.Remaining)
+                            </MudChip>
+                        </MudStack>
 
                         @if (!string.IsNullOrWhiteSpace(_imageMessage))
                         {
@@ -119,10 +125,36 @@ else if (_stateResult.Value is not null)
                 </MudItem>
 
                 <MudItem xs="12" md="4">
-                    <MudTable Items="state.Students" Dense="true" Hover="true" Elevation="1">
+                    <MudTable T="QuizStudentAnswerStatus"
+                              Items="state.Students"
+                              Dense="true"
+                              Hover="true"
+                              Elevation="1"
+                              AllowUnsorted="false">
                         <HeaderContent>
-                            <MudTh>Student</MudTh>
-                            <MudTh>Status</MudTh>
+                            <MudTh>
+                                <MudTableSortLabel SortBy="new Func<QuizStudentAnswerStatus, object>(student => student.DisplayName)">
+                                    Student
+                                </MudTableSortLabel>
+                            </MudTh>
+                            <MudTh>
+                                <MudTableSortLabel SortBy="new Func<QuizStudentAnswerStatus, object>(student => GetStatusSortValue(student))">
+                                    Status
+                                </MudTableSortLabel>
+                            </MudTh>
+                            @if (state.CurrentQuestion?.IsAnswerRevealed == true)
+                            {
+                                <MudTh>
+                                    <MudTableSortLabel SortBy="new Func<QuizStudentAnswerStatus, object>(student => student.AnswerElapsed ?? TimeSpan.MaxValue)">
+                                        Answer Time
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh>
+                                    <MudTableSortLabel SortBy="new Func<QuizStudentAnswerStatus, object>(student => GetCorrectSortValue(student))">
+                                        Correct
+                                    </MudTableSortLabel>
+                                </MudTh>
+                            }
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Student">@context.DisplayName</MudTd>
@@ -134,6 +166,18 @@ else if (_stateResult.Value is not null)
                                     @GetStatusText(context)
                                 </MudChip>
                             </MudTd>
+                            @if (state.CurrentQuestion?.IsAnswerRevealed == true)
+                            {
+                                <MudTd DataLabel="Answer Time">@FormatAnswerElapsed(context)</MudTd>
+                                <MudTd DataLabel="Correct">
+                                    <MudChip T="string"
+                                             Size="Size.Small"
+                                             Color="@GetCorrectColor(context)"
+                                             Variant="Variant.Filled">
+                                        @GetCorrectText(context)
+                                    </MudChip>
+                                </MudTd>
+                            }
                         </RowTemplate>
                     </MudTable>
                 </MudItem>

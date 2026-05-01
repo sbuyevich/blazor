@@ -28,6 +28,8 @@ public sealed class QuizAnswer
 
     public DateTime? EndedAtUtc { get; set; }
 
+    public DateTime? AnswerRevealedAtUtc { get; set; }
+
     public bool IsCorrect { get; set; }
 
     public Student Student { get; set; } = null!;

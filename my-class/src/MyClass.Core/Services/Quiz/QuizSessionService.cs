@@ -149,6 +149,44 @@ public sealed class QuizSessionService(
         return Result<bool>.Success(true, "Question finished.");
     }
 
+    public async Task<Result<bool>> ShowAnswerAsync(
+        LoginState? loginState,
+        ClassContext currentClass,
+        CancellationToken cancellationToken = default)
+    {
+        var authorizationMessage = ValidateTeacherAccess(loginState, currentClass);
+
+        if (authorizationMessage is not null)
+        {
+            return Result<bool>.Failure(authorizationMessage);
+        }
+
+        var contentResult = await quizContentService.LoadQuizAsync(cancellationToken);
+
+        if (!contentResult.Succeeded || contentResult.Value is null)
+        {
+            return Result<bool>.Failure(contentResult.Message);
+        }
+
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var currentQuestion = await GetCurrentLiveQuestionAsync(dbContext, contentResult.Value, DateTime.UtcNow, cancellationToken);
+
+        if (currentQuestion is null)
+        {
+            return Result<bool>.Failure("No question is available to reveal.");
+        }
+
+        if (currentQuestion.IsAnswerRevealed)
+        {
+            return Result<bool>.Success(true, "Answer is already shown.");
+        }
+
+        await RevealQuestionRowsAsync(dbContext, currentQuestion, DateTime.UtcNow, cancellationToken);
+        await quizNotificationService.NotifyQuizStateChangedAsync(currentClass, cancellationToken);
+
+        return Result<bool>.Success(true, "Answer shown.");
+    }
+
     public async Task<Result<bool>> MoveNextQuestionAsync(
         LoginState? loginState,
         ClassContext currentClass,
@@ -193,7 +231,7 @@ public sealed class QuizSessionService(
 
         if (nextIndex >= contentResult.Value.Questions.Count)
         {
-            return Result<bool>.Success(true, "Quiz complete.");
+            return Result<bool>.Failure("This is the last question.");
         }
 
         var createdCount = await CreateQuestionRowsAsync(
@@ -271,6 +309,29 @@ public sealed class QuizSessionService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    private static async Task RevealQuestionRowsAsync(
+        ApplicationDbContext dbContext,
+        LiveQuestionState question,
+        DateTime revealedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        var answers = await dbContext.QuizAnswers
+            .Where(answer =>
+                answer.QuestionIndex == question.QuestionIndex &&
+                answer.QuestionKey == question.QuestionKey)
+            .ToListAsync(cancellationToken);
+
+        foreach (var answer in answers)
+        {
+            answer.AnswerRevealedAtUtc ??= revealedAtUtc;
+            answer.EndedAtUtc ??= revealedAtUtc;
+            answer.IsCorrect = answer.Answer.Length > 0 &&
+                string.Equals(answer.Answer, answer.CorrectAnswer, StringComparison.Ordinal);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private static async Task<LiveQuestionState?> GetCurrentLiveQuestionAsync(
         ApplicationDbContext dbContext,
         QuizContent quiz,
@@ -302,7 +363,8 @@ public sealed class QuizSessionService(
             .Select(answer => new
             {
                 answer.StartedAtUtc,
-                answer.EndedAtUtc
+                answer.EndedAtUtc,
+                answer.AnswerRevealedAtUtc
             })
             .ToListAsync(cancellationToken);
 
@@ -321,6 +383,10 @@ public sealed class QuizSessionService(
         var isExpired = now >= startedAtUtc.AddSeconds(timeoutSeconds);
         var isInProgress = hasOpenAnswers && !isExpired;
         var finishedAtUtc = hasOpenAnswers ? null : rows.Max(row => row.EndedAtUtc);
+        var answerRevealedAtUtc = rows
+            .Where(row => row.AnswerRevealedAtUtc is not null)
+            .Select(row => row.AnswerRevealedAtUtc)
+            .Max();
         var remaining = isInProgress
             ? startedAtUtc.AddSeconds(timeoutSeconds) - now
             : TimeSpan.Zero;
@@ -332,6 +398,7 @@ public sealed class QuizSessionService(
             timeoutSeconds,
             startedAtUtc,
             finishedAtUtc,
+            answerRevealedAtUtc,
             hasOpenAnswers,
             isExpired,
             isInProgress,
@@ -351,9 +418,7 @@ public sealed class QuizSessionService(
             currentQuestion,
             cancellationToken);
 
-        var isComplete = currentQuestion is not null &&
-            currentQuestion.QuestionIndex >= quiz.Questions.Count - 1 &&
-            !currentQuestion.IsInProgress;
+        var isComplete = false;
 
         return new QuizTeacherState(
             quiz.Title,
@@ -369,7 +434,9 @@ public sealed class QuizSessionService(
                     currentQuestion.TimeoutSeconds,
                     currentQuestion.StartedAtUtc,
                     currentQuestion.FinishedAtUtc,
+                    currentQuestion.AnswerRevealedAtUtc,
                     currentQuestion.IsInProgress,
+                    currentQuestion.IsAnswerRevealed,
                     currentQuestion.Remaining),
             studentStatuses);
     }
@@ -397,7 +464,7 @@ public sealed class QuizSessionService(
         if (currentQuestion is null)
         {
             return activeStudents
-                .Select(student => new QuizStudentAnswerStatus(student.Id, student.UserName, student.DisplayName, false, false))
+                .Select(student => new QuizStudentAnswerStatus(student.Id, student.UserName, student.DisplayName, false, false, null, null, null))
                 .ToList();
         }
 
@@ -410,7 +477,9 @@ public sealed class QuizSessionService(
             {
                 answer.StudentId,
                 answer.Answer,
-                answer.EndedAtUtc
+                answer.StartedAtUtc,
+                answer.EndedAtUtc,
+                answer.IsCorrect
             })
             .ToDictionaryAsync(answer => answer.StudentId, cancellationToken);
 
@@ -424,7 +493,12 @@ public sealed class QuizSessionService(
                     student.UserName,
                     student.DisplayName,
                     answer is not null && answer.Answer.Length > 0,
-                    answer is not null && answer.EndedAtUtc is not null && answer.Answer.Length == 0);
+                    answer is not null && answer.EndedAtUtc is not null && answer.Answer.Length == 0,
+                    answer?.Answer.Length > 0 ? answer.EndedAtUtc : null,
+                    answer?.Answer.Length > 0 && answer.EndedAtUtc is not null
+                        ? answer.EndedAtUtc.Value - answer.StartedAtUtc
+                        : null,
+                    answer?.Answer.Length > 0 ? answer.IsCorrect : null);
             })
             .ToList();
     }
@@ -460,10 +534,14 @@ public sealed class QuizSessionService(
         int TimeoutSeconds,
         DateTime StartedAtUtc,
         DateTime? FinishedAtUtc,
+        DateTime? AnswerRevealedAtUtc,
         bool HasOpenAnswers,
         bool IsExpired,
         bool IsInProgress,
-        TimeSpan Remaining);
+        TimeSpan Remaining)
+    {
+        public bool IsAnswerRevealed => AnswerRevealedAtUtc is not null;
+    }
 }
 
 

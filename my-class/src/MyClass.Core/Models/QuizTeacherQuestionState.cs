@@ -8,7 +8,9 @@ public sealed record QuizTeacherQuestionState(
     int TimeoutSeconds,
     DateTime StartedAtUtc,
     DateTime? FinishedAtUtc,
+    DateTime? AnswerRevealedAtUtc,
     bool IsInProgress,
+    bool IsAnswerRevealed,
     TimeSpan Remaining);
 
 

@@ -1,13 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MyClass.Core.Data;
 using MyClass.Core.Data.Entities;
 using MyClass.Core.Models;
+using MyClass.Core.Options;
 
 namespace MyClass.Core.Services;
 
 public sealed class QuizAnswerService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
-    IQuizContentService quizContentService) : IQuizAnswerService
+    IQuizContentService quizContentService,
+    IOptions<QuizOptions> quizOptions) : IQuizAnswerService
 {
     public async Task<Result<QuizAnswerPageState>> GetAnswerPageStateAsync(
         LoginState? loginState,
@@ -39,10 +42,22 @@ public sealed class QuizAnswerService(
 
         if (current is null)
         {
-            return Result<QuizAnswerPageState>.Success(CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Value.Title));
+            return Result<QuizAnswerPageState>.Success(CreateState(
+                false,
+                false,
+                false,
+                "Waiting for the teacher to start a question.",
+                contentResult.Value.Title,
+                progressItems: CreateNeutralProgress(contentResult.Value)));
         }
 
         var answerChoices = CreateAnswerChoices(current.AnswerCount);
+        var progressItems = await BuildQuestionProgressAsync(
+            dbContext,
+            contentResult.Value,
+            current,
+            studentResult.Value.Id,
+            cancellationToken);
 
         var answer = await dbContext.QuizAnswers
             .AsNoTracking()
@@ -60,31 +75,53 @@ public sealed class QuizAnswerService(
 
             return answer is not null && answer.Answer.Length > 0
                 ? Result<QuizAnswerPageState>.Success(
-                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Value.Title, current))
+                    CreateState(false, true, false, "Answer submitted. Waiting for the next question.", contentResult.Value.Title, current, progressItems: progressItems))
                 : Result<QuizAnswerPageState>.Success(
-                    CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current));
+                    CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current, progressItems: progressItems));
+        }
+
+        if (current.IsAnswerRevealed)
+        {
+            var hasAnswered = answer is not null && answer.Answer.Length > 0;
+            var isCorrect = hasAnswered ? answer!.IsCorrect : null as bool?;
+
+            return Result<QuizAnswerPageState>.Success(
+                CreateState(
+                    false,
+                    hasAnswered,
+                    !hasAnswered,
+                    GetRevealMessage(isCorrect),
+                    contentResult.Value.Title,
+                    current,
+                    answerChoices,
+                    progressItems,
+                    isCorrect,
+                    hasAnswered ? answer!.EndedAtUtc : null,
+                    hasAnswered && answer!.EndedAtUtc is not null
+                        ? answer.EndedAtUtc.Value - answer.StartedAtUtc
+                        : null));
         }
 
         if (answer is null)
         {
             return Result<QuizAnswerPageState>.Success(
-                CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Value.Title));
+                CreateState(false, false, false, "Waiting for the teacher to start a question.", contentResult.Value.Title, progressItems: progressItems));
         }
 
         if (answer.Answer.Length > 0)
         {
             return Result<QuizAnswerPageState>.Success(
-                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", contentResult.Value.Title, current, answerChoices));
+                CreateState(false, true, false, $"Answer {answer.Answer} was submitted. Waiting for the next question.", contentResult.Value.Title, current, answerChoices, progressItems));
         }
 
         if (answer.EndedAtUtc is not null)
         {
             return Result<QuizAnswerPageState>.Success(
-                CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current));
+                CreateState(false, false, true, "This question has finished.", contentResult.Value.Title, current, progressItems: progressItems));
         }
 
         return Result<QuizAnswerPageState>.Success(
-            CreateState(true, false, false, "Choose an answer.", contentResult.Value.Title, current, answerChoices));
+            CreateState(true, false, false, "Choose an answer.", contentResult.Value.Title, current, answerChoices, progressItems));
     }
 
     public async Task<Result<bool>> SubmitAnswerAsync(
@@ -237,7 +274,8 @@ public sealed class QuizAnswerService(
             .Select(answer => new
             {
                 answer.StartedAtUtc,
-                answer.EndedAtUtc
+                answer.EndedAtUtc,
+                answer.AnswerRevealedAtUtc
             })
             .ToListAsync(cancellationToken);
 
@@ -254,6 +292,10 @@ public sealed class QuizAnswerService(
         var timeoutSeconds = questionContent?.TimeoutSeconds ?? quiz.TimeLimitSeconds;
         var hasOpenAnswers = rows.Any(row => row.EndedAtUtc is null);
         var isExpired = hasOpenAnswers && now >= startedAtUtc.AddSeconds(timeoutSeconds);
+        var answerRevealedAtUtc = rows
+            .Where(row => row.AnswerRevealedAtUtc is not null)
+            .Select(row => row.AnswerRevealedAtUtc)
+            .Max();
         var remaining = isExpired || !hasOpenAnswers
             ? TimeSpan.Zero
             : startedAtUtc.AddSeconds(timeoutSeconds) - now;
@@ -266,6 +308,7 @@ public sealed class QuizAnswerService(
             quiz.Questions.Count,
             timeoutSeconds,
             startedAtUtc,
+            answerRevealedAtUtc,
             hasOpenAnswers && !isExpired,
             remaining,
             isExpired);
@@ -278,7 +321,11 @@ public sealed class QuizAnswerService(
         string message,
         string quizTitle = "Quiz Answer",
         CurrentQuestion? currentQuestion = null,
-        IReadOnlyList<string>? answerChoices = null)
+        IReadOnlyList<string>? answerChoices = null,
+        IReadOnlyList<QuizQuestionProgressItem>? progressItems = null,
+        bool? isCorrect = null,
+        DateTime? answeredAtUtc = null,
+        TimeSpan? answerElapsed = null)
     {
         return new QuizAnswerPageState(
             hasInProgressAnswer,
@@ -290,9 +337,101 @@ public sealed class QuizAnswerService(
             currentQuestion?.Title,
             currentQuestion?.QuestionIndex,
             currentQuestion?.QuestionCount,
+            currentQuestion?.IsAnswerRevealed == true,
+            isCorrect,
+            answeredAtUtc,
+            answerElapsed,
+            currentQuestion?.IsAnswerRevealed == true ? message : null,
             currentQuestion?.IsInProgress == true,
             currentQuestion?.Remaining ?? TimeSpan.Zero,
+            progressItems ?? [],
             answerChoices ?? []);
+    }
+
+    private static IReadOnlyList<QuizQuestionProgressItem> CreateNeutralProgress(QuizContent quiz)
+    {
+        return quiz.Questions
+            .Select(question => new QuizQuestionProgressItem(
+                question.Index,
+                false,
+                false,
+                QuizQuestionProgressResult.Neutral))
+            .ToList();
+    }
+
+    private static async Task<IReadOnlyList<QuizQuestionProgressItem>> BuildQuestionProgressAsync(
+        ApplicationDbContext dbContext,
+        QuizContent quiz,
+        CurrentQuestion currentQuestion,
+        int studentId,
+        CancellationToken cancellationToken)
+    {
+        var answerRows = await dbContext.QuizAnswers
+            .AsNoTracking()
+            .Where(answer => answer.StudentId == studentId)
+            .Select(answer => new
+            {
+                answer.QuestionIndex,
+                answer.Answer,
+                answer.EndedAtUtc,
+                answer.AnswerRevealedAtUtc,
+                answer.IsCorrect,
+                answer.StartedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
+        var answers = answerRows
+            .GroupBy(answer => answer.QuestionIndex)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .OrderByDescending(answer => answer.StartedAtUtc)
+                    .First());
+
+        return quiz.Questions
+            .Select(question =>
+            {
+                var isCurrent = question.Index == currentQuestion.QuestionIndex;
+                var isPast = question.Index < currentQuestion.QuestionIndex;
+                answers.TryGetValue(question.Index, out var answer);
+
+                var result = GetQuestionProgressResult(answer?.Answer, answer?.EndedAtUtc, answer?.AnswerRevealedAtUtc, answer?.IsCorrect, isPast, isCurrent);
+
+                return new QuizQuestionProgressItem(
+                    question.Index,
+                    isCurrent,
+                    isPast || isCurrent,
+                    result);
+            })
+            .ToList();
+    }
+
+    private static QuizQuestionProgressResult GetQuestionProgressResult(
+        string? answer,
+        DateTime? endedAtUtc,
+        DateTime? answerRevealedAtUtc,
+        bool? isCorrect,
+        bool isPast,
+        bool isCurrent)
+    {
+        if (!isPast && !(isCurrent && answerRevealedAtUtc is not null))
+        {
+            return QuizQuestionProgressResult.Neutral;
+        }
+
+        if (endedAtUtc is null)
+        {
+            return QuizQuestionProgressResult.Neutral;
+        }
+
+        if (string.IsNullOrEmpty(answer))
+        {
+            return QuizQuestionProgressResult.Missed;
+        }
+
+        return isCorrect == true
+            ? QuizQuestionProgressResult.Correct
+            : QuizQuestionProgressResult.Incorrect;
     }
 
     private static IReadOnlyList<string> CreateAnswerChoices(int answerCount)
@@ -308,6 +447,25 @@ public sealed class QuizAnswerService(
             answerNumber >= 1 &&
             answerNumber <= answerCount &&
             string.Equals(answer, answerNumber.ToString(), StringComparison.Ordinal);
+    }
+
+    private string GetRevealMessage(bool? isCorrect)
+    {
+        var messages = quizOptions.Value.RevealMessages;
+
+        return isCorrect switch
+        {
+            true => GetConfiguredMessage(messages.Correct, "Correct. Good job!"),
+            false => GetConfiguredMessage(messages.Incorrect, "Incorrect. Not this time."),
+            _ => GetConfiguredMessage(messages.NoAnswer, "No answer submitted. Stay focused!")
+        };
+    }
+
+    private static string GetConfiguredMessage(string? configuredMessage, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(configuredMessage)
+            ? fallback
+            : configuredMessage.Trim();
     }
 
     private static async Task FinishExpiredQuestionAsync(
@@ -344,9 +502,13 @@ public sealed class QuizAnswerService(
         int QuestionCount,
         int TimeoutSeconds,
         DateTime StartedAtUtc,
+        DateTime? AnswerRevealedAtUtc,
         bool IsInProgress,
         TimeSpan Remaining,
-        bool IsExpired);
+        bool IsExpired)
+    {
+        public bool IsAnswerRevealed => AnswerRevealedAtUtc is not null;
+    }
 }
 
 

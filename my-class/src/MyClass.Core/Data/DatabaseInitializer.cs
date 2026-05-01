@@ -83,6 +83,7 @@ public static class DatabaseInitializer
                 Answer TEXT NOT NULL DEFAULT '',
                 StartedAtUtc TEXT NOT NULL,
                 EndedAtUtc TEXT NULL,
+                AnswerRevealedAtUtc TEXT NULL,
                 IsCorrect INTEGER NOT NULL DEFAULT 0,
                 CONSTRAINT FK_QuizAnswers_Students_StudentId FOREIGN KEY (StudentId) REFERENCES Students (Id) ON DELETE CASCADE
             )
@@ -192,6 +193,12 @@ public static class DatabaseInitializer
             quizAnswerColumns,
             "EndedAtUtc",
             "ALTER TABLE QuizAnswers ADD COLUMN EndedAtUtc TEXT NULL");
+
+        await AddQuizAnswerColumnIfMissingAsync(
+            dbContext,
+            quizAnswerColumns,
+            "AnswerRevealedAtUtc",
+            "ALTER TABLE QuizAnswers ADD COLUMN AnswerRevealedAtUtc TEXT NULL");
 
         await AddQuizAnswerColumnIfMissingAsync(
             dbContext,

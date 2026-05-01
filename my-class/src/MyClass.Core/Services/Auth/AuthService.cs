@@ -44,14 +44,10 @@ public sealed class AuthService(
             return Result<LoginState>.Failure("Invalid username or password.");
         }
 
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-
-        var student = await dbContext.Students
-            .Where(student => student.Class.Code == normalizedClassCode)
-            .SingleOrDefaultAsync(
-                student => student.UserName. Equals(normalizedUserName, StringComparison.OrdinalIgnoreCase),
-                cancellationToken);
-
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var students = await GetStudents(dbContext, normalizedClassCode);
+     
+        var student = students.SingleOrDefault(s => s.UserName.Equals(normalizedUserName, StringComparison.OrdinalIgnoreCase));          
         if (student is null || !passwordHashService.Verify(password, student.PasswordHash))
         {
             return Result<LoginState>.Failure("Invalid username or password.");
@@ -98,12 +94,9 @@ public sealed class AuthService(
             return Result<LoginState>.Failure("A valid class is required before registration.");
         }
 
-        var duplicateExists = await dbContext.Students
-            .AnyAsync(
-                student =>
-                    student.ClassId == currentClass.Id &&
-                    student.UserName.Equals(normalizedUserName, StringComparison.OrdinalIgnoreCase),
-                cancellationToken);
+        var students = await GetStudents(dbContext, currentClass.Code);
+        var duplicateExists = students
+            .Any(student => student.UserName.Equals(normalizedUserName, StringComparison.OrdinalIgnoreCase));
 
         if (duplicateExists)
         {
@@ -135,6 +128,14 @@ public sealed class AuthService(
 
         return Result<LoginState>.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));
     }
+
+    private async Task<List<Student>> GetStudents(ApplicationDbContext dbContext, string classCode)
+    {
+        return await dbContext.Students
+            .Where(s => s.Class.Code == classCode)
+            .ToListAsync();
+    }
+
 }
 
 

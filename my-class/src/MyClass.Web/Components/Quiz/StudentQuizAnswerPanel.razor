@@ -17,23 +17,49 @@
 else
 {
     <MudStack Spacing="3" Class="quiz-answer-shell">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
-            <div>
+        <MudStack Spacing="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
                 <MudText Typo="Typo.h5">@QuizTitle</MudText>
-                @if (!string.IsNullOrWhiteSpace(QuestionPositionText))
-                {
-                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">@QuestionPositionText</MudText>
-                }
-                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
-            </div>
 
-            @if (ShowTimer)
+                @if (ShowTimer)
+                {
+                    <MudChip T="string"
+                             Color="@(IsTimerRunning ? Color.Primary : Color.Default)"
+                             Variant="Variant.Filled">
+                        Timer: @FormatRemaining(TimerRemaining)
+                    </MudChip>
+                }
+            </MudStack>
+
+            @if (QuestionProgress.Count > 0)
             {
-                <MudChip T="string"
-                         Color="@(IsTimerRunning ? Color.Primary : Color.Default)"
-                         Variant="Variant.Filled">
-                    Timer: @FormatRemaining(TimerRemaining)
-                </MudChip>
+                <div class="quiz-progress-row" aria-label="Quiz question progress">
+                    @foreach (var item in QuestionProgress)
+                    {
+                        <span class="@GetProgressCircleClass(item)"
+                              title="@GetProgressCircleTitle(item)">
+                            @(item.QuestionIndex + 1)
+                        </span>
+                    }
+                </div>
+            }
+
+            @if (ShowRevealMessage)
+            {
+                <div class="@GetRevealMessageClass()">
+                    @RevealMessage
+                </div>
+            }
+            else
+            {
+                <div class="quiz-status-message-row">
+                    <MudText Typo="Typo.subtitle1"
+                             Color="Color.Secondary"
+                             Align="Align.Center"
+                             Class="quiz-status-message">
+                        @StatusMessage
+                    </MudText>
+                </div>
             }
         </MudStack>
 
@@ -48,24 +74,23 @@ else
                  alt="@QuestionImageAltText" />
         }
 
-        @if (AnswerChoices.Count > 0)
+        @if (ShowAnswerButtons)
         {
-            <MudText typo="Typo.subtitle2" Color="Color.Secondary">Click on button with correct answer number</MudText>
-            <MudGrid Spacing="20">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Align="Align.Center">
+                Click on button with correct answer number
+            </MudText>
+            <div class="quiz-answer-buttons">
                 @foreach (var answer in AnswerChoices)
                 {
-                    <MudItem>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Secondary"
-                                   FullWidth="true"
-                                   Class="quiz-answer-button"
-                                   Disabled="DisableAnswerButtons"
-                                   OnClick="() => SubmitAnswerAsync(answer)">
-                            @answer
-                        </MudButton>
-                    </MudItem>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               Class="quiz-answer-button"
+                               Disabled="_isSubmitting"
+                               OnClick="() => SubmitAnswerAsync(answer)">
+                        @answer
+                    </MudButton>
                 }
-            </MudGrid>
+            </div>
         }
         else if (_stateResult?.Value?.HasInProgressAnswer == true)
         {

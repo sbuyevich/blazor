@@ -15,6 +15,7 @@ public partial class TeacherQuizPanel
     private int? _loadedClassId;
     private int? _pendingClassId;
     private string? _loadedImageQuestionKey;
+    private bool? _loadedAnswerRevealState;
     private string? _imageDataUri;
     private string? _imageMessage;
     private bool _isLoading = true;
@@ -31,6 +32,7 @@ public partial class TeacherQuizPanel
         _isLoading = true;
         _stateResult = null;
         _loadedImageQuestionKey = null;
+        _loadedAnswerRevealState = null;
         _imageDataUri = null;
         _imageMessage = null;
     }
@@ -68,16 +70,29 @@ public partial class TeacherQuizPanel
     {
         var question = _stateResult?.Value?.CurrentQuestion;
 
-        if (question is null || question.QuestionKey == _loadedImageQuestionKey)
+        if (question is null)
+        {
+            _loadedImageQuestionKey = null;
+            _loadedAnswerRevealState = null;
+            _imageDataUri = null;
+            _imageMessage = null;
+            return;
+        }
+
+        if (question.QuestionKey == _loadedImageQuestionKey &&
+            question.IsAnswerRevealed == _loadedAnswerRevealState)
         {
             return;
         }
 
         _loadedImageQuestionKey = question.QuestionKey;
+        _loadedAnswerRevealState = question.IsAnswerRevealed;
         _imageDataUri = null;
         _imageMessage = null;
 
-        var imageResult = await QuizContentService.LoadQuestionImageAsync(question.QuestionKey);
+        var imageResult = question.IsAnswerRevealed
+            ? await QuizContentService.LoadAnswerImageAsync(question.QuestionKey)
+            : await QuizContentService.LoadQuestionImageAsync(question.QuestionKey);
 
         if (!imageResult.Succeeded)
         {
@@ -146,12 +161,14 @@ public partial class TeacherQuizPanel
     private async Task StartQuestionAsync()
     {
         _loadedImageQuestionKey = null;
+        _loadedAnswerRevealState = null;
         await RunActionAsync(() => QuizSessionService.StartQuestionAsync(_loginState, CurrentClass));
     }
 
     private async Task RestartQuizAsync()
     {
         _loadedImageQuestionKey = null;
+        _loadedAnswerRevealState = null;
         await RunActionAsync(() => QuizSessionService.RestartQuizAsync(_loginState, CurrentClass));
     }
 
@@ -163,7 +180,14 @@ public partial class TeacherQuizPanel
     private async Task MoveNextQuestionAsync()
     {
         _loadedImageQuestionKey = null;
+        _loadedAnswerRevealState = null;
         await RunActionAsync(() => QuizSessionService.MoveNextQuestionAsync(_loginState, CurrentClass));
+    }
+
+    private async Task ShowAnswerAsync()
+    {
+        _loadedAnswerRevealState = null;
+        await RunActionAsync(() => QuizSessionService.ShowAnswerAsync(_loginState, CurrentClass));
     }
 
     private async Task RunActionAsync(Func<Task<Result<bool>>> action)
@@ -212,7 +236,7 @@ public partial class TeacherQuizPanel
 
         _stateResult = Result<QuizTeacherState>.Success(state with
         {
-            IsComplete = question.QuestionIndex >= question.QuestionCount - 1,
+            IsComplete = false,
             CurrentQuestion = finishedQuestion,
             Students = students
         });
@@ -235,6 +259,11 @@ public partial class TeacherQuizPanel
         return $"{(int)remaining.TotalMinutes:00}:{remaining.Seconds:00}";
     }
 
+    private static bool IsLastQuestion(QuizTeacherQuestionState? question)
+    {
+        return question is not null && question.QuestionIndex >= question.QuestionCount - 1;
+    }
+
     private static Color GetStatusColor(QuizStudentAnswerStatus status)
     {
         if (status.HasAnswered)
@@ -253,6 +282,53 @@ public partial class TeacherQuizPanel
         }
 
         return "Not answered";
+    }
+
+    private static int GetStatusSortValue(QuizStudentAnswerStatus status)
+    {
+        if (status.HasAnswered)
+        {
+            return 0;
+        }
+
+        return status.FailedNoAnswer ? 2 : 1;
+    }
+
+    private static string FormatAnswerElapsed(QuizStudentAnswerStatus status)
+    {
+        return status.AnswerElapsed is null
+            ? "-"
+            : $"{(int)status.AnswerElapsed.Value.TotalSeconds}s";
+    }
+
+    private static string GetCorrectText(QuizStudentAnswerStatus status)
+    {
+        return status.IsCorrect switch
+        {
+            true => "Correct",
+            false => "Incorrect",
+            _ => "-"
+        };
+    }
+
+    private static int GetCorrectSortValue(QuizStudentAnswerStatus status)
+    {
+        return status.IsCorrect switch
+        {
+            true => 0,
+            false => 1,
+            _ => 2
+        };
+    }
+
+    private static Color GetCorrectColor(QuizStudentAnswerStatus status)
+    {
+        return status.IsCorrect switch
+        {
+            true => Color.Success,
+            false => Color.Error,
+            _ => Color.Default
+        };
     }
 
     public void Dispose()
