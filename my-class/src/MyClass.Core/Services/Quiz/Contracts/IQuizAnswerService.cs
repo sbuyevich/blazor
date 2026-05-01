@@ -5,12 +5,12 @@ namespace MyClass.Core.Services;
 
 public interface IQuizAnswerService
 {
-    Task<QuizAnswerPageStateResult> GetAnswerPageStateAsync(
+    Task<Result<QuizAnswerPageState>> GetAnswerPageStateAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default);
 
-    Task<QuizActionResult> SubmitAnswerAsync(
+    Task<Result<bool>> SubmitAnswerAsync(
         LoginState? loginState,
         ClassContext currentClass,
         string selectedAnswer,

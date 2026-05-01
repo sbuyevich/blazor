@@ -56,7 +56,7 @@
                     <MudText Typo="Typo.body2">Loading class...</MudText>
                 </MudStack>
             }
-            else if (!ClassContextState.Result.IsLoaded)
+            else if (!ClassContextState.Result.Succeeded)
             {
                 <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@ClassContextState.Result.Message</MudAlert>
             }

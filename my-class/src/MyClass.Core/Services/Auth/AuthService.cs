@@ -12,7 +12,7 @@ public sealed class AuthService(
     IPasswordHashService passwordHashService,
     IOptions<TeacherOptions> teacherOptions) : IAuthService
 {
-    public async Task<LoginResult> LoginAsync(
+    public async Task<Result<LoginState>> LoginAsync(
         string userName,
         string password,
         bool isTeacher,
@@ -26,7 +26,7 @@ public sealed class AuthService(
             string.IsNullOrWhiteSpace(password) ||
             string.IsNullOrWhiteSpace(normalizedClassCode))
         {
-            return LoginResult.Failure("Username, password, and class are required.");
+            return Result<LoginState>.Failure("Username, password, and class are required.");
         }
 
         var teacher = teacherOptions.Value;
@@ -36,12 +36,12 @@ public sealed class AuthService(
 
         if (validTeacher)
         {
-            return LoginResult.Success(new LoginState(normalizedUserName, true, normalizedClassCode, "Teacher"));
+            return Result<LoginState>.Success(new LoginState(normalizedUserName, true, normalizedClassCode, "Teacher"));
         }
 
         if (isTeacher)
         {
-            return LoginResult.Failure("Invalid username or password.");
+            return Result<LoginState>.Failure("Invalid username or password.");
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -54,7 +54,7 @@ public sealed class AuthService(
 
         if (student is null || !passwordHashService.Verify(password, student.PasswordHash))
         {
-            return LoginResult.Failure("Invalid username or password.");
+            return Result<LoginState>.Failure("Invalid username or password.");
         }
 
         if (!student.IsActive)
@@ -63,10 +63,10 @@ public sealed class AuthService(
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));
+        return Result<LoginState>.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));
     }
 
-    public async Task<LoginResult> RegisterStudentAsync(
+    public async Task<Result<LoginState>> RegisterStudentAsync(
         string userName,
         string firstName,
         string lastName,
@@ -85,7 +85,7 @@ public sealed class AuthService(
             string.IsNullOrWhiteSpace(password) ||
             string.IsNullOrWhiteSpace(normalizedClassCode))
         {
-            return LoginResult.Failure("First name, last name, username, password, and class are required.");
+            return Result<LoginState>.Failure("First name, last name, username, password, and class are required.");
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -95,7 +95,7 @@ public sealed class AuthService(
 
         if (currentClass is null)
         {
-            return LoginResult.Failure("A valid class is required before registration.");
+            return Result<LoginState>.Failure("A valid class is required before registration.");
         }
 
         var duplicateExists = await dbContext.Students
@@ -107,7 +107,7 @@ public sealed class AuthService(
 
         if (duplicateExists)
         {
-            return LoginResult.Failure("That username is already registered for this class.");
+            return Result<LoginState>.Failure("That username is already registered for this class.");
         }
 
         var student = new Student
@@ -130,10 +130,10 @@ public sealed class AuthService(
         }
         catch (DbUpdateException)
         {
-            return LoginResult.Failure("That username is already registered for this class.");
+            return Result<LoginState>.Failure("That username is already registered for this class.");
         }
 
-        return LoginResult.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));
+        return Result<LoginState>.Success(new LoginState(student.UserName, false, normalizedClassCode, student.DisplayName));
     }
 }
 

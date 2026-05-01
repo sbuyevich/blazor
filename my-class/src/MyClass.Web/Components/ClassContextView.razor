@@ -9,11 +9,11 @@
         <MudText Typo="Typo.body2">Loading class...</MudText>
     </MudStack>
 }
-else if (!_result.IsLoaded)
+else if (!_result.Succeeded)
 {
     <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@_result.Message</MudAlert>
 }
-else if (ChildContent is not null)
+else if (ChildContent is not null && _result.Value is not null)
 {
-    @ChildContent(_result.CurrentClass!)
+    @ChildContent(_result.Value)
 }

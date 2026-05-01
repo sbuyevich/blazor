@@ -46,8 +46,8 @@ public partial class ClassEditDialog
             return;
         }
 
-        MudDialog.Close(DialogResult.Ok(new ClassDialogResult(normalizedName, normalizedCode)));
+        MudDialog.Close(DialogResult.Ok(new ClassDialogInput(normalizedName, normalizedCode)));
     }
 }
 
-public sealed record ClassDialogResult(string Name, string Code);
+public sealed record ClassDialogInput(string Name, string Code);

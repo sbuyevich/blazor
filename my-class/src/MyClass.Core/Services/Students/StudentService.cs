@@ -10,7 +10,7 @@ public sealed class StudentService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IOptions<TeacherOptions> teacherOptions) : IStudentService
 {
-    public async Task<StudentListResult> GetStudentsForClassAsync(
+    public async Task<Result<IReadOnlyList<StudentListItem>>> GetStudentsForClassAsync(
         LoginState? loginState,
         ClassContext currentClass,
         string? searchText = null,
@@ -21,7 +21,7 @@ public sealed class StudentService(
 
         if (authorizationMessage is not null)
         {
-            return StudentListResult.Failure(authorizationMessage);
+            return Result<IReadOnlyList<StudentListItem>>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -59,10 +59,10 @@ public sealed class StudentService(
                 student.CreatedAtUtc))
             .ToListAsync(cancellationToken);
 
-        return StudentListResult.Success(students);
+        return Result<IReadOnlyList<StudentListItem>>.Success(students);
     }
 
-    public async Task<StudentActionResult> RemoveStudentFromClassAsync(
+    public async Task<Result<bool>> RemoveStudentFromClassAsync(
         LoginState? loginState,
         ClassContext currentClass,
         int studentId,
@@ -72,7 +72,7 @@ public sealed class StudentService(
 
         if (authorizationMessage is not null)
         {
-            return StudentActionResult.Failure(authorizationMessage);
+            return Result<bool>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -86,16 +86,16 @@ public sealed class StudentService(
 
         if (student is null)
         {
-            return StudentActionResult.Failure("The selected student was not found in this class.");
+            return Result<bool>.Failure("The selected student was not found in this class.");
         }
 
         dbContext.Students.Remove(student);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return StudentActionResult.Success($"{student.DisplayName} was removed.");
+        return Result<bool>.Success(true, $"{student.DisplayName} was removed.");
     }
 
-    public async Task<StudentActionResult> ResetStudentsActiveStateAsync(
+    public async Task<Result<bool>> ResetStudentsActiveStateAsync(
         LoginState? loginState,
         ClassContext currentClass,
         CancellationToken cancellationToken = default)
@@ -104,7 +104,7 @@ public sealed class StudentService(
 
         if (authorizationMessage is not null)
         {
-            return StudentActionResult.Failure(authorizationMessage);
+            return Result<bool>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -115,7 +115,7 @@ public sealed class StudentService(
                 setters => setters.SetProperty(student => student.IsActive, false),
                 cancellationToken);
 
-        return StudentActionResult.Success($"Reset {updatedCount} active student{(updatedCount == 1 ? string.Empty : "s")}.");
+        return Result<bool>.Success(true, $"Reset {updatedCount} active student{(updatedCount == 1 ? string.Empty : "s")}.");
     }
 
     private string? ValidateTeacherAccess(LoginState? loginState, ClassContext currentClass)

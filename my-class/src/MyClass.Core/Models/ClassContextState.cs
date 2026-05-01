@@ -4,14 +4,14 @@ public sealed class ClassContextState : IClassContextState
 {
     public ClassContext? CurrentClass { get; private set; }
 
-    public ClassContextResult? Result { get; private set; }
+    public Result<ClassContext>? Result { get; private set; }
 
     public event Action? Changed;
 
-    public void Set(ClassContextResult? result)
+    public void Set(Result<ClassContext>? result)
     {
         Result = result;
-        CurrentClass = result?.CurrentClass;
+        CurrentClass = result?.Value;
         Changed?.Invoke();
     }
 }

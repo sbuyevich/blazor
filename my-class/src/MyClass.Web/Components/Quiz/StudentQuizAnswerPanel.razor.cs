@@ -10,7 +10,7 @@ public partial class StudentQuizAnswerPanel
     [Parameter, EditorRequired]
     public ClassContext CurrentClass { get; set; } = null!;
 
-    private QuizAnswerPageStateResult? _stateResult;
+    private Result<QuizAnswerPageState>? _stateResult;
     private HubConnection? _hubConnection;
     private LoginState? _loginState;
     private CancellationTokenSource? _pollingCancellation;
@@ -28,19 +28,19 @@ public partial class StudentQuizAnswerPanel
     private TimeSpan _timerRemaining = TimeSpan.Zero;
     private bool _isTimerRunning;
 
-    private IReadOnlyList<string> AnswerChoices => _stateResult?.State?.AnswerChoices ?? [];
+    private IReadOnlyList<string> AnswerChoices => _stateResult?.Value?.AnswerChoices ?? [];
 
-    private bool DisableAnswerButtons => _isSubmitting || _stateResult?.State?.HasInProgressAnswer != true;
+    private bool DisableAnswerButtons => _isSubmitting || _stateResult?.Value?.HasInProgressAnswer != true;
 
-    private string QuestionImageAltText => _stateResult?.State?.QuestionTitle ?? "Current quiz question";
+    private string QuestionImageAltText => _stateResult?.Value?.QuestionTitle ?? "Current quiz question";
 
-    private string QuizTitle => _stateResult?.State?.QuizTitle ?? "Quiz Answer";
+    private string QuizTitle => _stateResult?.Value?.QuizTitle ?? "Quiz Answer";
 
     private string? QuestionPositionText
     {
         get
         {
-            var state = _stateResult?.State;
+            var state = _stateResult?.Value;
 
             if (state?.QuestionIndex is null || state.QuestionCount is null)
             {
@@ -51,7 +51,7 @@ public partial class StudentQuizAnswerPanel
         }
     }
 
-    private bool ShowTimer => !string.IsNullOrWhiteSpace(_stateResult?.State?.QuestionKey);
+    private bool ShowTimer => !string.IsNullOrWhiteSpace(_stateResult?.Value?.QuestionKey);
 
     private bool IsTimerRunning => _isTimerRunning;
 
@@ -61,12 +61,12 @@ public partial class StudentQuizAnswerPanel
     {
         get
         {
-            if (_stateResult?.State is null)
+            if (_stateResult?.Value is null)
             {
                 return "Waiting for quiz state.";
             }
 
-            return _stateResult.State.Message;
+            return _stateResult.Value.Message;
         }
     }
 
@@ -118,7 +118,7 @@ public partial class StudentQuizAnswerPanel
 
     private async Task LoadCurrentImageAsync()
     {
-        var questionKey = _stateResult?.State?.QuestionKey;
+        var questionKey = _stateResult?.Value?.QuestionKey;
 
         if (string.IsNullOrWhiteSpace(questionKey))
         {
@@ -143,7 +143,7 @@ public partial class StudentQuizAnswerPanel
             return;
         }
 
-        _imageDataUri = imageResult.DataUri;
+        _imageDataUri = imageResult.Value;
     }
 
     private void ResetImageState()
@@ -155,7 +155,7 @@ public partial class StudentQuizAnswerPanel
 
     private void UpdateTimerState()
     {
-        var state = _stateResult?.State;
+        var state = _stateResult?.Value;
 
         if (state is null || string.IsNullOrWhiteSpace(state.QuestionKey))
         {

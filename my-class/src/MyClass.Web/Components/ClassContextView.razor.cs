@@ -9,7 +9,7 @@ public partial class ClassContextView
     [Parameter]
     public RenderFragment<ClassContext>? ChildContent { get; set; }
 
-    private ClassContextResult? _result;
+    private Result<ClassContext>? _result;
 
     protected override async Task OnInitializedAsync()
     {

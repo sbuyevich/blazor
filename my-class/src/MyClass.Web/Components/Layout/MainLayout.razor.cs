@@ -12,7 +12,7 @@ public partial class MainLayout
     private ClassContext? CurrentClass => ClassContextState.CurrentClass;
 
     private string? ClassMessage =>
-        ClassContextState.Result is { IsLoaded: false } result
+        ClassContextState.Result is { Succeeded: false } result
             ? result.Message
             : null;
 

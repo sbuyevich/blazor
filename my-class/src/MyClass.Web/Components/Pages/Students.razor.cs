@@ -8,9 +8,11 @@ public partial class Students
     [CascadingParameter]
     public ClassContext CurrentClass { get; set; } = null!;
 
-    private StudentListResult? _studentsResult;
+    private Result<IReadOnlyList<StudentListItem>>? _studentsResult;
 
-    private void OnStudentsLoaded(StudentListResult result)
+    private int StudentCount => _studentsResult?.Value?.Count ?? 0;
+
+    private void OnStudentsLoaded(Result<IReadOnlyList<StudentListItem>> result)
     {
         _studentsResult = result;
     }

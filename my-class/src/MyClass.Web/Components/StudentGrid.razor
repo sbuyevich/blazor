@@ -57,7 +57,7 @@ else if (_studentsResult.Succeeded)
             </MudButton>
         </MudStack>
 
-        @if (_studentsResult.Students.Count == 0)
+        @if (StudentRows.Count == 0)
         {
             <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
                 @EmptyStateText
@@ -65,7 +65,7 @@ else if (_studentsResult.Succeeded)
         }
         else
         {
-            <MudTable Items="_studentsResult.Students" Dense="true" Hover="true" Elevation="1">
+            <MudTable Items="StudentRows" Dense="true" Hover="true" Elevation="1">
                 <HeaderContent>
                     <MudTh>Last Name</MudTh>
                     <MudTh>First Name</MudTh>

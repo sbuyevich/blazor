@@ -35,8 +35,8 @@ public partial class SchoolEditDialog
             return;
         }
 
-        MudDialog.Close(DialogResult.Ok(new SchoolDialogResult(normalizedName)));
+        MudDialog.Close(DialogResult.Ok(new SchoolDialogInput(normalizedName)));
     }
 }
 
-public sealed record SchoolDialogResult(string Name);
+public sealed record SchoolDialogInput(string Name);

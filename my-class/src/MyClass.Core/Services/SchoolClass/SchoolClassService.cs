@@ -12,7 +12,7 @@ public sealed class SchoolClassService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IOptions<TeacherOptions> teacherOptions) : ISchoolClassService
 {
-    public async Task<SchoolClassListResult> GetSchoolClassesAsync(
+    public async Task<Result<IReadOnlyList<SchoolClassSchoolItem>>> GetSchoolClassesAsync(
         LoginState? loginState,
         CancellationToken cancellationToken = default)
     {
@@ -20,7 +20,7 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassListResult.Failure(authorizationMessage);
+            return Result<IReadOnlyList<SchoolClassSchoolItem>>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -44,10 +44,10 @@ public sealed class SchoolClassService(
                     .ToList()))
             .ToListAsync(cancellationToken);
 
-        return SchoolClassListResult.Success(schools);
+        return Result<IReadOnlyList<SchoolClassSchoolItem>>.Success(schools);
     }
 
-    public async Task<SchoolClassClassListResult> GetClassesForSchoolAsync(
+    public async Task<Result<IReadOnlyList<SchoolClassClassItem>>> GetClassesForSchoolAsync(
         LoginState? loginState,
         int schoolId,
         CancellationToken cancellationToken = default)
@@ -56,7 +56,7 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassClassListResult.Failure(authorizationMessage);
+            return Result<IReadOnlyList<SchoolClassClassItem>>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -66,7 +66,7 @@ public sealed class SchoolClassService(
 
         if (!schoolExists)
         {
-            return SchoolClassClassListResult.Failure("The selected school was not found.");
+            return Result<IReadOnlyList<SchoolClassClassItem>>.Failure("The selected school was not found.");
         }
 
         var classes = await dbContext.Classes
@@ -82,10 +82,10 @@ public sealed class SchoolClassService(
                 @class.Students.Count))
             .ToListAsync(cancellationToken);
 
-        return SchoolClassClassListResult.Success(classes);
+        return Result<IReadOnlyList<SchoolClassClassItem>>.Success(classes);
     }
 
-    public async Task<SchoolClassActionResult> CreateSchoolAsync(
+    public async Task<Result<int?>> CreateSchoolAsync(
         LoginState? loginState,
         string name,
         CancellationToken cancellationToken = default)
@@ -94,14 +94,14 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(authorizationMessage);
+            return Result<int?>.Failure(authorizationMessage);
         }
 
         var normalizedName = name.Trim();
 
         if (string.IsNullOrWhiteSpace(normalizedName))
         {
-            return SchoolClassActionResult.Failure("School name is required.");
+            return Result<int?>.Failure("School name is required.");
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -114,10 +114,10 @@ public sealed class SchoolClassService(
         dbContext.Schools.Add(school);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return SchoolClassActionResult.Success("School added.", school.Id);
+        return Result<int?>.Success(school.Id, "School added.");
     }
 
-    public async Task<SchoolClassActionResult> UpdateSchoolAsync(
+    public async Task<Result<int?>> UpdateSchoolAsync(
         LoginState? loginState,
         int schoolId,
         string name,
@@ -127,14 +127,14 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(authorizationMessage);
+            return Result<int?>.Failure(authorizationMessage);
         }
 
         var normalizedName = name.Trim();
 
         if (string.IsNullOrWhiteSpace(normalizedName))
         {
-            return SchoolClassActionResult.Failure("School name is required.");
+            return Result<int?>.Failure("School name is required.");
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -144,16 +144,16 @@ public sealed class SchoolClassService(
 
         if (school is null)
         {
-            return SchoolClassActionResult.Failure("The selected school was not found.");
+            return Result<int?>.Failure("The selected school was not found.");
         }
 
         school.Name = normalizedName;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return SchoolClassActionResult.Success("School updated.", school.Id);
+        return Result<int?>.Success(school.Id, "School updated.");
     }
 
-    public async Task<SchoolClassActionResult> DeleteSchoolAsync(
+    public async Task<Result<int?>> DeleteSchoolAsync(
         LoginState? loginState,
         int schoolId,
         CancellationToken cancellationToken = default)
@@ -162,7 +162,7 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(authorizationMessage);
+            return Result<int?>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -172,7 +172,7 @@ public sealed class SchoolClassService(
 
         if (school is null)
         {
-            return SchoolClassActionResult.Failure("The selected school was not found.");
+            return Result<int?>.Failure("The selected school was not found.");
         }
 
         var hasClasses = await dbContext.Classes
@@ -180,16 +180,16 @@ public sealed class SchoolClassService(
 
         if (hasClasses)
         {
-            return SchoolClassActionResult.Failure("Remove this school's classes before deleting it.");
+            return Result<int?>.Failure("Remove this school's classes before deleting it.");
         }
 
         dbContext.Schools.Remove(school);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return SchoolClassActionResult.Success("School deleted.");
+        return Result<int?>.Success(null, "School deleted.");
     }
 
-    public async Task<SchoolClassActionResult> CreateClassAsync(
+    public async Task<Result<int?>> CreateClassAsync(
         LoginState? loginState,
         int schoolId,
         string name,
@@ -200,14 +200,14 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(authorizationMessage);
+            return Result<int?>.Failure(authorizationMessage);
         }
 
         var validationMessage = ValidateClassInput(name, code, out var normalizedName, out var normalizedCode);
 
         if (validationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(validationMessage);
+            return Result<int?>.Failure(validationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -217,12 +217,12 @@ public sealed class SchoolClassService(
 
         if (!schoolExists)
         {
-            return SchoolClassActionResult.Failure("A valid school is required before adding a class.");
+            return Result<int?>.Failure("A valid school is required before adding a class.");
         }
 
         if (await ClassCodeExistsAsync(dbContext, normalizedCode, null, cancellationToken))
         {
-            return SchoolClassActionResult.Failure("That class code is already in use.");
+            return Result<int?>.Failure("That class code is already in use.");
         }
 
         var newClass = new ClassEntity
@@ -240,13 +240,13 @@ public sealed class SchoolClassService(
         }
         catch (DbUpdateException)
         {
-            return SchoolClassActionResult.Failure("That class code is already in use.");
+            return Result<int?>.Failure("That class code is already in use.");
         }
 
-        return SchoolClassActionResult.Success("Class added.", newClass.Id);
+        return Result<int?>.Success(newClass.Id, "Class added.");
     }
 
-    public async Task<SchoolClassActionResult> UpdateClassAsync(
+    public async Task<Result<int?>> UpdateClassAsync(
         LoginState? loginState,
         int classId,
         string name,
@@ -257,14 +257,14 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(authorizationMessage);
+            return Result<int?>.Failure(authorizationMessage);
         }
 
         var validationMessage = ValidateClassInput(name, code, out var normalizedName, out var normalizedCode);
 
         if (validationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(validationMessage);
+            return Result<int?>.Failure(validationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -274,12 +274,12 @@ public sealed class SchoolClassService(
 
         if (existingClass is null)
         {
-            return SchoolClassActionResult.Failure("The selected class was not found.");
+            return Result<int?>.Failure("The selected class was not found.");
         }
 
         if (await ClassCodeExistsAsync(dbContext, normalizedCode, classId, cancellationToken))
         {
-            return SchoolClassActionResult.Failure("That class code is already in use.");
+            return Result<int?>.Failure("That class code is already in use.");
         }
 
         existingClass.Name = normalizedName;
@@ -291,13 +291,13 @@ public sealed class SchoolClassService(
         }
         catch (DbUpdateException)
         {
-            return SchoolClassActionResult.Failure("That class code is already in use.");
+            return Result<int?>.Failure("That class code is already in use.");
         }
 
-        return SchoolClassActionResult.Success("Class updated.", existingClass.Id);
+        return Result<int?>.Success(existingClass.Id, "Class updated.");
     }
 
-    public async Task<SchoolClassActionResult> DeleteClassAsync(
+    public async Task<Result<int?>> DeleteClassAsync(
         LoginState? loginState,
         int classId,
         CancellationToken cancellationToken = default)
@@ -306,7 +306,7 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(authorizationMessage);
+            return Result<int?>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -316,7 +316,7 @@ public sealed class SchoolClassService(
 
         if (existingClass is null)
         {
-            return SchoolClassActionResult.Failure("The selected class was not found.");
+            return Result<int?>.Failure("The selected class was not found.");
         }
 
         var hasStudents = await dbContext.Students
@@ -324,16 +324,16 @@ public sealed class SchoolClassService(
 
         if (hasStudents)
         {
-            return SchoolClassActionResult.Failure("Remove this class's students before deleting it.");
+            return Result<int?>.Failure("Remove this class's students before deleting it.");
         }
 
         dbContext.Classes.Remove(existingClass);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return SchoolClassActionResult.Success("Class deleted.");
+        return Result<int?>.Success(null, "Class deleted.");
     }
 
-    public async Task<SchoolClassStudentListResult> GetStudentsForClassAsync(
+    public async Task<Result<IReadOnlyList<SchoolClassStudentItem>>> GetStudentsForClassAsync(
         LoginState? loginState,
         int classId,
         string? searchText = null,
@@ -343,7 +343,7 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassStudentListResult.Failure(authorizationMessage);
+            return Result<IReadOnlyList<SchoolClassStudentItem>>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -353,7 +353,7 @@ public sealed class SchoolClassService(
 
         if (!classExists)
         {
-            return SchoolClassStudentListResult.Failure("The selected class was not found.");
+            return Result<IReadOnlyList<SchoolClassStudentItem>>.Failure("The selected class was not found.");
         }
 
         var query = dbContext.Students
@@ -378,10 +378,10 @@ public sealed class SchoolClassService(
                 student.CreatedAtUtc))
             .ToListAsync(cancellationToken);
 
-        return SchoolClassStudentListResult.Success(students);
+        return Result<IReadOnlyList<SchoolClassStudentItem>>.Success(students);
     }
 
-    public async Task<SchoolClassActionResult> RemoveStudentFromClassAsync(
+    public async Task<Result<int?>> RemoveStudentFromClassAsync(
         LoginState? loginState,
         int classId,
         int studentId,
@@ -391,7 +391,7 @@ public sealed class SchoolClassService(
 
         if (authorizationMessage is not null)
         {
-            return SchoolClassActionResult.Failure(authorizationMessage);
+            return Result<int?>.Failure(authorizationMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -405,13 +405,13 @@ public sealed class SchoolClassService(
 
         if (student is null)
         {
-            return SchoolClassActionResult.Failure("The selected student was not found in this class.");
+            return Result<int?>.Failure("The selected student was not found in this class.");
         }
 
         dbContext.Students.Remove(student);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return SchoolClassActionResult.Success($"{student.DisplayName} was removed.", student.Id);
+        return Result<int?>.Success(student.Id, $"{student.DisplayName} was removed.");
     }
 
     private static string? ValidateClassInput(

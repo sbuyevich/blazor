@@ -169,7 +169,7 @@
                             @if (_studentResult?.Succeeded == true)
                             {
                                 <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
-                                    @_studentResult.Students.Count student@(_studentResult.Students.Count == 1 ? string.Empty : "s")
+                                    @StudentRows.Count student@(StudentRows.Count == 1 ? string.Empty : "s")
                                 </MudChip>
                             }
                         </MudStack>
@@ -213,7 +213,7 @@
                                           AdornmentIcon="@Icons.Material.Filled.Search"
                                           Clearable="true" />
 
-                            @if (_studentResult.Students.Count == 0)
+                            @if (StudentRows.Count == 0)
                             {
                                 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
                                     @StudentEmptyStateText
@@ -221,7 +221,7 @@
                             }
                             else
                             {
-                                <MudTable Items="_studentResult.Students" Dense="true" Hover="true" Elevation="0">
+                                <MudTable Items="StudentRows" Dense="true" Hover="true" Elevation="0">
                                     <HeaderContent>
                                         <MudTh>Display Name</MudTh>
                                         <MudTh>User Name</MudTh>

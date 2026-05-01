@@ -11,16 +11,13 @@ public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> 
     private const string MissingCodeMessage = "Class code is missing. Add ?c=demo to the URL to load the demo class.";
     private const string NotFoundMessageTemplate = "Class code '{0}' was not found.";
 
-    public async Task<ClassContextResult> ResolveAsync(string? classCode, CancellationToken cancellationToken = default)
+    public async Task<Result<ClassContext>> ResolveAsync(string? classCode, CancellationToken cancellationToken = default)
     {
         var normalizedCode = classCode?.Trim().ToUpperInvariant();
 
         if (string.IsNullOrWhiteSpace(normalizedCode))
         {
-            return new ClassContextResult(
-                ClassContextStatus.MissingCode,
-                null,
-                MissingCodeMessage);
+            return Result<ClassContext>.Failure(MissingCodeMessage);
         }
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -39,16 +36,10 @@ public sealed class ClassContextService(IDbContextFactory<ApplicationDbContext> 
 
         if (currentClass is null)
         {
-            return new ClassContextResult(
-                ClassContextStatus.NotFound,
-                null,
-                string.Format(NotFoundMessageTemplate, normalizedCode));
+            return Result<ClassContext>.Failure(string.Format(NotFoundMessageTemplate, normalizedCode));
         }
 
-        return new ClassContextResult(
-            ClassContextStatus.Loaded,
-            currentClass,
-            string.Empty);
+        return Result<ClassContext>.Success(currentClass);
     }
 
     public string? GetClassCodeFromUri(string uri)

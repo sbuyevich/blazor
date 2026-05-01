@@ -30,8 +30,8 @@ public partial class SchoolClass
         MaxWidth = MaxWidth.Small
     };
 
-    private SchoolClassListResult? _schoolClassResult;
-    private SchoolClassStudentListResult? _studentResult;
+    private Result<IReadOnlyList<SchoolClassSchoolItem>>? _schoolClassResult;
+    private Result<IReadOnlyList<SchoolClassStudentItem>>? _studentResult;
     private IReadOnlyList<SchoolClassSchoolItem> _schools = [];
     private LoginState? _loginState;
     private int? _selectedSchoolId;
@@ -43,6 +43,9 @@ public partial class SchoolClass
 
     private IReadOnlyList<SchoolClassClassItem> SelectedClasses =>
         _schools.FirstOrDefault(school => school.Id == _selectedSchoolId)?.Classes ?? [];
+
+    private IReadOnlyList<SchoolClassStudentItem> StudentRows =>
+        _studentResult?.Value ?? [];
 
     private string StudentEmptyStateText =>
         string.IsNullOrWhiteSpace(_studentSearchText)
@@ -76,8 +79,8 @@ public partial class SchoolClass
         await LoadLoginStateAsync();
 
         _schoolClassResult = await SchoolClassService.GetSchoolClassesAsync(_loginState);
-        _schools = _schoolClassResult.Succeeded
-            ? _schoolClassResult.Schools
+        _schools = _schoolClassResult.Succeeded && _schoolClassResult.Value is not null
+            ? _schoolClassResult.Value
             : [];
 
         SelectSchoolAndClass(preferredSchoolId, preferredClassId);
@@ -270,7 +273,7 @@ public partial class SchoolClass
     }
 
     private async Task ExecuteSchoolClassActionAsync(
-        Func<Task<SchoolClassActionResult>> action,
+        Func<Task<Result<int?>>> action,
         Func<int?, Task> refresh)
     {
         _isSaving = true;
@@ -286,10 +289,10 @@ public partial class SchoolClass
         }
 
         Snackbar.Add(result.Message, Severity.Success);
-        await refresh(result.EntityId);
+        await refresh(result.Value);
     }
 
-    private async Task<SchoolDialogResult?> ShowSchoolDialogAsync(
+    private async Task<SchoolDialogInput?> ShowSchoolDialogAsync(
         string title,
         string name,
         string saveText)
@@ -305,10 +308,10 @@ public partial class SchoolClass
 
         return result is null || result.Canceled
             ? null
-            : result.Data as SchoolDialogResult;
+            : result.Data as SchoolDialogInput;
     }
 
-    private async Task<ClassDialogResult?> ShowClassDialogAsync(
+    private async Task<ClassDialogInput?> ShowClassDialogAsync(
         string title,
         string name,
         string code,
@@ -326,6 +329,6 @@ public partial class SchoolClass
 
         return result is null || result.Canceled
             ? null
-            : result.Data as ClassDialogResult;
+            : result.Data as ClassDialogInput;
     }
 }

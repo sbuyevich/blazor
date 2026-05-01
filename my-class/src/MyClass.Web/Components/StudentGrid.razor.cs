@@ -10,9 +10,9 @@ public partial class StudentGrid
     public ClassContext CurrentClass { get; set; } = null!;
 
     [Parameter]
-    public EventCallback<StudentListResult> StudentsLoaded { get; set; }
+    public EventCallback<Result<IReadOnlyList<StudentListItem>>> StudentsLoaded { get; set; }
 
-    private StudentListResult? _studentsResult;
+    private Result<IReadOnlyList<StudentListItem>>? _studentsResult;
     private LoginState? _loginState;
     private string? _searchText;
     private bool _activeOnly;
@@ -36,6 +36,9 @@ public partial class StudentGrid
                 : "No students match those filters.";
         }
     }
+
+    private IReadOnlyList<StudentListItem> StudentRows =>
+        _studentsResult?.Value ?? [];
 
     protected override void OnParametersSet()
     {
