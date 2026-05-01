@@ -17,31 +17,42 @@
 else
 {
     <MudStack Spacing="3" Class="quiz-answer-shell">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
-            <div>
+        <MudStack Spacing="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
                 <MudText Typo="Typo.h5">@QuizTitle</MudText>
-                @if (QuestionProgress.Count > 0)
-                {
-                    <div class="quiz-progress-row" aria-label="Quiz question progress">
-                        @foreach (var item in QuestionProgress)
-                        {
-                            <span class="@GetProgressCircleClass(item)"
-                                  title="@GetProgressCircleTitle(item)">
-                                @(item.QuestionIndex + 1)
-                            </span>
-                        }
-                    </div>
-                }
-                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
-            </div>
 
-            @if (ShowTimer)
+                @if (ShowTimer)
+                {
+                    <MudChip T="string"
+                             Color="@(IsTimerRunning ? Color.Primary : Color.Default)"
+                             Variant="Variant.Filled">
+                        Timer: @FormatRemaining(TimerRemaining)
+                    </MudChip>
+                }
+            </MudStack>
+
+            @if (QuestionProgress.Count > 0)
             {
-                <MudChip T="string"
-                         Color="@(IsTimerRunning ? Color.Primary : Color.Default)"
-                         Variant="Variant.Filled">
-                    Timer: @FormatRemaining(TimerRemaining)
-                </MudChip>
+                <div class="quiz-progress-row" aria-label="Quiz question progress">
+                    @foreach (var item in QuestionProgress)
+                    {
+                        <span class="@GetProgressCircleClass(item)"
+                              title="@GetProgressCircleTitle(item)">
+                            @(item.QuestionIndex + 1)
+                        </span>
+                    }
+                </div>
+            }
+
+            @if (ShowRevealMessage)
+            {
+                <div class="@GetRevealMessageClass()">
+                    @RevealMessage
+                </div>
+            }
+            else
+            {
+                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@StatusMessage</MudText>
             }
         </MudStack>
 
@@ -56,14 +67,7 @@ else
                  alt="@QuestionImageAltText" />
         }
 
-        @if (ShowRevealMessage)
-        {
-            <div class="@GetRevealMessageClass()">
-                @RevealMessage
-            </div>
-        }
-
-        @if (AnswerChoices.Count > 0)
+        @if (ShowAnswerButtons)
         {
             <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Align="Align.Center">
                 Click on button with correct answer number
@@ -74,7 +78,7 @@ else
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Secondary"
                                Class="quiz-answer-button"
-                               Disabled="DisableAnswerButtons"
+                               Disabled="_isSubmitting"
                                OnClick="() => SubmitAnswerAsync(answer)">
                         @answer
                     </MudButton>

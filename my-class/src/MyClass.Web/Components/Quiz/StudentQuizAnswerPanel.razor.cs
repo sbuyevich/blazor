@@ -33,10 +33,11 @@ public partial class StudentQuizAnswerPanel
 
     private IReadOnlyList<QuizQuestionProgressItem> QuestionProgress => _stateResult?.Value?.QuestionProgress ?? [];
 
-    private bool DisableAnswerButtons =>
-        _isSubmitting ||
-        _stateResult?.Value?.HasInProgressAnswer != true ||
-        _stateResult?.Value?.IsAnswerRevealed == true;
+    private bool ShowAnswerButtons =>
+        AnswerChoices.Count > 0 &&
+        _stateResult?.Value?.HasInProgressAnswer == true &&
+        _stateResult?.Value?.AlreadyAnswered != true &&
+        _stateResult?.Value?.IsAnswerRevealed != true;
 
     private string QuestionImageAltText =>
         _stateResult?.Value?.IsAnswerRevealed == true

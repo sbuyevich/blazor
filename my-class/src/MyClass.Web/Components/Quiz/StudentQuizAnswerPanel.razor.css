@@ -24,14 +24,6 @@
     line-height: 1;
 }
 
-.quiz-progress-circle-bold {
-    font-weight: 700;
-}
-
-.quiz-progress-circle-current {
-    border-width: 2px;
-}
-
 .quiz-progress-circle-neutral {
     background: var(--mud-palette-surface);
 }
@@ -49,6 +41,15 @@
 .quiz-progress-circle-missed {
     background: #fff1b8;
     border-color: #e3c95e;
+}
+
+.quiz-progress-circle-bold {
+    border: 2px solid #111111;
+    font-weight: 800;
+}
+
+.quiz-progress-circle-current {
+    border: 3px solid #111111;
 }
 
 .quiz-answer-buttons {
