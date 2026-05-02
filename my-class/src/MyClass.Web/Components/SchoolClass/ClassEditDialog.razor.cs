@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
-namespace MyClass.Web.Components.SchoolClass;
+namespace MyClass.Web.Components;
 
 public partial class ClassEditDialog
 {

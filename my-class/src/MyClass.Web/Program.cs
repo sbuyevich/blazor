@@ -5,6 +5,7 @@ using MyClass.Core.Data;
 using MyClass.Core.Models;
 using MyClass.Core.Options;
 using MyClass.Core.Services;
+using MyClass.Web.App;
 using MyClass.Web.Components;
 using MyClass.Web.Hubs;
 

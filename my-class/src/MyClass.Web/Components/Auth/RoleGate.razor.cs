@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 
-namespace MyClass.Web.Components.Auth;
+namespace MyClass.Web.Components;
 
 public partial class RoleGate
 {
