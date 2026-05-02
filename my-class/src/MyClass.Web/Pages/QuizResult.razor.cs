@@ -83,7 +83,7 @@ public partial class QuizResult
             var csv = BuildCsv(ExportRows);
             await JSRuntime.InvokeVoidAsync(
                 "myClassDownloadTextFile",
-                "quiz-results.csv",
+                CreateExportFileName(_stateResult?.Value?.QuizName),
                 "text/csv;charset=utf-8",
                 csv);
         }
@@ -120,6 +120,39 @@ public partial class QuizResult
         }
 
         return csv.ToString();
+    }
+
+    private static string CreateExportFileName(string? quizTitle)
+    {
+        var safeTitle = CreateSafeFileName(quizTitle);
+
+        return $"{safeTitle}-results.csv";
+    }
+
+    private static string CreateSafeFileName(string? value)
+    {
+        var trimmedValue = value?.Trim();
+
+        if (string.IsNullOrWhiteSpace(trimmedValue))
+        {
+            return "Quiz";
+        }
+
+        var invalidFileNameChars = Path.GetInvalidFileNameChars();
+        var fileName = new StringBuilder(trimmedValue.Length);
+
+        foreach (var character in trimmedValue)
+        {
+            fileName.Append(Array.IndexOf(invalidFileNameChars, character) >= 0 || char.IsControl(character)
+                ? '-'
+                : character);
+        }
+
+        var safeFileName = fileName.ToString().Trim(' ', '.', '-');
+
+        return string.IsNullOrWhiteSpace(safeFileName)
+            ? "Quiz"
+            : safeFileName;
     }
 
     private static string EscapeCsv(string value)

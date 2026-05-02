@@ -71,6 +71,7 @@ public sealed class QuizResultService(
 
         return Result<QuizResultPageState>.Success(
             new QuizResultPageState(
+                contentResult.Value.Name,
                 CreateStudentSummaries(rowsWithTime),
                 CreateQuestionSummaries(rowsWithTime),
                 CreateExportRows(rowsWithTime)));
@@ -78,7 +79,7 @@ public sealed class QuizResultService(
 
     private static QuizResultPageState CreateEmptyState()
     {
-        return new QuizResultPageState([], [], []);
+        return new QuizResultPageState("Quiz", [], [], []);
     }
 
     private static IReadOnlyList<QuizResultStudentSummary> CreateStudentSummaries(

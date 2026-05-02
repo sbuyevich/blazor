@@ -74,31 +74,25 @@
                                 </MudTh>
                                 <MudTh Style="text-align:center;">
                                     <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.CorrectCount)">
-                                        Correct
+                                        Correct Answers
                                     </MudTableSortLabel>
                                 </MudTh>
                                 <MudTh Style="text-align:center;">
                                     <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.IncorrectCount)">
-                                        Incorrect
-                                    </MudTableSortLabel>
-                                </MudTh>
-                                <MudTh Style="text-align:center;">
-                                    <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.PercentCorrect)">
-                                        Percent
+                                        Incorrect Answers
                                     </MudTableSortLabel>
                                 </MudTh>
                                 <MudTh Style="text-align:right;">
                                     <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.TotalAnswerTime)">
-                                        Time
+                                        Total Answer Time
                                     </MudTableSortLabel>
                                 </MudTh>
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd DataLabel="Student">@context.StudentDisplayName</MudTd>
-                                <MudTd DataLabel="Correct" Style="text-align:center;">@context.CorrectCount</MudTd>
+                                <MudTd DataLabel="Correct" Style="text-align:center;">@context.CorrectCount (@FormatPercent(context.PercentCorrect))</MudTd>
                                 <MudTd DataLabel="Incorrect" Style="text-align:center;">@context.IncorrectCount</MudTd>
-                                <MudTd DataLabel="Percent" Style="text-align:center;">@FormatPercent(context.PercentCorrect)</MudTd>
-                                <MudTd DataLabel="Time" Style="text-align:right;">@FormatTime(context.TotalAnswerTime)</MudTd>
+                                <MudTd DataLabel="Time" Style="text-align:center;">@FormatTime(context.TotalAnswerTime)</MudTd>
                             </RowTemplate>
                         </MudTable>
                     </MudStack>
@@ -122,31 +116,25 @@
                                 </MudTh>
                                 <MudTh Style="text-align:center;">
                                     <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.CorrectCount)">
-                                        Correct
+                                        Students with Correct Answer
                                     </MudTableSortLabel>
                                 </MudTh>
                                 <MudTh Style="text-align:center;">
                                     <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.IncorrectCount)">
-                                        Incorrect
-                                    </MudTableSortLabel>
-                                </MudTh>
-                                <MudTh Style="text-align:center;">
-                                    <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.PercentCorrect)">
-                                        Percent
+                                        Students with Incorrect Answer
                                     </MudTableSortLabel>
                                 </MudTh>
                                 <MudTh Style="text-align:right;">
                                     <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.TotalAnswerTime)">
-                                        Time
+                                        Answer Time
                                     </MudTableSortLabel>
                                 </MudTh>
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd DataLabel="Question">@context.QuestionText</MudTd>
-                                <MudTd DataLabel="Correct" Style="text-align:center;">@context.CorrectCount</MudTd>
+                                <MudTd DataLabel="Correct" Style="text-align:center;">@context.CorrectCount (@FormatPercent(context.PercentCorrect))</MudTd>
                                 <MudTd DataLabel="Incorrect" Style="text-align:center;">@context.IncorrectCount</MudTd>
-                                <MudTd DataLabel="Percent" Style="text-align:center;">@FormatPercent(context.PercentCorrect)</MudTd>
-                                <MudTd DataLabel="Time" Style="text-align:right;">@FormatTime(context.TotalAnswerTime)</MudTd>
+                                <MudTd DataLabel="Time" Style="text-align:center;">@FormatTime(context.TotalAnswerTime)</MudTd>
                             </RowTemplate>
                         </MudTable>
                     </MudStack>

@@ -24,6 +24,11 @@ h1:focus {
     outline: none;
 }
 
+.mud-table thead .mud-table-cell,
+.mud-table thead .mud-table-sort-label {
+    font-weight: 700;
+}
+
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }

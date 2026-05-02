@@ -98,7 +98,13 @@ public sealed class QuizContentService(
             return Result<QuizContent>.Failure(quizMetadata.Message);
         }
 
+        var quizName = quizMetadata.Value.Name?.Trim();
         var quizTitle = quizMetadata.Value.Title?.Trim();
+
+        if (string.IsNullOrWhiteSpace(quizName))
+        {
+            return Result<QuizContent>.Failure("Selected quiz.json must define a non-empty name.");
+        }
 
         if (string.IsNullOrWhiteSpace(quizTitle))
         {
@@ -146,7 +152,7 @@ public sealed class QuizContentService(
             questions.Add(questionResult.Value);
         }
 
-        var quiz = new QuizContent(quizTitle, quizMetadata.Value.TimeLimitSeconds, questions);
+        var quiz = new QuizContent(quizName, quizTitle, quizMetadata.Value.TimeLimitSeconds, questions);
         _cachedQuizzes[quizFolder] = quiz;
 
         return Result<QuizContent>.Success(quiz);
