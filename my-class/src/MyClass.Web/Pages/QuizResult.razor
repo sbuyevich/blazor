@@ -1,0 +1,160 @@
+@page "/quiz-result"
+@rendermode InteractiveServer
+
+<PageTitle>Quiz Result</PageTitle>
+
+<RoleGate RequireTeacher="true" DeniedMessage="Only teachers can view quiz results.">
+    <MudStack Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+            <div>
+                <MudText Typo="Typo.h4">Quiz Result</MudText>
+            </div>
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                @if (_stateResult?.Succeeded == true && _stateResult.Value?.HasResults == true)
+                {
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
+                        @_stateResult.Value.StudentSummaries.Count student@(_stateResult.Value.StudentSummaries.Count == 1 ? string.Empty : "s")
+                    </MudChip>
+                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">
+                        @_stateResult.Value.QuestionSummaries.Count question@(_stateResult.Value.QuestionSummaries.Count == 1 ? string.Empty : "s")
+                    </MudChip>
+                }
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.FileDownload"
+                           Disabled="@(!HasResults || _isExporting)"
+                           OnClick="ExportCsvAsync">
+                    @(_isExporting ? "Exporting..." : "Export")
+                </MudButton>
+            </MudStack>
+        </MudStack>
+
+        @if (_isLoading)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+                <MudText Typo="Typo.body2">Loading quiz results...</MudText>
+            </MudStack>
+        }
+        else if (_stateResult is null)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                Unable to load quiz results.
+            </MudAlert>
+        }
+        else if (!_stateResult.Succeeded)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+                @_stateResult.Message
+            </MudAlert>
+        }
+        else if (_stateResult.Value?.HasResults != true)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                No active quiz results yet.
+            </MudAlert>
+        }
+        else
+        {
+            <MudStack Spacing="3">
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudStack Spacing="3">
+                        <MudText Typo="Typo.h6">Students</MudText>
+
+                        <MudTable T="QuizResultStudentSummary"
+                                  Items="StudentSummaries"
+                                  Dense="true"
+                                  Hover="true"
+                                  Elevation="0"
+                                  AllowUnsorted="false">
+                            <HeaderContent>
+                                <MudTh>
+                                    <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.StudentDisplayName)">
+                                        Student
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh Style="text-align:center;">
+                                    <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.CorrectCount)">
+                                        Correct
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh Style="text-align:center;">
+                                    <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.IncorrectCount)">
+                                        Incorrect
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh Style="text-align:center;">
+                                    <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.PercentCorrect)">
+                                        Percent
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh Style="text-align:right;">
+                                    <MudTableSortLabel SortBy="new Func<QuizResultStudentSummary, object>(row => row.TotalAnswerTime)">
+                                        Time
+                                    </MudTableSortLabel>
+                                </MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Student">@context.StudentDisplayName</MudTd>
+                                <MudTd DataLabel="Correct" Style="text-align:center;">@context.CorrectCount</MudTd>
+                                <MudTd DataLabel="Incorrect" Style="text-align:center;">@context.IncorrectCount</MudTd>
+                                <MudTd DataLabel="Percent" Style="text-align:center;">@FormatPercent(context.PercentCorrect)</MudTd>
+                                <MudTd DataLabel="Time" Style="text-align:right;">@FormatTime(context.TotalAnswerTime)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudStack Spacing="3">
+                        <MudText Typo="Typo.h6">Questions</MudText>
+
+                        <MudTable T="QuizResultQuestionSummary"
+                                  Items="QuestionSummaries"
+                                  Dense="true"
+                                  Hover="true"
+                                  Elevation="0"
+                                  AllowUnsorted="false">
+                            <HeaderContent>
+                                <MudTh>
+                                    <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.QuestionText)">
+                                        Question
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh Style="text-align:center;">
+                                    <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.CorrectCount)">
+                                        Correct
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh Style="text-align:center;">
+                                    <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.IncorrectCount)">
+                                        Incorrect
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh Style="text-align:center;">
+                                    <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.PercentCorrect)">
+                                        Percent
+                                    </MudTableSortLabel>
+                                </MudTh>
+                                <MudTh Style="text-align:right;">
+                                    <MudTableSortLabel SortBy="new Func<QuizResultQuestionSummary, object>(row => row.TotalAnswerTime)">
+                                        Time
+                                    </MudTableSortLabel>
+                                </MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Question">@context.QuestionText</MudTd>
+                                <MudTd DataLabel="Correct" Style="text-align:center;">@context.CorrectCount</MudTd>
+                                <MudTd DataLabel="Incorrect" Style="text-align:center;">@context.IncorrectCount</MudTd>
+                                <MudTd DataLabel="Percent" Style="text-align:center;">@FormatPercent(context.PercentCorrect)</MudTd>
+                                <MudTd DataLabel="Time" Style="text-align:right;">@FormatTime(context.TotalAnswerTime)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudStack>
+                </MudPaper>
+            </MudStack>
+        }
+    </MudStack>
+</RoleGate>

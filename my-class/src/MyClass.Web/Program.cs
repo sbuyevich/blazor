@@ -38,6 +38,7 @@ builder.Services.AddScoped<IQuizContentService, QuizContentService>();
 builder.Services.AddScoped<IQuizNotificationService, SignalRQuizNotificationService>();
 builder.Services.AddScoped<IQuizSessionService, QuizSessionService>();
 builder.Services.AddScoped<IQuizAnswerService, QuizAnswerService>();
+builder.Services.AddScoped<IQuizResultService, QuizResultService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ISchoolClassService, SchoolClassService>();
 builder.Services.AddScoped<ISessionStorageService, SessionStorageService>();

@@ -57,8 +57,8 @@ Create a teacher-only `/quiz-result` page that summarizes the current active qui
 
 ## Task Breakdown
 
-- [ ] [Task 01 - Quiz Result Service](tasks/01-quiz-result-service.md)
-- [ ] [Task 02 - Teacher Result Page Access](tasks/02-teacher-result-page-access.md)
-- [ ] [Task 03 - Result Grids UI](tasks/03-result-grids-ui.md)
-- [ ] [Task 04 - CSV Export](tasks/04-csv-export.md)
+- [x] [Task 01 - Quiz Result Service](tasks/01-quiz-result-service.md)
+- [x] [Task 02 - Teacher Result Page Access](tasks/02-teacher-result-page-access.md)
+- [x] [Task 03 - Result Grids UI](tasks/03-result-grids-ui.md)
+- [x] [Task 04 - CSV Export](tasks/04-csv-export.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)
