@@ -101,7 +101,7 @@ public partial class QuizResult
     {
         var csv = new StringBuilder();
 
-        csv.AppendLine("StudentDisplayName,QuestionText,CorrectAnswer,Answer,AnswerTime,IsCorrect");
+        csv.AppendLine("Student,Question,Pass,Student Answer,Correct Answer,Answer Time");
 
         foreach (var row in rows)
         {
@@ -109,13 +109,13 @@ public partial class QuizResult
             csv.Append(',');
             csv.Append(EscapeCsv(row.QuestionText));
             csv.Append(',');
-            csv.Append(EscapeCsv(row.CorrectAnswer));
+            csv.Append(EscapeCsv(row.IsCorrect.ToString(CultureInfo.InvariantCulture)));
             csv.Append(',');
             csv.Append(EscapeCsv(row.Answer));
             csv.Append(',');
-            csv.Append(EscapeCsv(FormatCsvTime(row.AnswerTime)));
+            csv.Append(EscapeCsv(row.CorrectAnswer));
             csv.Append(',');
-            csv.Append(EscapeCsv(row.IsCorrect.ToString(CultureInfo.InvariantCulture)));
+            csv.Append(EscapeCsv(FormatCsvTime(row.AnswerTime)));
             csv.AppendLine();
         }
 
