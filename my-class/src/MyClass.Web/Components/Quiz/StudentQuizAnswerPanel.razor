@@ -1,3 +1,4 @@
+@namespace MyClass.Web.Components
 @rendermode InteractiveServer
 @implements IAsyncDisposable
 @inject ILoginStateService LoginStateService
@@ -9,10 +10,7 @@
 
 @if (_isLoading)
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-        <MudText Typo="Typo.body2">Loading quiz answer...</MudText>
-    </MudStack>
+    <LoadingIndicator Text="Loading quiz answer..." />
 }
 else
 {

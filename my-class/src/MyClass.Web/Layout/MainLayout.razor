@@ -1,4 +1,4 @@
-@using MyClass.Web.Components.Auth
+@using MyClass.Web.Components
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject IClassContextService ClassContextService
@@ -51,10 +51,7 @@
             }
             else if (ClassContextState.Result is null)
             {
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                    <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-                    <MudText Typo="Typo.body2">Loading class...</MudText>
-                </MudStack>
+                <LoadingIndicator Text="Loading class..." />
             }
             else if (!ClassContextState.Result.Succeeded)
             {

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using MyClass.Core.Models;
 using MyClass.Web.Hubs;
 
-namespace MyClass.Web.Components.Quiz;
+namespace MyClass.Web.Components;
 
 public partial class StudentQuizAnswerPanel
 {

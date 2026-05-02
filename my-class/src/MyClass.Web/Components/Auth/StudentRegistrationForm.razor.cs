@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MyClass.Core.Models;
 
-namespace MyClass.Web.Components.Auth;
+namespace MyClass.Web.Components;
 
 public partial class StudentRegistrationForm
 {

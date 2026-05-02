@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MyClass.Core.Models;
 using MyClass.Core.Services;
-using MyClass.Web.Components.SchoolClass;
+using MyClass.Web.Components;
 
 namespace  MyClass.Web.Pages;
 

@@ -1,3 +1,4 @@
+@namespace MyClass.Web.Components
 @rendermode InteractiveServer
 @implements IDisposable
 @inject ISessionStorageService SessionStorage
@@ -18,10 +19,7 @@
             @* Loading state: Show spinner while checking existing login state *@
             @if (!_loadedLoginState)
             {
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                    <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-                    <MudText Typo="Typo.body2">Checking sign-in...</MudText>
-                </MudStack>
+                <LoadingIndicator Text="Checking sign-in..." />
             }
             @* Registration state: Show registration form if user clicked "Register" *@
             else if (_showRegistration)

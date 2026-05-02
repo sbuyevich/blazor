@@ -9,10 +9,7 @@
 
         @if (_isLoading)
         {
-            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-                <MudText Typo="Typo.body2">Loading schools...</MudText>
-            </MudStack>
+            <LoadingIndicator Text="Loading schools..." />
         }
         else if (_schoolClassResult is null)
         {
@@ -185,10 +182,7 @@
                         }
                         else if (_isLoadingStudents)
                         {
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-                                <MudText Typo="Typo.body2">Loading students...</MudText>
-                            </MudStack>
+                            <LoadingIndicator Text="Loading students..." />
                         }
                         else if (_studentResult is null)
                         {
