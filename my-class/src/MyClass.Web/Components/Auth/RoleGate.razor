@@ -12,10 +12,7 @@
 @* Loading state: Show spinner while checking login state *@
 @if (!_loadedLoginState)
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-        <MudText Typo="Typo.body2">Checking access...</MudText>
-    </MudStack>
+    <LoadingIndicator Text="Checking access..." />
 }
 @* Unauthenticated state: No user is currently logged in *@
 else if (LoginStateService.Current is null)

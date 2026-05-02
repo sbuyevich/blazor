@@ -4,10 +4,7 @@
 
 @if (_result is null)
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-        <MudText Typo="Typo.body2">Loading class...</MudText>
-    </MudStack>
+    <LoadingIndicator Text="Loading class..." />
 }
 else if (!_result.Succeeded)
 {

@@ -1,0 +1,9 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+    <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+    <MudText Typo="Typo.body2">@Text</MudText>
+</MudStack>
+
+@code {
+    [Parameter]
+    public string Text { get; set; } = string.Empty;
+}

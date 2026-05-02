@@ -7,10 +7,7 @@
 
 @if (_isLoading)
 {
-    <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="2">
-        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-        <MudText Typo="Typo.body2">Loading students...</MudText>
-    </MudStack>
+    <LoadingIndicator Text="Loading students..." />
 }
 else if (_studentsResult is null)
 {
