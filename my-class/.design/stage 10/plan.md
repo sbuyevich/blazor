@@ -1,73 +1,64 @@
-# Stage 9 Select Quiz by Teacher Plan
+# Stage 10 Quiz Result Page Plan
 
 ## Summary
 
-Stage 9 lets the teacher choose which quiz is active. The app discovers quizzes from `Quiz:RootFolder`, lists valid quiz folders in a Teacher Quiz page dropdown, stores the teacher's selected quiz in browser session storage, and uses the selected quiz for the shared teacher/student quiz flow.
+Create a teacher-only `/quiz-result` page that summarizes the current active quiz run stored in `QuizAnswers`. The page shows sortable student and question result grids and lets the teacher export the current answer rows to CSV.
 
 ## Key Changes
 
-- Discover valid quiz folders from the configured quiz root folder.
-- Read each quiz folder's `quiz.json` metadata.
-- Add selected quiz state and session-storage support.
-- Update quiz content loading to use the selected quiz folder instead of a single fixed quiz folder.
-- Add a teacher-facing quiz dropdown at the top of the Teacher Quiz page.
-- Ensure students see the quiz currently selected by the teacher.
-- Add warnings for missing, invalid, or unavailable quiz selections.
-
-## Quiz Metadata
-
-Each direct child folder under `Quiz:RootFolder` can be a quiz folder. A valid quiz folder must contain `quiz.json`.
-
-Required metadata fields:
-
-- `name`: display name used in the teacher dropdown.
-- `title`: quiz title shown on quiz pages.
-- `timeLimitSeconds`: default time limit for questions.
-
-Example:
-
-```json
-{
-  "name": "Astronomy - easy",
-  "title": "How good you know Astronomy?",
-  "timeLimitSeconds": 30
-}
-```
+- Add a quiz result service in `MyClass.Core` using `IDbContextFactory<ApplicationDbContext>`:
+  - Load answer rows for the teacher's current class.
+  - Build student summary rows grouped by student.
+  - Build question summary rows grouped by question.
+  - Build flat CSV export rows from `QuizAnswers`.
+  - Treat no-answer/timeouts as incorrect and include the full question time in aggregated time.
+- Add `/quiz-result` as a teacher-only page:
+  - Use the existing teacher role/login checks.
+  - Keep the existing Teacher nav link.
+  - Show an empty state when no active quiz result rows exist.
+- Build MudBlazor result UI:
+  - Student summary grid with sortable columns for student name, correct count, incorrect count, percent correct, and total answer time.
+  - Question summary grid with sortable columns for question, correct count, incorrect count, percent correct, and total answer time.
+  - Export button at the top of the page, disabled when there are no rows.
+- Add CSV export:
+  - Export the current `QuizAnswers` rows for the current class.
+  - Include `StudentDisplayName`, `QuestionText`, `CorrectAnswer`, `Answer`, `AnswerTime`, and `IsCorrect`.
 
 ## Public Interfaces / Types
 
-- Add a quiz summary model for discovered quizzes.
-- Add service support for listing available quizzes.
-- Add service support for loading quiz content/images from a selected quiz folder.
-- Add browser session-storage support for the selected teacher quiz path.
-- Add shared runtime active quiz selection so students load the teacher-selected quiz without database persistence.
+- Add `IQuizResultService` with result models following existing `Succeeded`, `Message`, payload conventions.
+- Add lightweight result models for:
+  - student summary rows
+  - question summary rows
+  - CSV export rows or export content
+- No database schema change is required.
+- Do not add long-term quiz history or recreate `QuizSessions` / `QuizSessionQuestions`.
 
 ## Test Plan
 
-- Teacher sees a quiz dropdown with valid discovered quizzes.
-- Invalid quiz folders are skipped without breaking the page.
-- Teacher selection survives refresh in the same browser session.
-- If a saved selected quiz no longer exists, the first valid quiz is selected.
-- Start/restart uses the selected quiz.
-- Student pages load the quiz currently selected by the teacher.
-- Question image and answer image loading continue to work from the selected quiz folder.
-- Missing/invalid selected quiz shows a warning and prevents quiz start.
-- Existing start, finish, show answer, next, restart, timer, SignalR, and polling behavior does not regress.
+- Teacher can access `/quiz-result`.
+- Student or unauthenticated user cannot use the page.
+- Empty active quiz results show a clear empty state and disable export.
+- Student summary counts correct and incorrect answers correctly.
+- Question summary counts correct and incorrect answers correctly.
+- Percent correct uses correct answers divided by all answer rows in the group.
+- No-answer/timeouts count as incorrect and add full question time to aggregate time.
+- Submitted answers use elapsed time from `StartedAtUtc` to `EndedAtUtc`.
+- CSV export includes only current class answer rows and the required columns.
+- Existing quiz start, next, restart, answer, reveal, and navigation behavior does not regress.
 - `dotnet build .\MyClass.slnx` succeeds.
 
 ## Assumptions
 
-- Students do not choose quizzes.
-- Teacher quiz selection is stored in browser session storage for page refresh continuity.
-- The active quiz selection used by students is runtime class state controlled by the teacher dropdown.
-- Existing question and answer image naming rules continue inside each selected quiz folder.
-- `Quiz:RootFolder` points to the parent folder that contains all quiz folders.
+- Stage 10 reports only the current active quiz run in `QuizAnswers`.
+- `QuizAnswers` remains active-run storage, not durable reporting history.
+- The current class is inferred through `QuizAnswers.StudentId -> Students.ClassId`.
+- No-answer/timeouts use the question time limit from quiz content when calculating aggregate time.
 
 ## Task Breakdown
 
-- [x] [Task 01 - Quiz Discovery and Metadata](tasks/01-quiz-discovery-and-metadata.md)
-- [x] [Task 02 - Selected Quiz Session Storage](tasks/02-selected-quiz-session-storage.md)
-- [x] [Task 03 - Selected Quiz Content Loading](tasks/03-selected-quiz-content-loading.md)
-- [x] [Task 04 - Teacher Quiz Dropdown](tasks/04-teacher-quiz-dropdown.md)
-- [x] [Task 05 - Student Uses Active Teacher Quiz](tasks/05-student-uses-active-teacher-quiz.md)
+- [x] [Task 01 - Quiz Result Service](tasks/01-quiz-result-service.md)
+- [x] [Task 02 - Teacher Result Page Access](tasks/02-teacher-result-page-access.md)
+- [x] [Task 03 - Result Grids UI](tasks/03-result-grids-ui.md)
+- [x] [Task 04 - CSV Export](tasks/04-csv-export.md)
 - [ ] [Task 10 - Verification](tasks/10-verification.md)
